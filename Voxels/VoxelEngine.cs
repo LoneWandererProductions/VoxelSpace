@@ -84,6 +84,8 @@ namespace VoxelEngine
                 var dx = (pRight.X - pLeft.X) / _screenWidth;
                 var dy = (pRight.Y - pLeft.Y) / _screenWidth;
 
+                _dbm = DirectBitmap.GetInstance(_bmp);
+
                 for (var i = 0; i < _screenWidth; i++)
                 {
                     var diffuseX = (int)pLeft.X & (_width - 1);
@@ -106,7 +108,6 @@ namespace VoxelEngine
                     //DrawVerticalLine(i, (int)heightOnScreen, _yBuffer[i], color, g);
                     if (heightOnScreen > _yBuffer[i]) continue;
 
-                    _dbm = DirectBitmap.GetInstance(_bmp);
                     _dbm.DrawVerticalLine(i, (int)_yBuffer[i], length, color);
 
 
