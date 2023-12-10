@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0</TargetFramework>
+    <Authors>Wayfarer</Authors>
+    <Copyright>Lone Wanderer Productions</Copyright>
+    <Company>Lone Wanderer Productions</Company>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ExtendedSystemObjects\ExtendedSystemObjects.csproj" />
+  </ItemGroup>
+
+</Project>
