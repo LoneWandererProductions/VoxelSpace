@@ -1,17 +1,16 @@
-﻿// ReSharper disable PossibleLossOfFraction
+﻿
+//Source: https://github.com/s-macke/VoxelSpace
 
-using System;
+// ReSharper disable PossibleLossOfFraction
+
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
-using System.Threading.Tasks;
 using System.Windows.Input;
 using Imaging;
 using Mathematics;
 
-namespace VoxelEngine
+namespace Voxels
 {
     /// <summary>
     ///     https://www.youtube.com/watch?v=bQBY9BM9g_Y
@@ -81,8 +80,8 @@ namespace VoxelEngine
 
             for (var i = 0; i < _yBuffer.Length; i++) _yBuffer[i] = _screenHeight;
 
-            var sinPhi = ExtendedMath.CalcSin(_camera.Angle); //Math.Sin(Math.PI * degrees / 180d);
-            var cosPhi = ExtendedMath.CalcCos(_camera.Angle); //Math.Cos(Math.PI * degrees / 180);
+            var sinPhi = ExtendedMath.CalcSin(_camera.Angle);
+            var cosPhi = ExtendedMath.CalcCos(_camera.Angle);
 
             float z = 1;
             float dz = 1;
@@ -92,6 +91,7 @@ namespace VoxelEngine
                 var pLeft = new PointF(
                     (float)(-cosPhi * z - sinPhi * z) + _camera.X,
                     (float)(sinPhi * z - cosPhi * z) + _camera.Y);
+
                 var pRight = new PointF(
                     (float)(cosPhi * z - sinPhi * z) + _camera.X,
                     (float)(-sinPhi * z - cosPhi * z) + _camera.Y);

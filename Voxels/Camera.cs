@@ -1,4 +1,4 @@
-namespace VoxelEngine
+namespace Voxels
 {
     public class Camera
     {

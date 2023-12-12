@@ -2,7 +2,7 @@
 using System.Windows;
 using System.Windows.Input;
 using Imaging;
-using VoxelEngine;
+using Voxels;
 
 namespace Main
 {

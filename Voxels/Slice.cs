@@ -1,6 +1,6 @@
 ﻿using System.Drawing;
 
-namespace VoxelEngine
+namespace Voxels
 {
     public class Slice
     {
