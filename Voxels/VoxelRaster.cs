@@ -17,7 +17,7 @@ namespace Voxels
     /// </summary>
     public sealed class VoxelRaster
     {
-        private readonly Camera _camera = new();
+        private readonly Camera _camera;
 
         private readonly int _screenHeight = 480;
 
@@ -133,7 +133,6 @@ namespace Voxels
             {
                 Shade = color,
                 X1 = x,
-                X2 = x,
                 Y1 = heightOnScreen,
                 Y2 = buffer
             };

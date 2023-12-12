@@ -1,6 +1,6 @@
 namespace Voxels
 {
-    public class Camera
+    public sealed class Camera
     {
         /// <summary>
         ///     Gets or sets the x.
@@ -9,7 +9,7 @@ namespace Voxels
         /// <value>
         ///     The x.
         /// </value>
-        public float X { get; set; }
+        public float X { get; init; }
 
         /// <summary>
         ///     Gets or sets the y.
@@ -18,7 +18,7 @@ namespace Voxels
         /// <value>
         ///     The y.
         /// </value>
-        public float Y { get; set; }
+        public float Y { get; init; }
 
         /// <summary>
         ///     Gets or sets the height.
@@ -45,7 +45,7 @@ namespace Voxels
         /// <value>
         ///     The z far.
         /// </value>
-        public float ZFar { get; set; }
+        public float ZFar { get; init; }
 
         /// <summary>
         ///     Gets or sets the angle.
@@ -54,8 +54,8 @@ namespace Voxels
         /// <value>
         ///     The angle.
         /// </value>
-        public int Angle { get; set; } = 90; // 1.5 * 3.141592; // (= 270 deg)
+        public int Angle { get; set; }
 
-        public int Scale { get; set; }
+        public int Scale { get; init; }
     }
 }

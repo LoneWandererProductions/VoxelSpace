@@ -2,16 +2,14 @@
 
 namespace Voxels
 {
-    public class Slice
+    internal sealed class Slice
     {
-        public Color Shade { get; set; }
+        internal Color Shade { get; init; }
 
-        public int X1 { get; set; }
+        internal int X1 { get; init; }
 
-        public float X2 { get; set; }
+        internal int Y1 { get; init; }
 
-        public int Y1 { get; set; }
-
-        public float Y2 { get; set; }
+        internal float Y2 { get; init; }
     }
 }
