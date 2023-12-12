@@ -2,15 +2,16 @@
 using System.Windows;
 using System.Windows.Input;
 using Imaging;
+using VoxelEngine;
 
 namespace Main
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow
     {
-        private readonly VoxelEngine.VoxelEngine _voxel = new();
+        private VoxelRaster _voxel;
 
         public MainWindow()
         {
@@ -20,7 +21,9 @@ namespace Main
 
         private void Initiate()
         {
-            var bmp = _voxel.Render(new PointF(100, 100), 0, 100, 120, 120, 300);
+            _voxel = new VoxelRaster(100, 100, 0, 100, 120, 120, 300);
+
+            var bmp = _voxel.Render();
             ImageView.Source = bmp.ToBitmapImage();
         }
 

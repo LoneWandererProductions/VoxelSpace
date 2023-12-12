@@ -9,7 +9,7 @@ namespace VoxelEngine
         /// <value>
         ///     The x.
         /// </value>
-        public double X { get; set; } = 512.0;
+        public float X { get; set; }
 
         /// <summary>
         ///     Gets or sets the y.
@@ -18,7 +18,7 @@ namespace VoxelEngine
         /// <value>
         ///     The y.
         /// </value>
-        public double Y { get; set; } = 512.0;
+        public float Y { get; set; }
 
         /// <summary>
         ///     Gets or sets the height.
@@ -27,7 +27,7 @@ namespace VoxelEngine
         /// <value>
         ///     The height.
         /// </value>
-        public double Height { get; set; } = 70.0;
+        public float Height { get; set; }
 
         /// <summary>
         ///     Gets or sets the horizon.
@@ -36,7 +36,7 @@ namespace VoxelEngine
         /// <value>
         ///     The horizon.
         /// </value>
-        public double Horizon { get; set; } = 60.0;
+        public int Horizon { get; set; }
 
         /// <summary>
         ///     Gets or sets the z far.
@@ -45,7 +45,7 @@ namespace VoxelEngine
         /// <value>
         ///     The z far.
         /// </value>
-        public double ZFar { get; set; } = 600.0;
+        public float ZFar { get; set; }
 
         /// <summary>
         ///     Gets or sets the angle.
@@ -54,6 +54,8 @@ namespace VoxelEngine
         /// <value>
         ///     The angle.
         /// </value>
-        public double Angle { get; set; } = 90; // 1.5 * 3.141592; // (= 270 deg)
+        public int Angle { get; set; } = 90; // 1.5 * 3.141592; // (= 270 deg)
+
+        public int Scale { get; set; }
     }
 }

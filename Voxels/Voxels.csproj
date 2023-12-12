@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net5.0-windows</TargetFramework>
@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Imaging\Imaging.csproj" />
+    <ProjectReference Include="..\Mathematics\Mathematics.csproj" />
   </ItemGroup>
 
 </Project>
