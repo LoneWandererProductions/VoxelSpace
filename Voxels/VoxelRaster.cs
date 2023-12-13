@@ -1,8 +1,8 @@
-﻿
-//Source: https://github.com/s-macke/VoxelSpace
+﻿//Source: https://github.com/s-macke/VoxelSpace
 
 // ReSharper disable PossibleLossOfFraction
 
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
@@ -19,15 +19,15 @@ namespace Voxels
     {
         private readonly Camera _camera;
 
-        private readonly int _screenHeight = 480;
+        private readonly List<Slice> _raster = new();
 
-        private readonly int _screenWidth = 640;
+        private readonly int _screenHeight = 200;
+
+        private readonly int _screenWidth = 300;
 
         private Bitmap _bmp;
 
         private int _colorHeight;
-
-        private readonly List<Slice> _raster = new();
 
         /// <summary>
         ///     The color map
@@ -89,29 +89,30 @@ namespace Voxels
             while (z < _camera.ZFar)
             {
                 var pLeft = new PointF(
-                    (float)(-cosPhi * z - sinPhi * z) + _camera.X,
-                    (float)(sinPhi * z - cosPhi * z) + _camera.Y);
+                    (float) (-cosPhi * z - sinPhi * z) + _camera.X,
+                    (float) (sinPhi * z - cosPhi * z) + _camera.Y);
 
                 var pRight = new PointF(
-                    (float)(cosPhi * z - sinPhi * z) + _camera.X,
-                    (float)(-sinPhi * z - cosPhi * z) + _camera.Y);
+                    (float) (cosPhi * z - sinPhi * z) + _camera.X,
+                    (float) (-sinPhi * z - cosPhi * z) + _camera.Y);
 
                 var dx = (pRight.X - pLeft.X) / _screenWidth;
                 var dy = (pRight.Y - pLeft.Y) / _screenWidth;
 
                 for (var i = 0; i < _screenWidth; i++)
                 {
-                    var diffuseX = (int)pLeft.X & (_colorWidth - 1);
-                    var diffuseY = (int)pLeft.Y & (_colorHeight - 1);
-                    var heightX = (int)pLeft.X & (_topographyWidth - 1);
-                    var heightY = (int)pLeft.Y & (_topographyHeight - 1);
+                    var diffuseX = (int) pLeft.X & (_colorWidth - 1);
+                    var diffuseY = (int) pLeft.Y & (_colorHeight - 1);
+                    var heightX = (int) pLeft.X & (_topographyWidth - 1);
+                    var heightY = (int) pLeft.Y & (_topographyHeight - 1);
 
-                    float heightOfHeightMap = _heightMap[heightX & (_topographyWidth - 1), heightY & (_topographyHeight - 1)];
+                    float heightOfHeightMap =
+                        _heightMap[heightX & (_topographyWidth - 1), heightY & (_topographyHeight - 1)];
 
                     var heightOnScreen = (_camera.Height - heightOfHeightMap) / z * _camera.Scale + _camera.Horizon;
                     var color = _colorMap[diffuseX & (_colorWidth - 1), diffuseY & (_colorHeight - 1)];
 
-                    GenerateSlice(color,i, (int)heightOnScreen, _yBuffer[i]);
+                    GenerateSlice(color, i, (int) heightOnScreen, _yBuffer[i]);
 
                     if (heightOnScreen < _yBuffer[i]) _yBuffer[i] = heightOnScreen;
                     pLeft.X += dx;
@@ -142,10 +143,7 @@ namespace Voxels
 
         private void DrawRaster()
         {
-            foreach (var slice in _raster)
-            {
-                DrawVerticalLine(slice.Shade, slice.X1, slice.Y1, slice.Y2);
-            }
+            foreach (var slice in _raster) DrawVerticalLine(slice.Shade, slice.X1, slice.Y1, slice.Y2);
         }
 
         private void DrawVerticalLine(Color col, int x, int heightOnScreen, float buffer)
@@ -156,26 +154,37 @@ namespace Voxels
             g.DrawLine(new Pen(new SolidBrush(col)), x, heightOnScreen, x, buffer);
         }
 
-        public void KeyInput()
+        public void KeyInput(Key key)
         {
-            if (Keyboard.IsKeyDown(Key.Up))
+            switch (key)
             {
-                //_camera.X += Math.Cos(_camera.Angle);
-                //_camera.Y += Math.Sin(_camera.Angle);
+                case Key.Up:
+                    _camera.X += (float) Math.Cos(_camera.Angle);
+                    _camera.Y += (float) Math.Sin(_camera.Angle);
+                    break;
+                case Key.Down:
+                    _camera.X -= (float) Math.Cos(_camera.Angle);
+                    _camera.Y -= (float) Math.Sin(_camera.Angle);
+                    break;
+                case Key.Left:
+                    _camera.Angle++;
+                    break;
+                case Key.Right:
+                    _camera.Angle--;
+                    break;
+                case Key.E:
+                    _camera.Height++;
+                    break;
+                case Key.D:
+                    _camera.Height--;
+                    break;
+                case Key.S:
+                    _camera.Horizon++;
+                    break;
+                case Key.W:
+                    _camera.Horizon--;
+                    break;
             }
-
-            if (Keyboard.IsKeyDown(Key.Down))
-            {
-                //_camera.X -= Math.Cos(_camera.Angle);
-                //_camera.Y -= Math.Sin(_camera.Angle);
-            }
-
-            if (Keyboard.IsKeyDown(Key.Left)) _camera.Angle--;
-            if (Keyboard.IsKeyDown(Key.Right)) _camera.Angle++;
-            if (Keyboard.IsKeyDown(Key.E)) _camera.Height++;
-            if (Keyboard.IsKeyDown(Key.D)) _camera.Height--;
-            if (Keyboard.IsKeyDown(Key.S)) _camera.Horizon++;
-            if (Keyboard.IsKeyDown(Key.W)) _camera.Horizon--;
         }
 
         private void ClearFrame()

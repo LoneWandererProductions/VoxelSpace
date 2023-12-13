@@ -9,7 +9,7 @@ namespace Voxels
         /// <value>
         ///     The x.
         /// </value>
-        public float X { get; init; }
+        public float X { get; set; }
 
         /// <summary>
         ///     Gets or sets the y.
@@ -18,7 +18,7 @@ namespace Voxels
         /// <value>
         ///     The y.
         /// </value>
-        public float Y { get; init; }
+        public float Y { get; set; }
 
         /// <summary>
         ///     Gets or sets the height.

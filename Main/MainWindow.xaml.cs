@@ -5,7 +5,7 @@ using Voxels;
 namespace Main
 {
     /// <summary>
-    /// Interaction logic for MainWindow.xaml
+    ///     Interaction logic for MainWindow.xaml
     /// </summary>
     public partial class MainWindow
     {
@@ -27,13 +27,9 @@ namespace Main
 
         private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
         {
-            //TODO
-            //https://stackoverflow.com/questions/31220870/how-do-i-create-keyboard-input-in-a-wpf-application
-
-            if (e.Key == Key.Enter)
-                //Process user input
-                e.Handled = true;
+            _voxel.KeyInput(e.Key);
+            var bmp = _voxel.Render();
+            ImageView.Source = bmp.ToBitmapImage();
         }
     }
-
 }
