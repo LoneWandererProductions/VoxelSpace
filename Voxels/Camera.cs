@@ -1,7 +1,11 @@
+using System.Drawing;
+
 namespace Voxels
 {
     public sealed class Camera
     {
+        public Color BackgroundColor { get; set; } = Color.Cyan;
+
         /// <summary>
         ///     Gets or sets the x.
         ///     x position on the map
@@ -56,6 +60,12 @@ namespace Voxels
         /// </value>
         public int Angle { get; set; }
 
+        /// <summary>
+        /// Gets the scale.
+        /// </summary>
+        /// <value>
+        /// The scale.
+        /// </value>
         public int Scale { get; init; }
     }
 }

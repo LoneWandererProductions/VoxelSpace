@@ -17,9 +17,10 @@ namespace Voxels
     /// </summary>
     public sealed class VoxelRaster
     {
-        private readonly Camera _camera;
-
-        private readonly List<Slice> _raster = new();
+        /// <summary>
+        /// The Slices of the Image
+        /// </summary>
+        private List<Slice> _raster;
 
         private readonly int _screenHeight = 200;
 
@@ -27,14 +28,20 @@ namespace Voxels
 
         private Bitmap _bmp;
 
-        private int _colorHeight;
-
         /// <summary>
         ///     The color map
         ///     Buffer/array to hold color values (1024*1024)
         /// </summary>
         private Color[,] _colorMap;
 
+        /// <summary>
+        /// The color height
+        /// </summary>
+        private int _colorHeight;
+
+        /// <summary>
+        /// The color width
+        /// </summary>
         private int _colorWidth;
 
         /// <summary>
@@ -43,8 +50,14 @@ namespace Voxels
         /// </summary>
         private int[,] _heightMap;
 
+        /// <summary>
+        /// The topography height
+        /// </summary>
         private int _topographyHeight;
 
+        /// <summary>
+        /// The topography width
+        /// </summary>
         private int _topographyWidth;
 
         /// <summary>
@@ -54,7 +67,7 @@ namespace Voxels
 
         public VoxelRaster(int x, int y, int degree, int height, int horizon, int scale, int distance)
         {
-            _camera = new Camera
+            Camera = new Camera
             {
                 X = x,
                 Y = y,
@@ -72,29 +85,43 @@ namespace Voxels
             ProcessHeightMap(bmp);
         }
 
+        /// <summary>
+        ///     Gets or sets the camera.
+        ///     Only here just in case if KeyInput is not available
+        /// </summary>
+        /// <value>
+        ///     The camera.
+        /// </value>
+        private Camera Camera { get; }
+
+        /// <summary>
+        /// Renders this instance.
+        /// </summary>
+        /// <returns>The finished Image</returns>
         public Bitmap Render()
         {
             ClearFrame();
+            _raster = new List<Slice>();
 
             _yBuffer = new float[_screenWidth];
 
             for (var i = 0; i < _yBuffer.Length; i++) _yBuffer[i] = _screenHeight;
 
-            var sinPhi = ExtendedMath.CalcSin(_camera.Angle);
-            var cosPhi = ExtendedMath.CalcCos(_camera.Angle);
+            var sinPhi = ExtendedMath.CalcSin(Camera.Angle);
+            var cosPhi = ExtendedMath.CalcCos(Camera.Angle);
 
             float z = 1;
             float dz = 1;
 
-            while (z < _camera.ZFar)
+            while (z < Camera.ZFar)
             {
                 var pLeft = new PointF(
-                    (float) (-cosPhi * z - sinPhi * z) + _camera.X,
-                    (float) (sinPhi * z - cosPhi * z) + _camera.Y);
+                    (float) (-cosPhi * z - sinPhi * z) + Camera.X,
+                    (float) (sinPhi * z - cosPhi * z) + Camera.Y);
 
                 var pRight = new PointF(
-                    (float) (cosPhi * z - sinPhi * z) + _camera.X,
-                    (float) (-sinPhi * z - cosPhi * z) + _camera.Y);
+                    (float) (cosPhi * z - sinPhi * z) + Camera.X,
+                    (float) (-sinPhi * z - cosPhi * z) + Camera.Y);
 
                 var dx = (pRight.X - pLeft.X) / _screenWidth;
                 var dy = (pRight.Y - pLeft.Y) / _screenWidth;
@@ -109,7 +136,7 @@ namespace Voxels
                     float heightOfHeightMap =
                         _heightMap[heightX & (_topographyWidth - 1), heightY & (_topographyHeight - 1)];
 
-                    var heightOnScreen = (_camera.Height - heightOfHeightMap) / z * _camera.Scale + _camera.Horizon;
+                    var heightOnScreen = (Camera.Height - heightOfHeightMap) / z * Camera.Scale + Camera.Horizon;
                     var color = _colorMap[diffuseX & (_colorWidth - 1), diffuseY & (_colorHeight - 1)];
 
                     GenerateSlice(color, i, (int) heightOnScreen, _yBuffer[i]);
@@ -158,45 +185,38 @@ namespace Voxels
         {
             switch (key)
             {
-                case Key.Up:
-                    _camera.X += (float) Math.Cos(_camera.Angle);
-                    _camera.Y += (float) Math.Sin(_camera.Angle);
+                case Key.W: //Forward
+                    Camera.X -= (float) (10 * Math.Sin(Camera.Angle));
+                    Camera.X -= (float) (10 * Math.Cos(Camera.Angle));
                     break;
-                case Key.Down:
-                    _camera.X -= (float) Math.Cos(_camera.Angle);
-                    _camera.Y -= (float) Math.Sin(_camera.Angle);
+                case Key.S: //Backward
+                    Camera.X += (float) (10 * Math.Sin(Camera.Angle));
+                    Camera.Y += (float) (10 * Math.Cos(Camera.Angle));
                     break;
-                case Key.Left:
-                    _camera.Angle++;
+                case Key.A: //Turn Left
+                    Camera.Angle += 10;
                     break;
-                case Key.Right:
-                    _camera.Angle--;
+                case Key.D: //Turn Right
+                    Camera.Angle -= 10;
                     break;
-                case Key.E:
-                    _camera.Height++;
+                case Key.O: //Look up
+                    Camera.Horizon += 10;
                     break;
-                case Key.D:
-                    _camera.Height--;
-                    break;
-                case Key.S:
-                    _camera.Horizon++;
-                    break;
-                case Key.W:
-                    _camera.Horizon--;
+                case Key.P: //Look down
+                    Camera.Horizon -= 10;
                     break;
             }
         }
 
         private void ClearFrame()
         {
+            _bmp = null;
             _bmp = new Bitmap(_screenWidth, _screenHeight);
 
             using var g = Graphics.FromImage(_bmp);
 
             //set background Color
-            var color = Color.FromArgb(0, 36, 36, 56);
-
-            var b = new SolidBrush(color);
+            var b = new SolidBrush(Camera.BackgroundColor);
 
             g.FillRectangle(b, 0, 0, _screenWidth, _screenHeight);
         }
