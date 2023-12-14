@@ -15,6 +15,7 @@ using System;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 
 namespace Imaging
 {
@@ -120,17 +121,50 @@ namespace Imaging
         }
 
         /// <summary>
-        /// Draws a line with a specified color.
-        /// It is quite faster than the normal way of drawing a line, at least for a vertical line that is one pixel wide.
+        /// Draws a vertical line with a specified color.
+        /// For now Microsoft's Rectangle Method is faster in certain circumstances
         /// </summary>
+        /// <param name="x">The x Coordinate.</param>
+        /// <param name="y">The y Coordinate.</param>
+        /// <param name="height">The height.</param>
+        /// <param name="color">The color.</param>
+        public void DrawVerticalLine(int x, int y, int height, Color color)
+        {
+            for (int i = y; i < height; i++)
+                SetPixel(x, i, color);
+        }
+
+        /// <summary>
+        /// Draws a horizontal line with a specified color.
+        /// For now Microsoft's Rectangle Method is faster in certain circumstances
+        /// /// </summary>
         /// <param name="x">The x Coordinate.</param>
         /// <param name="y">The y Coordinate.</param>
         /// <param name="length">The length.</param>
         /// <param name="color">The color.</param>
-        public void DrawVerticalLine(int x, int y, int length, Color color)
+        public void DrawHorizontalLine(int x, int y, int length, Color color)
         {
-            for (int i = y; i < length; i++)
-                SetPixel(x, i, color);
+            for (int i = x; i < length; i++)
+                SetPixel(i, y, color);
+        }
+
+        /// <summary>
+        /// Draws the rectangle.
+        /// For now Microsoft's Rectangle Method is faster
+        /// </summary>
+        /// <param name="x">The x Coordinate.</param>
+        /// <param name="y">The y Coordinate.</param>
+        /// <param name="width">The width.</param>
+        /// <param name="height">The height.</param>
+        /// <param name="color">The color.</param>
+        public void DrawRectangle(int x, int y, int width, int height, Color color)
+        {
+            if(width > height)
+                Parallel.For(x, height,
+                    index => DrawVerticalLine(index, y, width, color));
+            else
+                Parallel.For(y, width,
+                    index => DrawHorizontalLine(x, index, height, color));
         }
 
         /// <summary>

@@ -4,6 +4,12 @@ namespace Voxels
 {
     public sealed class Camera
     {
+        /// <summary>
+        ///     Gets or sets the color of the background.
+        /// </summary>
+        /// <value>
+        ///     The color of the background.
+        /// </value>
         public Color BackgroundColor { get; set; } = Color.Cyan;
 
         /// <summary>
@@ -61,11 +67,29 @@ namespace Voxels
         public int Angle { get; set; }
 
         /// <summary>
-        /// Gets the scale.
+        ///     Gets the scale.
         /// </summary>
         /// <value>
-        /// The scale.
+        ///     The scale.
         /// </value>
         public int Scale { get; init; }
+
+        /// <summary>
+        ///     Gets or sets the height of the screen.
+        ///     The higher the better the resolution, at the cost of speed
+        /// </summary>
+        /// <value>
+        ///     The height of the screen.
+        /// </value>
+        public int ScreenHeight { get; set; } = 200;
+
+        /// <summary>
+        ///     Gets or sets the width of the screen.
+        ///     The higher the better the resolution, at the cost of speed
+        /// </summary>
+        /// <value>
+        ///     The width of the screen.
+        /// </value>
+        public int ScreenWidth { get; set; } = 300;
     }
 }

@@ -25,7 +25,7 @@ namespace Imaging
         /// <summary>
         ///     The cif image
         /// </summary>
-        public Dictionary<Color, List<int>> CifImage = new();
+        public Dictionary<Color, List<int>> cifImage = new();
 
         /// <summary>
         ///     Gets a value indicating whether this <see cref="Cif" /> is compressed.
@@ -78,24 +78,33 @@ namespace Imaging
         {
             var id = CifProcessing.CalculateId(x, y, Width);
 
-            if (id > CheckSum) return false;
-
-            foreach (var (key, value) in CifImage)
+            if (id > CheckSum)
             {
-                if (!value.Contains(id)) continue;
+                return false;
+            }
 
-                if (key == color) return false;
-
-                CifImage[key].Remove(id);
-
-                if (CifImage.ContainsKey(color))
+            foreach (var (key, value) in cifImage)
+            {
+                if (!value.Contains(id))
                 {
-                    CifImage[color].Add(id);
+                    continue;
+                }
+
+                if (key == color)
+                {
+                    return false;
+                }
+
+                cifImage[key].Remove(id);
+
+                if (cifImage.ContainsKey(color))
+                {
+                    cifImage[color].Add(id);
                 }
                 else
                 {
-                    var cache = new List<int> {id};
-                    CifImage.Add(color, cache);
+                    var cache = new List<int> { id };
+                    cifImage.Add(color, cache);
                 }
 
                 return true;
@@ -112,15 +121,22 @@ namespace Imaging
         /// <returns>Success Status</returns>
         public bool ChangeColor(Color oldColor, Color newColor)
         {
-            if (!CifImage.ContainsKey(oldColor)) return false;
+            if (!cifImage.ContainsKey(oldColor))
+            {
+                return false;
+            }
 
-            var cache = CifImage[oldColor];
-            CifImage.Remove(oldColor);
+            var cache = cifImage[oldColor];
+            cifImage.Remove(oldColor);
 
-            if (CifImage.ContainsKey(newColor))
-                CifImage[newColor].AddRange(cache);
+            if (cifImage.ContainsKey(newColor))
+            {
+                cifImage[newColor].AddRange(cache);
+            }
             else
-                CifImage.Add(newColor, cache);
+            {
+                cifImage.Add(newColor, cache);
+            }
 
             return true;
         }
@@ -132,17 +148,22 @@ namespace Imaging
         [return: MaybeNull]
         public Image GetImage()
         {
-            if (CifImage == null) return null;
+            if (cifImage == null)
+            {
+                return null;
+            }
 
             var image = new Bitmap(Height, Width);
             var dbm = DirectBitmap.GetInstance(image);
 
-            foreach (var (key, value) in CifImage)
-            foreach (var id in value)
+            foreach (var (key, value) in cifImage)
             {
-                var x = CifProcessing.IdToX(id, Width);
-                var y = CifProcessing.IdToY(id, Width);
-                dbm.SetPixel(x, y, key);
+                foreach (var id in value)
+                {
+                    var x = CifProcessing.IdToX(id, Width);
+                    var y = CifProcessing.IdToY(id, Width);
+                    dbm.SetPixel(x, y, key);
+                }
             }
 
             return null;

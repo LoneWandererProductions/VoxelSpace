@@ -77,7 +77,7 @@ namespace Imaging
         /// </value>
         public int FrameIndex
         {
-            get => (int) GetValue(FrameIndexProperty);
+            get => (int)GetValue(FrameIndexProperty);
             set => SetValue(FrameIndexProperty, value);
         }
 
@@ -86,7 +86,7 @@ namespace Imaging
         /// </summary>
         public bool AutoStart
         {
-            get => (bool) GetValue(AutoStartProperty);
+            get => (bool)GetValue(AutoStartProperty);
             set => SetValue(AutoStartProperty, value);
         }
 
@@ -98,7 +98,7 @@ namespace Imaging
         /// </value>
         public string GifSource
         {
-            get => (string) GetValue(GifSourceProperty);
+            get => (string)GetValue(GifSourceProperty);
             set => SetValue(GifSourceProperty, value);
         }
 
@@ -108,31 +108,46 @@ namespace Imaging
         private void Initialize()
         {
             //check if Image exists
-            if (!File.Exists(GifSource)) return;
+            if (!File.Exists(GifSource))
+            {
+                return;
+            }
 
             var info = ImageGifHandler.GetImageInfo(GifSource);
 
             //Todo Error News perhaps
-            if (info == null) return;
+            if (info == null)
+            {
+                return;
+            }
 
             _imageList = ImageGifHandler.LoadGif(GifSource);
 
             Source = _imageList[0];
 
-            if (!info.IsAnimated) return;
+            if (!info.IsAnimated)
+            {
+                return;
+            }
 
             var time = info.Frames / 10;
 
-            if (time < 1) time = 1;
+            if (time < 1)
+            {
+                time = 1;
+            }
 
             _animation = new Int32Animation(0, info.Frames - 1,
-                new Duration(new TimeSpan(0, 0, 0, time, 0))) {RepeatBehavior = RepeatBehavior.Forever};
+                new Duration(new TimeSpan(0, 0, 0, time, 0))) { RepeatBehavior = RepeatBehavior.Forever };
 
             Source = _imageList[0];
 
             _isInitialized = true;
 
-            if (AutoStart) StartAnimation();
+            if (AutoStart)
+            {
+                StartAnimation();
+            }
         }
 
         /// <summary>
@@ -142,10 +157,14 @@ namespace Imaging
         /// <param name="e">The <see cref="DependencyPropertyChangedEventArgs" /> instance containing the event data.</param>
         private static void VisibilityPropertyChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
         {
-            if ((Visibility) e.NewValue == Visibility.Visible)
-                ((ImageGif) sender).StartAnimation();
+            if ((Visibility)e.NewValue == Visibility.Visible)
+            {
+                ((ImageGif)sender).StartAnimation();
+            }
             else
-                ((ImageGif) sender).StopAnimation();
+            {
+                ((ImageGif)sender).StopAnimation();
+            }
         }
 
         /// <summary>
@@ -155,9 +174,15 @@ namespace Imaging
         /// <param name="ev">The <see cref="DependencyPropertyChangedEventArgs" /> instance containing the event data.</param>
         private static void ChangingFrameIndex(DependencyObject obj, DependencyPropertyChangedEventArgs ev)
         {
-            if (!((ImageGif) obj).AutoStart) return;
+            if (!((ImageGif)obj).AutoStart)
+            {
+                return;
+            }
 
-            if (obj is ImageGif gifImage) gifImage.Source = gifImage._imageList[(int) ev.NewValue];
+            if (obj is ImageGif gifImage)
+            {
+                gifImage.Source = gifImage._imageList[(int)ev.NewValue];
+            }
         }
 
         /// <summary>
@@ -185,7 +210,10 @@ namespace Imaging
         /// </summary>
         private void StartAnimation()
         {
-            if (!_isInitialized) Initialize();
+            if (!_isInitialized)
+            {
+                Initialize();
+            }
 
             BeginAnimation(FrameIndexProperty, _animation);
         }

@@ -53,7 +53,7 @@ namespace Imaging
         }
 
         /// <summary>
-        ///     Cifs to image.
+        ///     Cif to image.
         /// </summary>
         /// <param name="data">The data.</param>
         /// <returns>The converted Image</returns>
@@ -62,10 +62,16 @@ namespace Imaging
         {
             //get image size
             var check = int.TryParse(data[0][0], out var height);
-            if (!check) return null;
+            if (!check)
+            {
+                return null;
+            }
 
             check = int.TryParse(data[0][1], out var length);
-            if (!check) return null;
+            if (!check)
+            {
+                return null;
+            }
 
             //remove the Height, length data
             data.RemoveAt(0);
@@ -80,18 +86,24 @@ namespace Imaging
 
                 check = int.TryParse(line[1], out var a);
 
-                if (!check) continue;
+                if (!check)
+                {
+                    continue;
+                }
 
                 var converter = new ColorHsv(hex, a);
 
-                var color = Color.FromArgb((byte) converter.A, (byte) converter.R, (byte) converter.G,
-                    (byte) converter.B);
+                var color = Color.FromArgb((byte)converter.A, (byte)converter.R, (byte)converter.G,
+                    (byte)converter.B);
 
                 //get coordinates
                 for (var i = 2; i < line.Count; i++)
                 {
                     check = int.TryParse(line[i], out var idMaster);
-                    if (!check) continue;
+                    if (!check)
+                    {
+                        continue;
+                    }
 
                     var x = IdToX(idMaster, length);
                     var y = IdToY(idMaster, length);
@@ -103,7 +115,7 @@ namespace Imaging
         }
 
         /// <summary>
-        ///     Cifs to image.
+        ///     Cif to image.
         /// </summary>
         /// <param name="data">The data.</param>
         /// <returns>The converted Image</returns>
@@ -113,10 +125,16 @@ namespace Imaging
             //get image size
             var check = int.TryParse(data[0][0], out var height);
 
-            if (!check) return null;
+            if (!check)
+            {
+                return null;
+            }
 
             check = int.TryParse(data[0][1], out var length);
-            if (!check) return null;
+            if (!check)
+            {
+                return null;
+            }
 
             //remove the Height, length data
             data.RemoveAt(0);
@@ -131,26 +149,36 @@ namespace Imaging
 
                 check = int.TryParse(line[1], out var a);
 
-                if (!check) continue;
+                if (!check)
+                {
+                    continue;
+                }
 
                 var converter = new ColorHsv(hex, a);
 
-                var color = Color.FromArgb((byte) converter.A, (byte) converter.R, (byte) converter.G,
-                    (byte) converter.B);
+                var color = Color.FromArgb((byte)converter.A, (byte)converter.R, (byte)converter.G,
+                    (byte)converter.B);
 
                 //get coordinates
                 for (var i = 2; i < line.Count; i++)
+                {
                     if (line[i].Contains("-"))
                     {
                         //split get start and end
                         var lst = line[i].Split(ImagingResources.CifSeparator).ToList();
                         check = int.TryParse(lst[0], out var start);
 
-                        if (!check) continue;
+                        if (!check)
+                        {
+                            continue;
+                        }
 
                         check = int.TryParse(lst[1], out var end);
 
-                        if (!check) continue;
+                        if (!check)
+                        {
+                            continue;
+                        }
 
                         //paint area
                         for (var j = start; j <= end; j++)
@@ -164,12 +192,16 @@ namespace Imaging
                     {
                         check = int.TryParse(line[i], out var idMaster);
 
-                        if (!check) continue;
+                        if (!check)
+                        {
+                            continue;
+                        }
 
                         var x = IdToX(idMaster, length);
                         var y = IdToY(idMaster, length);
                         dbm.SetPixel(x, y, color);
                     }
+                }
             }
 
             return dbm.Bitmap;
@@ -203,7 +235,7 @@ namespace Imaging
                 //Possible error here
                 var converter = new ColorHsv(key.R, key.G, key.B, key.A);
                 //First two keys are color and Hue
-                var subChild = new List<string>(2) {converter.Hex, key.A.ToString()};
+                var subChild = new List<string>(2) { converter.Hex, key.A.ToString() };
 
                 subChild.AddRange(value.Select(id => id.ToString()));
 
@@ -243,11 +275,16 @@ namespace Imaging
             {
                 var converter = new ColorHsv(key.R, key.G, key.B, key.A);
                 //First two keys are color and Hue
-                var subChild = new List<string>(2) {converter.Hex, key.A.ToString()};
+                var subChild = new List<string>(2) { converter.Hex, key.A.ToString() };
 
                 var sequence = Utility.Sequencer(value, 3);
 
                 var compressed = new List<int>();
+
+                if (sequence == null)
+                {
+                    continue;
+                }
 
                 foreach (var (startS, endS) in sequence)
                 {

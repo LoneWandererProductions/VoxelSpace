@@ -6,6 +6,9 @@
  * PROGRAMER:   Peter Geinitz (Wayfarer)
  */
 
+// ReSharper disable UnusedMemberInSuper.Global
+// ReSharper disable UnusedMember.Global
+
 using System.Drawing;
 
 namespace Imaging

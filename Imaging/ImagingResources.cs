@@ -6,6 +6,9 @@
  * PROGRAMER:   Peter Geinitz (Wayfarer)
  */
 
+// ReSharper disable MemberCanBeInternal
+// ReSharper disable MemberCanBePrivate.Global
+
 using System.Collections.Generic;
 
 namespace Imaging
@@ -13,7 +16,7 @@ namespace Imaging
     /// <summary>
     ///     The com Control resources class.
     /// </summary>
-    internal static class ImagingResources
+    public static class ImagingResources
     {
         /// <summary>
         ///     The error missing file (const). Value: "File not Found: ".
@@ -58,33 +61,33 @@ namespace Imaging
         /// <summary>
         ///     The jpg Extension (const). Value: ".jpg"
         /// </summary>
-        internal const string JpgExt = ".jpg";
+        public const string JpgExt = ".jpg";
 
         /// <summary>
         ///     The png Extension (const). Value: ".png"
         /// </summary>
-        internal const string PngExt = ".png";
+        public const string PngExt = ".png";
 
         /// <summary>
         ///     The Bmp Extension (const). Value: ".Bmp"
         /// </summary>
-        internal const string BmpExt = ".Bmp";
+        public const string BmpExt = ".Bmp";
 
         /// <summary>
         ///     The Gif Extension (const). Value: ".gif"
         /// </summary>
-        internal const string GifExt = ".gif";
+        public const string GifExt = ".gif";
 
         /// <summary>
         ///     The Tif Extension (const). Value: ".tif"
         /// </summary>
-        internal const string TifExt = ".tif";
+        public const string TifExt = ".tif";
 
 
         /// <summary>
         ///     The File Appendix
         /// </summary>
-        internal static readonly List<string> Appendix = new()
+        public static readonly List<string> Appendix = new()
         {
             JpgExt,
             PngExt,
