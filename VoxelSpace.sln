@@ -12,6 +12,10 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FileHandler", "FileHandler\FileHandler.csproj", "{747E21C3-9E11-43BD-918C-8D2DD5EC7014}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{37CB3BEC-8C05-4FB2-BB82-C0E332197FED}"
+	ProjectSection(SolutionItems) = preProject
+		..\CoreLibrary\License.txt = ..\CoreLibrary\License.txt
+		..\CoreLibrary\README.md = ..\CoreLibrary\README.md
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataFormatter", "DataFormatter\DataFormatter.csproj", "{FC6898E3-BBAC-47DA-BC0C-D514618540F8}"
 EndProject

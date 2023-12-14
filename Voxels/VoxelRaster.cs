@@ -1,11 +1,17 @@
-﻿//Source: https://github.com/s-macke/VoxelSpace
+﻿/*
+ * COPYRIGHT:   See COPYING in the top level directory
+ * PROJECT:     Voxels
+ * FILE:        Voxels/VoxelRaster.cs
+ * PURPOSE:     Main Renderer
+ * PROGRAMER:   Peter Geinitz (Wayfarer)
+ * Source:      https://github.com/s-macke/VoxelSpace
+ */
 
 // ReSharper disable PossibleLossOfFraction
 
 using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Drawing.Imaging;
 using System.IO;
 using System.Windows.Input;
 using Imaging;
@@ -95,15 +101,7 @@ namespace Voxels
             var bmp = new Bitmap(Image.FromFile(string.Concat(Directory.GetCurrentDirectory(), "\\Terrain\\C1W.png")));
             ProcessColorMap(bmp);
 
-            _image = new ImageRender();
-
-            //TODO my grayscale is not equivalent.... why?
-
-            var bmp2 = _image.FilterImage(bmp, ImageFilter.GrayScale);
-            //bmp2.Save("mine.jpg",ImageFormat.Jpeg);
-
             bmp = new Bitmap(Image.FromFile(string.Concat(Directory.GetCurrentDirectory(), "\\Terrain\\D1.png")));
-            //bmp2.Save("original.jpg", ImageFormat.Jpeg);
 
             ProcessHeightMap(bmp);
         }
@@ -187,12 +185,12 @@ namespace Voxels
             switch (key)
             {
                 case Key.W: //Forward
-                    Camera.X -= (float)(10 * Math.Sin(Camera.Angle));
-                    Camera.X -= (float)(10 * Math.Cos(Camera.Angle));
+                    Camera.X -= (float)(10 * ExtendedMath.CalcSin(Camera.Angle));
+                    Camera.X -= (float)(10 * ExtendedMath.CalcCos(Camera.Angle));
                     break;
                 case Key.S: //Backward
-                    Camera.X += (float)(10 * Math.Sin(Camera.Angle));
-                    Camera.Y += (float)(10 * Math.Cos(Camera.Angle));
+                    Camera.X += (float)(10 * ExtendedMath.CalcSin(Camera.Angle));
+                    Camera.Y += (float)(10 * ExtendedMath.CalcCos(Camera.Angle));
                     break;
                 case Key.A: //Turn Left
                     Camera.Angle += 10;

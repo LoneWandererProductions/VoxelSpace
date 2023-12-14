@@ -1,3 +1,11 @@
+/*
+ * COPYRIGHT:   See COPYING in the top level directory
+ * PROJECT:     Voxels
+ * FILE:        Voxels/Camera.cs
+ * PURPOSE:     All possible options
+ * PROGRAMER:   Peter Geinitz (Wayfarer)
+ */
+
 using System.Drawing;
 
 namespace Voxels

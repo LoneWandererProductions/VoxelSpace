@@ -1,4 +1,12 @@
-﻿using System.Windows;
+﻿/*
+ * COPYRIGHT:   See COPYING in the top level directory
+ * PROJECT:     Main
+ * FILE:        Main/MainWindow.cs
+ * PURPOSE:     Just the Wpf Window
+ * PROGRAMER:   Peter Geinitz (Wayfarer)
+ */
+
+using System.Windows;
 using System.Windows.Input;
 using Imaging;
 using Voxels;
