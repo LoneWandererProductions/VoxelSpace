@@ -65,6 +65,11 @@ namespace Voxels
         private float[] _yBuffer;
 
         /// <summary>
+        /// The image Interface
+        /// </summary>
+        private readonly ImageRender _image;
+
+        /// <summary>
         /// Initializes a new instance of the <see cref="VoxelRaster"/> class.
         /// </summary>
         /// <param name="x">The x.</param>
@@ -90,7 +95,15 @@ namespace Voxels
             var bmp = new Bitmap(Image.FromFile(string.Concat(Directory.GetCurrentDirectory(), "\\Terrain\\C1W.png")));
             ProcessColorMap(bmp);
 
+            _image = new ImageRender();
+
+            //TODO my grayscale is not equivalent.... why?
+
+            var bmp2 = _image.FilterImage(bmp, ImageFilter.GrayScale);
+            //bmp2.Save("mine.jpg",ImageFormat.Jpeg);
+
             bmp = new Bitmap(Image.FromFile(string.Concat(Directory.GetCurrentDirectory(), "\\Terrain\\D1.png")));
+            //bmp2.Save("original.jpg", ImageFormat.Jpeg);
 
             ProcessHeightMap(bmp);
         }
