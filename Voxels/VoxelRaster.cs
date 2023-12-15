@@ -71,11 +71,6 @@ namespace Voxels
         private float[] _yBuffer;
 
         /// <summary>
-        /// The image Interface
-        /// </summary>
-        private readonly ImageRender _image;
-
-        /// <summary>
         /// Initializes a new instance of the <see cref="VoxelRaster"/> class.
         /// </summary>
         /// <param name="x">The x.</param>
