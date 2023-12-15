@@ -6,6 +6,11 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800" PreviewKeyDown="Window_PreviewKeyDown">
     <Grid>
-        <Image Name="ImageView" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" />
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="150"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+        <Image Name="ImageView" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"  Grid.Column="1"/>
+        <TextBox Grid.Column="0" x:Name="TxtBox" VerticalContentAlignment="Stretch" HorizontalAlignment="Stretch" TextWrapping="Wrap" VerticalAlignment="Stretch" VerticalScrollBarVisibility="Auto" IsReadOnly="True"/>
     </Grid>
 </Window>

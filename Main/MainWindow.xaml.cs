@@ -6,6 +6,7 @@
  * PROGRAMER:   Peter Geinitz (Wayfarer)
  */
 
+using System;
 using System.Windows;
 using System.Windows.Input;
 using Imaging;
@@ -39,6 +40,8 @@ namespace Main
 
             var bmp = _voxel.Render();
             ImageView.Source = bmp.ToBitmapImage();
+
+            TxtBox.Text = string.Concat(TxtBox.Text, " x: ", _voxel.Camera.X, " y: ", _voxel.Camera.Y, Environment.NewLine);
         }
 
         /// <summary>
@@ -51,6 +54,8 @@ namespace Main
             _voxel.KeyInput(e.Key);
             var bmp = _voxel.Render();
             ImageView.Source = bmp.ToBitmapImage();
+
+            TxtBox.Text = string.Concat(TxtBox.Text, " x: ", _voxel.Camera.X, " y: ", _voxel.Camera.Y, Environment.NewLine);
         }
     }
 }

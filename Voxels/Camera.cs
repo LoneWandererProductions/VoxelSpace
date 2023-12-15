@@ -27,7 +27,7 @@ namespace Voxels
         /// <value>
         ///     The x.
         /// </value>
-        public float X { get; set; }
+        public int X { get; set; }
 
         /// <summary>
         ///     Gets or sets the y.
@@ -36,7 +36,7 @@ namespace Voxels
         /// <value>
         ///     The y.
         /// </value>
-        public float Y { get; set; }
+        public int Y { get; set; }
 
         /// <summary>
         ///     Gets or sets the height.
@@ -45,7 +45,7 @@ namespace Voxels
         /// <value>
         ///     The height.
         /// </value>
-        public float Height { get; set; }
+        public int Height { get; set; }
 
         /// <summary>
         ///     Gets or sets the horizon.

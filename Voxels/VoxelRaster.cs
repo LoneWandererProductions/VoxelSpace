@@ -149,10 +149,10 @@ namespace Voxels
 
                 for (var i = 0; i < Camera.ScreenWidth; i++)
                 {
-                    var diffuseX = (int) pLeft.X;
-                    var diffuseY = (int) pLeft.Y;
-                    var heightX = (int) pLeft.X;
-                    var heightY = (int) pLeft.Y;
+                    var diffuseX = (int)pLeft.X & (_colorWidth - 1);
+                    var diffuseY = (int)pLeft.Y & (_colorHeight - 1);
+                    var heightX = (int)pLeft.X & (_topographyWidth - 1);
+                    var heightY = (int)pLeft.Y & (_topographyHeight - 1);
 
                     var heightOfHeightMap =
                         _heightMap[heightX & (_topographyWidth - 1), heightY & (_topographyHeight - 1)];
@@ -185,12 +185,12 @@ namespace Voxels
             switch (key)
             {
                 case Key.W: //Forward
-                    Camera.X -= (float)(10 * ExtendedMath.CalcSin(Camera.Angle));
-                    Camera.X -= (float)(10 * ExtendedMath.CalcCos(Camera.Angle));
+                    Camera.X -= (int)(10 * ExtendedMath.CalcSin(Camera.Angle));
+                    Camera.Y -= (int)(10 * ExtendedMath.CalcCos(Camera.Angle));
                     break;
                 case Key.S: //Backward
-                    Camera.X += (float)(10 * ExtendedMath.CalcSin(Camera.Angle));
-                    Camera.Y += (float)(10 * ExtendedMath.CalcCos(Camera.Angle));
+                    Camera.X += (int)(10 * ExtendedMath.CalcSin(Camera.Angle));
+                    Camera.Y += (int)(10 * ExtendedMath.CalcCos(Camera.Angle));
                     break;
                 case Key.A: //Turn Left
                     Camera.Angle += 10;
