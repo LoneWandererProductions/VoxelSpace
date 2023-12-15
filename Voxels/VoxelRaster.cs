@@ -9,10 +9,8 @@
 
 // ReSharper disable PossibleLossOfFraction
 
-using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.IO;
 using System.Windows.Input;
 using Imaging;
 using Mathematics;
@@ -71,7 +69,7 @@ namespace Voxels
         private float[] _yBuffer;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="VoxelRaster"/> class.
+        /// Initializes a new instance of the <see cref="VoxelRaster" /> class.
         /// </summary>
         /// <param name="x">The x.</param>
         /// <param name="y">The y.</param>
@@ -80,7 +78,9 @@ namespace Voxels
         /// <param name="horizon">The horizon.</param>
         /// <param name="scale">The scale.</param>
         /// <param name="distance">The distance.</param>
-        public VoxelRaster(int x, int y, int degree, int height, int horizon, int scale, int distance)
+        /// <param name="colorMap">The bitmap with the colors</param>
+        /// <param name="heightMap">The bitmap with the height map.</param>
+        public VoxelRaster(int x, int y, int degree, int height, int horizon, int scale, int distance, Bitmap colorMap, Bitmap heightMap)
         {
             Camera = new Camera
             {
@@ -93,12 +93,9 @@ namespace Voxels
                 ZFar = distance
             };
 
-            var bmp = new Bitmap(Image.FromFile(string.Concat(Directory.GetCurrentDirectory(), "\\Terrain\\C1W.png")));
-            ProcessColorMap(bmp);
+            ProcessColorMap(colorMap);
 
-            bmp = new Bitmap(Image.FromFile(string.Concat(Directory.GetCurrentDirectory(), "\\Terrain\\D1.png")));
-
-            ProcessHeightMap(bmp);
+            ProcessHeightMap(heightMap);
         }
 
         /// <summary>
@@ -144,10 +141,10 @@ namespace Voxels
 
                 for (var i = 0; i < Camera.ScreenWidth; i++)
                 {
-                    var diffuseX = (int)pLeft.X & (_colorWidth - 1);
-                    var diffuseY = (int)pLeft.Y & (_colorHeight - 1);
-                    var heightX = (int)pLeft.X & (_topographyWidth - 1);
-                    var heightY = (int)pLeft.Y & (_topographyHeight - 1);
+                    var diffuseX = (int)pLeft.X;
+                    var diffuseY = (int)pLeft.Y;
+                    var heightX = (int)pLeft.X;
+                    var heightY = (int)pLeft.Y;
 
                     var heightOfHeightMap =
                         _heightMap[heightX & (_topographyWidth - 1), heightY & (_topographyHeight - 1)];

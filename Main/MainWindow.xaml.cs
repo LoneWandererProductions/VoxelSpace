@@ -7,6 +7,8 @@
  */
 
 using System;
+using System.Drawing;
+using System.IO;
 using System.Windows;
 using System.Windows.Input;
 using Imaging;
@@ -36,7 +38,10 @@ namespace Main
         /// </summary>
         private void Initiate()
         {
-            _voxel = new VoxelRaster(100, 100, 0, 100, 120, 120, 300);
+            var colorMap = new Bitmap(Image.FromFile(string.Concat(Directory.GetCurrentDirectory(), "\\Terrain\\C1W.png")));
+            var heightMap = new Bitmap(Image.FromFile(string.Concat(Directory.GetCurrentDirectory(), "\\Terrain\\D1.png")));
+
+            _voxel = new VoxelRaster(100, 100, 0, 100, 120, 120, 300, colorMap, heightMap);
 
             var bmp = _voxel.Render();
             ImageView.Source = bmp.ToBitmapImage();
