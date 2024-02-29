@@ -22,8 +22,9 @@ namespace Voxels
     /// </summary>
     public sealed class VoxelRaster
     {
-        //private readonly int _screenWidth = 300;
-
+        /// <summary>
+        ///     The bitmap we draw on
+        /// </summary>
         private Bitmap _bmp;
 
         /// <summary>
