@@ -197,9 +197,9 @@ namespace Imaging
         /// 
         /// <param name="id">The identifier.</param>
         /// <returns>Color at this point or null, if id was completely wrong.</returns>
-        public Color? GetColor(int id)
+        public Color GetColor(int id)
         {
-            if (id < 0 || id > Height * Width) return null;
+            if (id < 0 || id > Height * Width) return Color.Transparent;
 
             // Check if sorting is required and perform lazy loading
             if (_sortRequired)
@@ -213,7 +213,7 @@ namespace Imaging
                 if (value.Contains(id)) return color;
             }
 
-            return null;
+            return Color.Transparent;
         }
 
         /// <summary>

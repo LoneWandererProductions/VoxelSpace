@@ -159,12 +159,13 @@ namespace Voxels
 
                     var heightOnScreen = (Camera.Height - heightOfHeightMap) / z * Camera.Scale + Camera.Horizon;
 
-                    var color = _colorMap[diffuseX & (_colorWidth - 1), diffuseY & (_colorHeight - 1)];
-                    //var x = diffuseX & (_colorWidth - 1);
-                    //var y = diffuseY & (_colorHeight - 1);
-                    //var id = (y * _colorWidth) + x;
+                    //var color = _colorMap[diffuseX & (_colorWidth - 1), diffuseY & (_colorHeight - 1)];
 
-                    //var color = _colorMapCif.GetColor(id);
+                    var x = diffuseX & (_colorWidth - 1);
+                    var y = diffuseY & (_colorHeight - 1);
+                    var id = (y * _colorWidth) + x;
+
+                    var color = _colorMapCif.GetColor(id);
 
                     GenerateSlice(color, i, (int) heightOnScreen, _yBuffer[i]);
 
@@ -307,7 +308,7 @@ namespace Voxels
 
             var dbm = DirectBitmap.GetInstance(bmp);
 
-            //_colorMapCif = new Cif(bmp);
+            _colorMapCif = new Cif(bmp);
 
             _colorMap = new Color[bmp.Width, bmp.Height];
             for (var i = 0; i < bmp.Width; i++)

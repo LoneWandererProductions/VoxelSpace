@@ -98,6 +98,56 @@ namespace ExtendedSystemObjects
         }
 
         /// <summary>
+        /// Sequencers the specified set.
+        /// </summary>
+        /// <param name="set">The set.</param>
+        /// <param name="sequence">The sequence.</param>
+        /// <returns>List of Sequences, with start and end index, null if none were found.</returns>
+        [return: MaybeNull]
+        public static List<KeyValuePair<int, int>> Sequencer(SortedSet<int> set, int sequence)
+        {
+            var sequenceGroups = new List<List<int>>();
+            var currentSequence = new List<int>();
+
+            List<int> sortedList = new List<int>(set);
+
+            for (var i = 1; i < sortedList.Count; i++)
+            {
+                var cache = Math.Abs(sortedList[i]);
+
+                if (Math.Abs(sortedList[i - 1] + 1) == cache)
+                {
+                    //should be only the first case
+                    if (!currentSequence.Contains(i - 1))
+                    {
+                        currentSequence.Add(i - 1);
+                    }
+
+                    currentSequence.Add(i);
+                }
+                else
+                {
+                    if (currentSequence.Count == 0)
+                    {
+                        continue;
+                    }
+
+                    sequenceGroups.Add(currentSequence);
+                    currentSequence = new List<int>();
+                }
+            }
+
+            return sequenceGroups.Count == 0
+                ? null
+                : (from stack in sequenceGroups
+                    where stack.Count >= sequence
+                    let start = stack[0]
+                    let end = stack[^1]
+                    select new KeyValuePair<int, int>(start, end)).ToList();
+        }
+
+
+        /// <summary>
         ///     Sequencers the specified List.
         /// </summary>
         /// <param name="lst">The input list.</param>
@@ -143,7 +193,6 @@ namespace ExtendedSystemObjects
                     let end = stack[^1]
                     select new KeyValuePair<int, int>(start, end)).ToList();
         }
-
 
         /// <summary>
         ///     Sequences the specified list.
