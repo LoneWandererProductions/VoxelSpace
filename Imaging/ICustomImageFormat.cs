@@ -22,16 +22,21 @@ namespace Imaging
         /// Gets the cif file.
         /// </summary>
         /// <param name="path">The path.</param>
-        /// <returns></returns>
+        /// <returns>A bitmap Image</returns>
         Bitmap GetCifFile(string path);
 
         /// <summary>
         /// Gets the cif file.
         /// </summary>
         /// <param name="image">The image.</param>
-        /// <returns></returns>
+        /// <returns>Custom Image Format of the Image</returns>
         Cif GetCifFile(Bitmap image);
 
+        /// <summary>
+        /// Saves to cif file.
+        /// </summary>
+        /// <param name="image">The image.</param>
+        /// <param name="path">The path.</param>
         void SaveToCifFile(Bitmap image, string path);
 
         /// <summary>

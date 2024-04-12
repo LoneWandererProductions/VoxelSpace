@@ -6,6 +6,7 @@
  * PROGRAMER:   Peter Geinitz (Wayfarer)
  */
 
+using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
@@ -26,19 +27,24 @@ namespace Imaging
         ///     Converts to cif.
         /// </summary>
         /// <param name="image">The image.</param>
-        internal static Dictionary<Color, List<int>> ConvertToCif(Bitmap image)
+        internal static Dictionary<Color, SortedSet<int>> ConvertToCif(Bitmap image)
         {
-            var imageFormat = new Dictionary<Color, List<int>>();
+            var imageFormat = new Dictionary<Color, SortedSet<int>>();
 
             var dbm = DirectBitmap.GetInstance(image);
 
-            var colorMap = dbm.GetColors();
+            Span<Color> colorMap = dbm.GetColors();
 
             for (var i = 0; i < image.Height * image.Width; i++)
             {
                 var color = colorMap[i];
 
-                imageFormat.Add(color, i);
+                if (!imageFormat.ContainsKey(color))
+                {
+                    imageFormat[color] = new SortedSet<int>();
+                }
+
+                imageFormat[color].Add(i);
             }
 
             return imageFormat;
@@ -204,7 +210,7 @@ namespace Imaging
         /// <param name="imageFormat">The image format.</param>
         /// <returns>Cif Format ready to be saved as csv.</returns>
         internal static List<List<string>> GenerateCsv(int imageHeight, int imageWidth,
-            Dictionary<Color, List<int>> imageFormat)
+            Dictionary<Color, SortedSet<int>> imageFormat)
         {
             var master = new List<List<string>>();
             //first line is size of the image, compression, Number of Ids, used for checking and lines and number of Colors, added later
@@ -245,7 +251,7 @@ namespace Imaging
         /// <param name="imageFormat">The image format.</param>
         /// <returns>Compressed image</returns>
         internal static List<List<string>> GenerateCsvCompressed(int imageHeight, int imageWidth,
-            Dictionary<Color, List<int>> imageFormat)
+            Dictionary<Color, SortedSet<int>> imageFormat)
         {
             var master = new List<List<string>>();
             //first line is size of the image, compression, Number of Ids, used for checking and lines and number of Colors, added later
@@ -275,14 +281,16 @@ namespace Imaging
                     continue;
                 }
 
+                List<int> sortedList = new List<int>(value);
+
                 foreach (var (startS, endS) in sequence)
                 {
-                    var start = value[startS];
-                    var end = value[endS];
+                    var start = sortedList[startS];
+                    var end = sortedList[endS];
                     var cache = string.Concat(start, ImagingResources.CifSeparator, end);
                     subChild.Add(cache);
 
-                    var range = new List<int>(value.GetRange(startS, endS - startS));
+                    var range = new List<int>(sortedList.GetRange(startS, endS - startS));
                     compressed.AddRange(range);
                 }
 

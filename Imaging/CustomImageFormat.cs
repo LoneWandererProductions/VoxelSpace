@@ -64,6 +64,7 @@ namespace Imaging
             };
         }
 
+        /// <inheritdoc />
         /// <summary>
         ///     Saves to cif file.
         /// </summary>

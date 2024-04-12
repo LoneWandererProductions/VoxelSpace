@@ -28,12 +28,12 @@ namespace Imaging
         /// <summary>
         /// The cif image
         /// </summary>
-        private readonly Dictionary<Color, List<int>> _cifImage = new();
+        private readonly Dictionary<Color, SortedSet<int>> _cifImage = new();
 
         /// <summary>
         /// The cif sorted
         /// </summary>
-        private Dictionary<Color, List<int>> _cifSorted = new();
+        private Dictionary<Color, SortedSet<int>> _cifSorted = new();
 
         /// <summary>
         /// The sort required
@@ -43,7 +43,7 @@ namespace Imaging
         /// <summary>
         ///     The cif image
         /// </summary>
-        public Dictionary<Color, List<int>> CifImage
+        public Dictionary<Color, SortedSet<int>> CifImage
         {
             get => _cifImage;
             init
@@ -153,7 +153,7 @@ namespace Imaging
                 }
                 else
                 {
-                    var cache = new List<int> { id };
+                    var cache = new SortedSet<int> { id };
                     CifImage.Add(color, cache);
                 }
 
@@ -181,7 +181,7 @@ namespace Imaging
 
             if (CifImage.ContainsKey(newColor))
             {
-                CifImage[newColor].AddRange(cache);
+                CifImage[newColor].UnionWith(cache);
             }
             else
             {
@@ -194,38 +194,26 @@ namespace Imaging
         /// <summary>
         /// Gets the color, it is quite a fast way, if the image is big and the color count is low!
         /// </summary>
+        /// 
         /// <param name="id">The identifier.</param>
-        /// <returns>Color at this point or Color.Transparent, if id was completely wrong.</returns>
-        public Color GetColor(int id)
+        /// <returns>Color at this point or null, if id was completely wrong.</returns>
+        public Color? GetColor(int id)
         {
-            if (id < 0 || id > Height * Width) return Color.Transparent;
+            if (id < 0 || id > Height * Width) return null;
 
             // Check if sorting is required and perform lazy loading
-            //if (_sortRequired)
-            //{
-            //    _cifSorted = SortDct(_cifImage);
-            //    _sortRequired = false;
-            //}
+            if (_sortRequired)
+            {
+                _cifSorted = SortDct(_cifImage);
+                _sortRequired = false;
+            }
 
-            foreach (var (color, value) in _cifImage)
+            foreach (var (color, value) in _cifSorted)
             {
                 if (value.Contains(id)) return color;
             }
 
-            return Color.Transparent;
-        }
-
-        /// <summary>
-        /// Gets the color, it is quite a fast way, if the image is big and the color count is low!
-        /// </summary>
-        /// <param name="x">The x part of the Coordinate.</param>
-        /// <param name="y">The y  part of the Coordinate.</param>
-        /// <returns>Color at this point or Color.Transparent, if id was completely wrong.</returns>
-        public Color GetColor(int x, int y)
-        {
-            var coordinate = new Coordinate2D(x, y);
-            var id = coordinate.CalculateId(Width);
-            return GetColor(id);
+            return null;
         }
 
         /// <summary>
@@ -266,12 +254,14 @@ namespace Imaging
             {
                 info = string.Concat(info, ImagingResources.Color, color, ImagingResources.Spacing);
 
+                var sortedList = new List<int>(value);
+
                 for (var i = 0; i < value.Count - 1; i++)
                 {
-                    info = string.Concat(info, value[i], ImagingResources.Indexer);
+                    info = string.Concat(info, sortedList[i], ImagingResources.Indexer);
                 }
 
-                info = string.Concat(info, value[value.Count], Environment.NewLine);
+                info = string.Concat(info, sortedList[sortedList.Count], Environment.NewLine);
             }
 
             return info;
@@ -293,7 +283,7 @@ namespace Imaging
         /// </summary>
         /// <param name="value">The value.</param>
         /// <returns>Sorted Dictionary from biggest Count to lowest</returns>
-        private static Dictionary<Color, List<int>> SortDct(Dictionary<Color, List<int>> value)
+        private static Dictionary<Color, SortedSet<int>> SortDct(Dictionary<Color, SortedSet<int>> value)
         {
             return value.OrderByDescending(kv => kv.Value.Count)
                 .ToDictionary(kv => kv.Key, kv => kv.Value);
