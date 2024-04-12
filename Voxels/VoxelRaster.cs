@@ -23,6 +23,11 @@ namespace Voxels
     public sealed class VoxelRaster
     {
         /// <summary>
+        /// If the cif Format is active or not
+        /// </summary>
+        private const bool CifFormat = false;
+
+        /// <summary>
         ///     The color height
         /// </summary>
         private int _colorHeight;
@@ -31,8 +36,7 @@ namespace Voxels
         ///     The color map
         ///     Buffer/array to hold color values (1024*1024)
         /// </summary>
-        private Color[,] _colorMap { get; set; }
-
+        private Color[,] _colorMap;
 
         /// <summary>
         /// The color map cif
@@ -49,7 +53,13 @@ namespace Voxels
         ///     The height map
         ///     Buffer/array to hold height values (1024*1024)
         /// </summary>
-        private int[,] _heightMap { get; set; }
+        private int[,] _heightMap;
+
+        /// <summary>
+        ///     The height map
+        ///     Holds the height values (1024*1024)
+        /// </summary>
+        private Cif _heightMapCif;
 
         /// <summary>
         ///     The Slices of the Image
@@ -70,7 +80,6 @@ namespace Voxels
         ///     The y buffer
         /// </summary>
         private float[] _yBuffer;
-
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="VoxelRaster" /> class.
@@ -154,18 +163,30 @@ namespace Voxels
                     var heightX = (int) pLeft.X;
                     var heightY = (int) pLeft.Y;
 
-                    var heightOfHeightMap =
-                        _heightMap[heightX & (_topographyWidth - 1), heightY & (_topographyHeight - 1)];
+                    Color color;
+                    int heightOfHeightMap;
+
+                    if (CifFormat)
+                    {
+                        var x = diffuseX & (_colorWidth - 1);
+                        var y = diffuseY & (_colorHeight - 1);
+                        var id = (y * _colorWidth) + x;
+                        color = _colorMapCif.GetColor(id);
+
+                        x = heightX & (_topographyWidth - 1);
+                        y = heightY & (_topographyHeight - 1);
+                        id = (y * _colorWidth) + x;
+                        heightOfHeightMap = _heightMapCif.GetColor(id).R;
+                    }
+                    else
+                    {
+                        heightOfHeightMap =
+                            _heightMap[heightX & (_topographyWidth - 1), heightY & (_topographyHeight - 1)];
+
+                        color = _colorMap[diffuseX & (_colorWidth - 1), diffuseY & (_colorHeight - 1)];
+                    }
 
                     var heightOnScreen = (Camera.Height - heightOfHeightMap) / z * Camera.Scale + Camera.Horizon;
-
-                    //var color = _colorMap[diffuseX & (_colorWidth - 1), diffuseY & (_colorHeight - 1)];
-
-                    var x = diffuseX & (_colorWidth - 1);
-                    var y = diffuseY & (_colorHeight - 1);
-                    var id = (y * _colorWidth) + x;
-
-                    var color = _colorMapCif.GetColor(id);
 
                     GenerateSlice(color, i, (int) heightOnScreen, _yBuffer[i]);
 
@@ -288,6 +309,8 @@ namespace Voxels
             _topographyWidth = bmp.Width;
 
             var dbm = DirectBitmap.GetInstance(bmp);
+
+            _heightMapCif= new Cif(bmp);
 
             _heightMap = new int[bmp.Width, bmp.Height];
             for (var i = 0; i < bmp.Width; i++)

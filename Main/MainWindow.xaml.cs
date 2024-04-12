@@ -7,6 +7,7 @@
  */
 
 using System;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Windows;
@@ -57,9 +58,15 @@ namespace Main
         private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
         {
             _voxel.KeyInput(e.Key);
+
+            var timer = new Stopwatch();
+
+            timer.Start();
             var bmp = _voxel.Render();
             ImageView.Source = bmp.ToBitmapImage();
 
+            timer.Stop();
+            TxtBox.Text = string.Concat(TxtBox.Text, " Time Diff:", timer.Elapsed, Environment.NewLine);
             TxtBox.Text = string.Concat(TxtBox.Text, " x: ", _voxel.Camera.X, " y: ", _voxel.Camera.Y, Environment.NewLine);
         }
     }

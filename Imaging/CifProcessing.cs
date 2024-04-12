@@ -33,7 +33,7 @@ namespace Imaging
 
             var dbm = DirectBitmap.GetInstance(image);
 
-            Span<Color> colorMap = dbm.GetColors();
+            var colorMap = dbm.GetColors();
 
             for (var i = 0; i < image.Height * image.Width; i++)
             {
@@ -281,7 +281,7 @@ namespace Imaging
                     continue;
                 }
 
-                List<int> sortedList = new List<int>(value);
+                var sortedList = new List<int>(value);
 
                 foreach (var (startS, endS) in sequence)
                 {
