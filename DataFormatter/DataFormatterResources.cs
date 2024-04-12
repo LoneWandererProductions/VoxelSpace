@@ -34,5 +34,20 @@ namespace DataFormatter
         ///     The Splitter string (const). Value:  ",".
         /// </summary>
         internal const string Splitter = ",";
+
+        /// <summary>
+        ///     The string X (const). Value: "X: ".
+        /// </summary>
+        internal const string StrX = "X: ";
+
+        /// <summary>
+        ///     The string Y (const). Value: " Y: ".
+        /// </summary>
+        internal const string StrY = " Y: ";
+
+        /// <summary>
+        ///     The string Z (const). Value: " Z: ".
+        /// </summary>
+        internal const string StrZ = " Z: ";
     }
 }

@@ -16,8 +16,14 @@ using DataFormatter;
 // check sum for repairs perhaps?
 namespace Imaging
 {
+    /// <inheritdoc />
+    /// <summary>
+    /// The Custom Image Format
+    /// </summary>
+    /// <seealso cref="T:Imaging.ICustomImageFormat" />
     public sealed class CustomImageFormat : ICustomImageFormat
     {
+        /// <inheritdoc />
         /// <summary>
         ///     Gets the cif file.
         /// </summary>
@@ -38,6 +44,7 @@ namespace Imaging
                 : CifProcessing.CifToImage(image);
         }
 
+        /// <inheritdoc />
         /// <summary>
         ///     Gets the cif file.
         /// </summary>
@@ -52,7 +59,7 @@ namespace Imaging
                 Compressed = false,
                 Height = image.Height,
                 Width = image.Width,
-                cifImage = format,
+                CifImage = format,
                 NumberOfColors = format.Count
             };
         }
@@ -69,6 +76,7 @@ namespace Imaging
             CsvHandler.WriteCsv(path, lst);
         }
 
+        /// <inheritdoc />
         /// <summary>
         ///     Compresses the cif file.
         ///     Uses sequences to minimize the size of the file.

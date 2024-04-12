@@ -23,11 +23,6 @@ namespace Voxels
     public sealed class VoxelRaster
     {
         /// <summary>
-        ///     The bitmap we draw on
-        /// </summary>
-        private Bitmap _bmp;
-
-        /// <summary>
         ///     The color height
         /// </summary>
         private int _colorHeight;
@@ -36,7 +31,14 @@ namespace Voxels
         ///     The color map
         ///     Buffer/array to hold color values (1024*1024)
         /// </summary>
-        private Color[,] _colorMap;
+        private Color[,] _colorMap { get; set; }
+
+
+        /// <summary>
+        /// The color map cif
+        /// Holds the color values (1024*1024)
+        /// </summary>
+        private Cif _colorMapCif;
 
         /// <summary>
         ///     The color width
@@ -47,7 +49,7 @@ namespace Voxels
         ///     The height map
         ///     Buffer/array to hold height values (1024*1024)
         /// </summary>
-        private int[,] _heightMap;
+        private int[,] _heightMap { get; set; }
 
         /// <summary>
         ///     The Slices of the Image
@@ -69,8 +71,9 @@ namespace Voxels
         /// </summary>
         private float[] _yBuffer;
 
+
         /// <summary>
-        /// Initializes a new instance of the <see cref="VoxelRaster" /> class.
+        ///     Initializes a new instance of the <see cref="VoxelRaster" /> class.
         /// </summary>
         /// <param name="x">The x.</param>
         /// <param name="y">The y.</param>
@@ -81,7 +84,8 @@ namespace Voxels
         /// <param name="distance">The distance.</param>
         /// <param name="colorMap">The bitmap with the colors</param>
         /// <param name="heightMap">The bitmap with the height map.</param>
-        public VoxelRaster(int x, int y, int degree, int height, int horizon, int scale, int distance, Bitmap colorMap, Bitmap heightMap)
+        public VoxelRaster(int x, int y, int degree, int height, int horizon, int scale, int distance, Bitmap colorMap,
+            Bitmap heightMap)
         {
             Camera = new Camera
             {
@@ -114,7 +118,10 @@ namespace Voxels
         /// <returns>The finished Image</returns>
         public Bitmap Render()
         {
-            ClearFrame();
+            //if (_colorMap == null || _heightMap == null) return null;
+            if (_colorMapCif == null || _heightMap == null) return null;
+
+            var bmp = ClearFrame();
             _raster = new List<Slice>();
 
             _yBuffer = new float[Camera.ScreenWidth];
@@ -142,16 +149,22 @@ namespace Voxels
 
                 for (var i = 0; i < Camera.ScreenWidth; i++)
                 {
-                    var diffuseX = (int)pLeft.X;
-                    var diffuseY = (int)pLeft.Y;
-                    var heightX = (int)pLeft.X;
-                    var heightY = (int)pLeft.Y;
+                    var diffuseX = (int) pLeft.X;
+                    var diffuseY = (int) pLeft.Y;
+                    var heightX = (int) pLeft.X;
+                    var heightY = (int) pLeft.Y;
 
                     var heightOfHeightMap =
                         _heightMap[heightX & (_topographyWidth - 1), heightY & (_topographyHeight - 1)];
 
                     var heightOnScreen = (Camera.Height - heightOfHeightMap) / z * Camera.Scale + Camera.Horizon;
+
                     var color = _colorMap[diffuseX & (_colorWidth - 1), diffuseY & (_colorHeight - 1)];
+                    //var x = diffuseX & (_colorWidth - 1);
+                    //var y = diffuseY & (_colorHeight - 1);
+                    //var id = (y * _colorWidth) + x;
+
+                    //var color = _colorMapCif.GetColor(id);
 
                     GenerateSlice(color, i, (int) heightOnScreen, _yBuffer[i]);
 
@@ -164,13 +177,11 @@ namespace Voxels
                 dz += 0.005f;
             }
 
-            DrawRaster();
-
-            return _bmp;
+            return DrawRaster(bmp);
         }
 
         /// <summary>
-        /// Keys the input.
+        ///     Keys the input.
         /// </summary>
         /// <param name="key">The key.</param>
         public void KeyInput(Key key)
@@ -178,12 +189,12 @@ namespace Voxels
             switch (key)
             {
                 case Key.W: //Forward
-                    Camera.X -= (int)(10 * ExtendedMath.CalcSin(Camera.Angle));
-                    Camera.Y -= (int)(10 * ExtendedMath.CalcCos(Camera.Angle));
+                    Camera.X -= (int) (10 * ExtendedMath.CalcSin(Camera.Angle));
+                    Camera.Y -= (int) (10 * ExtendedMath.CalcCos(Camera.Angle));
                     break;
                 case Key.S: //Backward
-                    Camera.X += (int)(10 * ExtendedMath.CalcSin(Camera.Angle));
-                    Camera.Y += (int)(10 * ExtendedMath.CalcCos(Camera.Angle));
+                    Camera.X += (int) (10 * ExtendedMath.CalcSin(Camera.Angle));
+                    Camera.Y += (int) (10 * ExtendedMath.CalcCos(Camera.Angle));
                     break;
                 case Key.A: //Turn Left
                     Camera.Angle += 10;
@@ -201,7 +212,7 @@ namespace Voxels
         }
 
         /// <summary>
-        /// Generates the slice.
+        ///     Generates the slice.
         /// </summary>
         /// <param name="color">The color.</param>
         /// <param name="x">The x.</param>
@@ -221,45 +232,51 @@ namespace Voxels
         }
 
         /// <summary>
-        /// Draws the raster.
+        /// Draws the raster with our DirectBitmap.
         /// </summary>
-        private void DrawRaster()
+        /// <param name="bmp">The bitmap we draw on.</param>
+        private Bitmap DrawRaster(Bitmap bmp)
         {
-            foreach (var slice in _raster) DrawVerticalLine(slice.Shade, slice.X1, slice.Y1, slice.Y2);
+            foreach (var slice in _raster) DrawVerticalLine(slice.Shade, slice.X1, slice.Y1, slice.Y2, bmp);
+            return bmp;
         }
 
         /// <summary>
-        /// Draws the vertical line.
+        ///     Draws the vertical line.
         /// </summary>
         /// <param name="col">The col.</param>
         /// <param name="x">The x.</param>
         /// <param name="heightOnScreen">The height on screen.</param>
         /// <param name="buffer">The buffer.</param>
-        private void DrawVerticalLine(Color col, int x, int heightOnScreen, float buffer)
+        /// <param name="bmp">The bitmap we draw on</param>
+        private static void DrawVerticalLine(Color col, int x, int heightOnScreen, float buffer, Bitmap bmp)
         {
             if (heightOnScreen > buffer) return;
 
-            using var g = Graphics.FromImage(_bmp);
+            using var g = Graphics.FromImage(bmp);
             g.DrawLine(new Pen(new SolidBrush(col)), x, heightOnScreen, x, buffer);
         }
 
         /// <summary>
         /// Clears the frame.
         /// </summary>
-        private void ClearFrame()
+        /// <returns>A new frame to draw on</returns>
+        private Bitmap ClearFrame()
         {
-            _bmp = new Bitmap(Camera.ScreenWidth, Camera.ScreenHeight);
+            var bmp = new Bitmap(Camera.ScreenWidth, Camera.ScreenHeight);
 
-            using var g = Graphics.FromImage(_bmp);
+            using var g = Graphics.FromImage(bmp);
 
             //set background Color
             var backGround = new SolidBrush(Camera.BackgroundColor);
 
             g.FillRectangle(backGround, 0, 0, Camera.ScreenWidth, Camera.ScreenHeight);
+
+            return bmp;
         }
 
         /// <summary>
-        /// Processes the height map.
+        ///     Processes the height map.
         /// </summary>
         /// <param name="bmp">The BMP.</param>
         private void ProcessHeightMap(Bitmap bmp)
@@ -278,7 +295,7 @@ namespace Voxels
         }
 
         /// <summary>
-        /// Processes the color map.
+        ///     Processes the color map.
         /// </summary>
         /// <param name="bmp">The BMP.</param>
         private void ProcessColorMap(Bitmap bmp)
@@ -290,10 +307,12 @@ namespace Voxels
 
             var dbm = DirectBitmap.GetInstance(bmp);
 
+            //_colorMapCif = new Cif(bmp);
+
             _colorMap = new Color[bmp.Width, bmp.Height];
             for (var i = 0; i < bmp.Width; i++)
-            for (var j = 0; j < bmp.Height; j++)
-                _colorMap[i, j] = dbm.GetPixel(i, j);
+                for (var j = 0; j < bmp.Height; j++)
+                    _colorMap[i, j] = dbm.GetPixel(i, j);
         }
     }
 }

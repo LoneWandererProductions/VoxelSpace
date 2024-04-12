@@ -47,7 +47,10 @@ namespace FileHandler
         /// <returns>Ordered List</returns>
         private static IEnumerable<string> CustomSort(this IEnumerable<string> lst)
         {
-            if (!lst.Any()) return lst;
+            if (!lst.Any())
+            {
+                return lst;
+            }
 
             var enumerable = lst.ToList();
             var maxLen = enumerable.Max(s => s.Length);

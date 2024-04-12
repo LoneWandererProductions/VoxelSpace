@@ -9,6 +9,7 @@
 // ReSharper disable MemberCanBeInternal
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable UnusedMember.Global
+// ReSharper disable AutoPropertyCanBeMadeGetOnly.Global
 
 using System;
 
@@ -65,7 +66,7 @@ namespace Mathematics
         /// <value>
         ///     A, as Aspect Ratio
         /// </value>
-        internal static double A => (double) Height / Width;
+        internal static double A => (double)Height / Width;
 
         /// <summary>
         ///     field of view, degree

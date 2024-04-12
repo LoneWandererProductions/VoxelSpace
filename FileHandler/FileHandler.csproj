@@ -7,8 +7,4 @@
     <Company>Lone Wanderer Productions</Company>
   </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\ExtendedSystemObjects\ExtendedSystemObjects.csproj" />
-  </ItemGroup>
-
 </Project>

@@ -255,6 +255,8 @@ namespace FileHandler
             var targetFiles = FileHandlerProcessing.GetFilesByExtension(target, FileHandlerResources.AllFiles,
                 FileHandlerResources.SubFolders);
 
+            if (targetFiles == null) return null;
+
             //Handle the diff
             var intersect = sourceFiles.Select(i => i).Intersect(targetFiles).ToList();
             var except = sourceFiles.Except(targetFiles).ToList();

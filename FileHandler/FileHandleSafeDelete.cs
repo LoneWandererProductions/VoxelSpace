@@ -7,6 +7,7 @@
  */
 
 // ReSharper disable UnusedType.Global
+// ReSharper disable UnusedMember.Global
 
 using System;
 using System.Diagnostics;
@@ -26,9 +27,15 @@ namespace FileHandler
         /// <exception cref="FileHandlerException"></exception>
         public static bool DeleteFile(string path)
         {
-            if (string.IsNullOrEmpty(path)) throw new FileHandlerException(FileHandlerResources.ErrorEmptyString);
+            if (string.IsNullOrEmpty(path))
+            {
+                throw new FileHandlerException(FileHandlerResources.ErrorEmptyString);
+            }
 
-            if (!File.Exists(path)) return false;
+            if (!File.Exists(path))
+            {
+                return false;
+            }
 
             var count = 0;
 

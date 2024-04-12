@@ -177,9 +177,34 @@ namespace Imaging
                 return;
             }
 
+            CreateGif(btm, target);
+        }
+
+        internal static void CreateGif(List<string> path, string target)
+        {
+            //collect and convert all images
+            var btm = path.ConvertAll(ImageStream.GetOriginalBitmap);
+
+            if (btm.IsNullOrEmpty())
+            {
+                return;
+            }
+
+            CreateGif(btm, target);
+        }
+
+        /// <summary>
+        ///     Create the gif.
+        /// </summary>
+        /// <param name="btm">A list of Bitmaps.</param>
+        /// <param name="target">The target.</param>
+        private static void CreateGif(IEnumerable<Bitmap> btm, string target)
+        {
             var gEnc = new GifBitmapEncoder();
 
             //TODO encode and change to one size, add more sanity checks
+            //TODO possible Thumbnail
+            //TODO add more encoding
 
             foreach (var src in btm.Select(bmpImage => bmpImage.GetHbitmap()).Select(bmp =>
                          System.Windows.Interop.Imaging.CreateBitmapSourceFromHBitmap(

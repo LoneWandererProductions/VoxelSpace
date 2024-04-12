@@ -30,16 +30,23 @@ namespace FileHandler
             var root = Directory.GetCurrentDirectory();
 
             if (string.IsNullOrEmpty(root))
+            {
                 throw new FileHandlerException(string.Concat(FileHandlerResources.ErrorGetParentDirectory, root));
+            }
 
             var path = Directory.GetParent(root)?.ToString();
 
             if (string.IsNullOrEmpty(path))
+            {
                 throw new FileHandlerException(string.Concat(FileHandlerResources.ErrorGetParentDirectory, path));
+            }
 
             try
             {
-                for (var i = 0; i < level; i++) path = Directory.GetParent(path!)?.ToString();
+                for (var i = 0; i < level; i++)
+                {
+                    path = Directory.GetParent(path!)?.ToString();
+                }
             }
             catch (UnauthorizedAccessException ex)
             {

@@ -101,6 +101,20 @@ namespace Imaging
         Bitmap CombineBitmap(List<string> files);
 
         /// <summary>
+        ///     Combines the bitmaps.
+        /// </summary>
+        /// <param name="original">The original image.</param>
+        /// <param name="overlay">The overlay image.</param>
+        /// <param name="x">The x position.</param>
+        /// <param name="y">The y position.</param>
+        /// <returns>Combined Image</returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        Bitmap CombineBitmap(Bitmap original, Bitmap overlay, int x, int y);
+
+        /// <summary>
+        ///     Cuts a piece out of a bitmap.
+        /// </summary>
+        /// <summary>
         ///     Cuts a piece out of a bitmap.
         /// </summary>
         /// <param name="image">The image.</param>
@@ -123,6 +137,18 @@ namespace Imaging
         /// <returns>List of cut Images</returns>
         /// <exception cref="ArgumentNullException"></exception>
         List<Bitmap> CutBitmaps(Bitmap image, int x, int y, int height, int width);
+
+        /// <summary>
+        ///     Erases the rectangle from an Image.
+        /// </summary>
+        /// <param name="image">The image.</param>
+        /// <param name="x">The x.</param>
+        /// <param name="y">The y.</param>
+        /// <param name="height">The height.</param>
+        /// <param name="width">The width.</param>
+        /// <returns>Original Image with the erased area</returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        Bitmap EraseRectangle(Bitmap image, int x, int y, int height, int width);
 
         /// <summary>
         ///     Loads File one Time
@@ -310,10 +336,17 @@ namespace Imaging
         List<ImageSource> LoadGif(string path);
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="IImageRender" /> interface.
+        ///     Creates a gif.
         /// </summary>
         /// <param name="path">The path.</param>
-        /// <param name="target">The target.</param>
+        /// <param name="target">The target File.</param>
         void CreateGif(string path, string target);
+
+        /// <summary>
+        ///     Creates a gif.
+        /// </summary>
+        /// <param name="path">The paths of the images.</param>
+        /// <param name="target">The target File.</param>
+        void CreateGif(List<string> path, string target);
     }
 }

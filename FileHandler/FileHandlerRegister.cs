@@ -59,7 +59,10 @@ namespace FileHandler
         {
             ErrorLog ??= new List<string>();
 
-            if (ErrorLog.Count == MaxLog) ErrorLog.Clear();
+            if (ErrorLog.Count == MaxLog)
+            {
+                ErrorLog.Clear();
+            }
 
             ErrorLog.Add(string.Concat(FileHandlerResources.ErrorLogMethod, method, Environment.NewLine,
                 FileHandlerResources.ErrorLogPath, path, Environment.NewLine,

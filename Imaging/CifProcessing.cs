@@ -11,6 +11,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.Linq;
 using ExtendedSystemObjects;
+using Mathematics;
 
 namespace Imaging
 {
@@ -31,22 +32,13 @@ namespace Imaging
 
             var dbm = DirectBitmap.GetInstance(image);
 
-            for (var y = 0; y < image.Height; y++)
-            for (var x = 0; x < image.Width; x++)
-            {
-                var id = CalculateId(x, y, image.Width);
-                var color = dbm.GetPixel(x, y);
+            var colorMap = dbm.GetColors();
 
-                //get our new Image format
-                if (imageFormat.ContainsKey(color))
-                {
-                    imageFormat[color].Add(id);
-                }
-                else
-                {
-                    imageFormat.Add(color, new List<int>());
-                    imageFormat[color].Add(id);
-                }
+            for (var i = 0; i < image.Height * image.Width; i++)
+            {
+                var color = colorMap[i];
+
+                imageFormat.Add(color, i);
             }
 
             return imageFormat;
@@ -67,7 +59,7 @@ namespace Imaging
                 return null;
             }
 
-            check = int.TryParse(data[0][1], out var length);
+            check = int.TryParse(data[0][1], out var width);
             if (!check)
             {
                 return null;
@@ -76,7 +68,7 @@ namespace Imaging
             //remove the Height, length data
             data.RemoveAt(0);
 
-            var image = new Bitmap(height, length);
+            var image = new Bitmap(height, width);
 
             var dbm = DirectBitmap.GetInstance(image);
 
@@ -105,9 +97,8 @@ namespace Imaging
                         continue;
                     }
 
-                    var x = IdToX(idMaster, length);
-                    var y = IdToY(idMaster, length);
-                    dbm.SetPixel(x, y, color);
+                    var coordinate = Coordinate2D.GetInstance(idMaster, width);
+                    dbm.SetPixel(coordinate.X, coordinate.Y, color);
                 }
             }
 
@@ -130,7 +121,7 @@ namespace Imaging
                 return null;
             }
 
-            check = int.TryParse(data[0][1], out var length);
+            check = int.TryParse(data[0][1], out var width);
             if (!check)
             {
                 return null;
@@ -139,7 +130,7 @@ namespace Imaging
             //remove the Height, length data
             data.RemoveAt(0);
 
-            var image = new Bitmap(height, length);
+            var image = new Bitmap(height, width);
 
             var dbm = DirectBitmap.GetInstance(image);
 
@@ -183,9 +174,8 @@ namespace Imaging
                         //paint area
                         for (var j = start; j <= end; j++)
                         {
-                            var x = IdToX(j, length);
-                            var y = IdToY(j, length);
-                            dbm.SetPixel(x, y, color);
+                            var coordinate = Coordinate2D.GetInstance(j, width);
+                            dbm.SetPixel(coordinate.X, coordinate.Y, color);
                         }
                     }
                     else
@@ -197,9 +187,8 @@ namespace Imaging
                             continue;
                         }
 
-                        var x = IdToX(idMaster, length);
-                        var y = IdToY(idMaster, length);
-                        dbm.SetPixel(x, y, color);
+                        var coordinate = Coordinate2D.GetInstance(idMaster, width);
+                        dbm.SetPixel(coordinate.X, coordinate.Y, color);
                     }
                 }
             }
@@ -309,40 +298,6 @@ namespace Imaging
             master[0].Add(master.Count.ToString());
 
             return master;
-        }
-
-        /// <summary>
-        ///     Calculates the identifier.
-        /// </summary>
-        /// <param name="x">The x.</param>
-        /// <param name="y">The y.</param>
-        /// <param name="length">The length.</param>
-        /// <returns>Id of Coordinate</returns>
-        internal static int CalculateId(int x, int y, int length)
-        {
-            return (y * length) + x;
-        }
-
-        /// <summary>
-        ///     Identifiers to x.
-        /// </summary>
-        /// <param name="masterId">The master identifier.</param>
-        /// <param name="length">The length.</param>
-        /// <returns>x coordinate</returns>
-        internal static int IdToX(int masterId, int length)
-        {
-            return masterId % length;
-        }
-
-        /// <summary>
-        ///     Identifiers to y.
-        /// </summary>
-        /// <param name="masterId">The master identifier.</param>
-        /// <param name="length">The length.</param>
-        /// <returns>y coordinate</returns>
-        internal static int IdToY(int masterId, int length)
-        {
-            return masterId / length;
         }
     }
 }

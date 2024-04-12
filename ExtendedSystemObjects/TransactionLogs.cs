@@ -36,7 +36,7 @@ namespace ExtendedSystemObjects
         ///     Gets a value indicating whether this <see cref="TransactionLogs" /> is changed.
         /// </summary>
         /// <value>
-        ///     <c>true</c> if changed; otherwise, <c>false</c>.
+        ///     <c>true</c> if changed; currentSequencewise, <c>false</c>.
         /// </value>
         public bool Changed { get; private set; }
 
@@ -66,7 +66,7 @@ namespace ExtendedSystemObjects
             var id = GetItem(uniqueIdentifier, LogState.Add);
             var item = Changelog[id].Data;
 
-            var log = new LogEntry {State = LogState.Remove, Data = item, UniqueIdentifier = uniqueIdentifier};
+            var log = new LogEntry { State = LogState.Remove, Data = item, UniqueIdentifier = uniqueIdentifier };
             Changelog.Add(Changelog.Count, log);
 
             Changed = true;
@@ -83,7 +83,7 @@ namespace ExtendedSystemObjects
 
             if (entry == -1)
             {
-                var log = new LogEntry {State = LogState.Change, Data = item, UniqueIdentifier = uniqueIdentifier};
+                var log = new LogEntry { State = LogState.Change, Data = item, UniqueIdentifier = uniqueIdentifier };
                 Changelog.Add(Changelog.Count, log);
 
                 Changed = true;
@@ -92,7 +92,10 @@ namespace ExtendedSystemObjects
             {
                 var existingItem = Changelog[entry];
 
-                if (existingItem.Equals(item)) return;
+                if (existingItem.Equals(item))
+                {
+                    return;
+                }
 
                 Changelog[entry] = new LogEntry
                 {
@@ -113,8 +116,10 @@ namespace ExtendedSystemObjects
             var unique = Changelog[id].UniqueIdentifier;
 
             foreach (var item in Changelog.Reverse().Where(item =>
-                item.Key < id && item.Value.UniqueIdentifier == unique && item.Value.State == LogState.Add))
+                         item.Key < id && item.Value.UniqueIdentifier == unique && item.Value.State == LogState.Add))
+            {
                 return item.Key;
+            }
 
             return -1;
         }
@@ -138,11 +143,18 @@ namespace ExtendedSystemObjects
         /// <returns>ChangedItem</returns>
         private int GetItem(int uniqueIdentifier, LogState state)
         {
-            if (Changelog == null || Changelog.Count == 0) return -1;
+            if (Changelog == null || Changelog.Count == 0)
+            {
+                return -1;
+            }
 
             foreach (var (key, value) in Changelog.Reverse())
+            {
                 if (value.UniqueIdentifier == uniqueIdentifier && value.State == state)
+                {
                     return key;
+                }
+            }
 
             return -1;
         }
@@ -153,9 +165,15 @@ namespace ExtendedSystemObjects
         /// <returns>First available Key</returns>
         public int GetNewKey()
         {
-            if (Changelog == null) return -1;
+            if (Changelog == null)
+            {
+                return -1;
+            }
 
-            if (Changelog.Count == 0) return 0;
+            if (Changelog.Count == 0)
+            {
+                return 0;
+            }
 
             var lst = Changelog.Keys.ToList();
 

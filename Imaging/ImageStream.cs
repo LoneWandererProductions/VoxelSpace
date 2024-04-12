@@ -341,7 +341,9 @@ namespace Imaging
         {
             if (image == null)
             {
-                var innerException = new ArgumentNullException(nameof(image));
+                var innerException =
+                    new ArgumentNullException(string.Concat(nameof(BitmapScaling), ImagingResources.Spacing,
+                        nameof(image)));
                 throw new ArgumentNullException(ImagingResources.ErrorWrongParameters, innerException);
             }
 
@@ -391,7 +393,9 @@ namespace Imaging
         {
             if (image == null)
             {
-                var innerException = new ArgumentNullException(nameof(image));
+                var innerException =
+                    new ArgumentNullException(string.Concat(nameof(BitmapScaling), ImagingResources.Spacing,
+                        nameof(image)));
                 throw new ArgumentNullException(ImagingResources.ErrorWrongParameters, innerException);
             }
 
@@ -436,7 +440,9 @@ namespace Imaging
         {
             if (files.IsNullOrEmpty())
             {
-                var innerException = new ArgumentNullException(nameof(files));
+                var innerException =
+                    new ArgumentNullException(string.Concat(nameof(CombineBitmap), ImagingResources.Spacing,
+                        nameof(files)));
                 throw new ArgumentNullException(ImagingResources.ErrorWrongParameters, innerException);
             }
 
@@ -490,6 +496,40 @@ namespace Imaging
         }
 
         /// <summary>
+        ///     Combines the bitmaps.
+        /// </summary>
+        /// <param name="original">The original image.</param>
+        /// <param name="overlay">The overlay image.</param>
+        /// <param name="x">The x position.</param>
+        /// <param name="y">The y position.</param>
+        /// <returns>Combined Image</returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        internal static Bitmap CombineBitmap(Bitmap original, Bitmap overlay, int x, int y)
+        {
+            if (original == null)
+            {
+                var innerException = new ArgumentNullException(string.Concat(nameof(CombineBitmap),
+                    ImagingResources.Spacing, nameof(original)));
+                throw new ArgumentNullException(ImagingResources.ErrorWrongParameters, innerException);
+            }
+
+            if (overlay == null)
+            {
+                var innerException = new ArgumentNullException(string.Concat(nameof(CombineBitmap),
+                    ImagingResources.Spacing, nameof(overlay)));
+                throw new ArgumentNullException(ImagingResources.ErrorWrongParameters, innerException);
+            }
+
+            //get a graphics object from the image so we can draw on it
+            using var graph = Graphics.FromImage(original);
+
+            graph.DrawImage(overlay,
+                new Rectangle(x, y, overlay.Width, overlay.Height));
+
+            return original;
+        }
+
+        /// <summary>
         ///     Cuts a piece out of a bitmap.
         /// </summary>
         /// <param name="image">The image.</param>
@@ -503,13 +543,16 @@ namespace Imaging
         {
             if (image == null)
             {
-                var innerException = new ArgumentNullException(nameof(image));
+                var innerException =
+                    new ArgumentNullException(
+                        string.Concat(nameof(CutBitmaps), ImagingResources.Spacing, nameof(image)));
                 throw new ArgumentNullException(ImagingResources.ErrorWrongParameters, innerException);
             }
 
             if (height == 0 || width == 0)
             {
-                var innerException = new ArgumentNullException(nameof(image));
+                var innerException = new ArgumentNullException(string.Concat(nameof(CombineBitmap),
+                    ImagingResources.Spacing, nameof(height), ImagingResources.Spacing, nameof(width)));
                 throw new ArgumentNullException(ImagingResources.ErrorWrongParameters, innerException);
             }
 
@@ -543,7 +586,9 @@ namespace Imaging
         {
             if (image == null)
             {
-                var innerException = new ArgumentNullException(nameof(image));
+                var innerException =
+                    new ArgumentNullException(
+                        string.Concat(nameof(CutBitmaps), ImagingResources.Spacing, nameof(image)));
                 throw new ArgumentNullException(ImagingResources.ErrorWrongParameters, innerException);
             }
 
@@ -558,6 +603,36 @@ namespace Imaging
             }
 
             return images;
+        }
+
+        /// <summary>
+        ///     Erases the rectangle from an Image.
+        /// </summary>
+        /// <param name="image">The image.</param>
+        /// <param name="x">The x.</param>
+        /// <param name="y">The y.</param>
+        /// <param name="height">The height.</param>
+        /// <param name="width">The width.</param>
+        /// <returns>Original Image with the erased area</returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        public static Bitmap EraseRectangle(Bitmap image, int x, int y, int height, int width)
+        {
+            if (image == null)
+            {
+                var innerException = new ArgumentNullException(string.Concat(nameof(EraseRectangle),
+                    ImagingResources.Spacing, nameof(image)));
+                throw new ArgumentNullException(ImagingResources.ErrorWrongParameters, innerException);
+            }
+
+            using var graph = Graphics.FromImage(image);
+
+            graph.CompositingMode = CompositingMode.SourceCopy;
+
+            using var br = new SolidBrush(Color.FromArgb(0, 255, 255, 255));
+
+            graph.FillRectangle(br, new Rectangle(x, y, width, height));
+
+            return image;
         }
 
         /// <summary>
@@ -577,7 +652,9 @@ namespace Imaging
         {
             if (image == null)
             {
-                var innerException = new ArgumentNullException(nameof(image));
+                var innerException =
+                    new ArgumentNullException(string.Concat(nameof(FilterImage), ImagingResources.Spacing,
+                        nameof(image)));
                 throw new ArgumentNullException(ImagingResources.ErrorWrongParameters, innerException);
             }
 
@@ -641,7 +718,8 @@ namespace Imaging
         {
             if (image == null)
             {
-                var innerException = new ArgumentNullException(nameof(image));
+                var innerException = new ArgumentNullException(string.Concat(nameof(BitmapImageToBitmap),
+                    ImagingResources.Spacing, nameof(image)));
                 throw new ArgumentNullException(ImagingResources.ErrorWrongParameters, innerException);
             }
 
@@ -667,7 +745,8 @@ namespace Imaging
         {
             if (image == null)
             {
-                var innerException = new ArgumentNullException(nameof(image));
+                var innerException = new ArgumentNullException(string.Concat(nameof(BitmapToBitmapImage),
+                    ImagingResources.Spacing, nameof(image)));
                 throw new ArgumentNullException(ImagingResources.ErrorWrongParameters, innerException);
             }
 
@@ -705,7 +784,9 @@ namespace Imaging
 
             if (image == null)
             {
-                var innerException = new ArgumentNullException(nameof(image));
+                var innerException =
+                    new ArgumentNullException(string.Concat(nameof(RotateImage), ImagingResources.Spacing,
+                        nameof(image)));
                 throw new ArgumentNullException(ImagingResources.ErrorWrongParameters, innerException);
             }
 
@@ -775,7 +856,9 @@ namespace Imaging
         {
             if (image == null)
             {
-                var innerException = new ArgumentNullException(nameof(image));
+                var innerException =
+                    new ArgumentNullException(string.Concat(nameof(CropImage), ImagingResources.Spacing,
+                        nameof(image)));
                 throw new ArgumentNullException(ImagingResources.ErrorWrongParameters, innerException);
             }
 
@@ -919,19 +1002,25 @@ namespace Imaging
         {
             if (format == null)
             {
-                var innerException = new ArgumentNullException(nameof(format));
+                var innerException =
+                    new ArgumentNullException(string.Concat(nameof(SaveBitmap), ImagingResources.Spacing,
+                        nameof(format)));
                 throw new ArgumentNullException(ImagingResources.ErrorWrongParameters, innerException);
             }
 
             if (image == null)
             {
-                var innerException = new ArgumentNullException(nameof(image));
+                var innerException =
+                    new ArgumentNullException(
+                        string.Concat(nameof(SaveBitmap), ImagingResources.Spacing, nameof(image)));
                 throw new ArgumentNullException(ImagingResources.ErrorWrongParameters, innerException);
             }
 
             if (string.IsNullOrEmpty(path))
             {
-                var innerException = new ArgumentNullException(nameof(path));
+                var innerException =
+                    new ArgumentNullException(string.Concat(nameof(SaveBitmap), ImagingResources.Spacing,
+                        nameof(path)));
                 throw new ArgumentNullException(ImagingResources.ErrorWrongParameters, innerException);
             }
 
@@ -980,7 +1069,8 @@ namespace Imaging
         {
             if (image == null)
             {
-                var innerException = new ArgumentNullException(nameof(image));
+                var innerException = new ArgumentNullException(string.Concat(nameof(ConvertWhiteToTransparent),
+                    ImagingResources.Spacing, nameof(image)));
                 throw new ArgumentNullException(ImagingResources.ErrorWrongParameters, innerException);
             }
 
@@ -1027,7 +1117,8 @@ namespace Imaging
         {
             if (image == null)
             {
-                var innerException = new ArgumentNullException(nameof(image));
+                var innerException =
+                    new ArgumentNullException(string.Concat(nameof(GetPixel), ImagingResources.Spacing, nameof(image)));
                 throw new ArgumentNullException(ImagingResources.ErrorWrongParameters, innerException);
             }
 
@@ -1050,7 +1141,8 @@ namespace Imaging
         {
             if (image == null)
             {
-                var innerException = new ArgumentNullException(nameof(image));
+                var innerException =
+                    new ArgumentNullException(string.Concat(nameof(GetPixel), ImagingResources.Spacing, nameof(image)));
                 throw new ArgumentNullException(ImagingResources.ErrorWrongParameters, innerException);
             }
 
@@ -1093,7 +1185,8 @@ namespace Imaging
         {
             if (image == null)
             {
-                var innerException = new ArgumentNullException(nameof(image));
+                var innerException =
+                    new ArgumentNullException(string.Concat(nameof(SetPixel), ImagingResources.Spacing, nameof(image)));
                 throw new ArgumentNullException(ImagingResources.ErrorWrongParameters, innerException);
             }
 
@@ -1117,7 +1210,8 @@ namespace Imaging
         {
             if (image == null)
             {
-                var innerException = new ArgumentNullException(nameof(image));
+                var innerException =
+                    new ArgumentNullException(string.Concat(nameof(SetPixel), ImagingResources.Spacing, nameof(image)));
                 throw new ArgumentNullException(ImagingResources.ErrorWrongParameters, innerException);
             }
 

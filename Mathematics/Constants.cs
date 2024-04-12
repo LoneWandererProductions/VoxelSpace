@@ -1,5 +1,4 @@
-﻿using System;
-/*
+﻿/*
  * COPYRIGHT:   See COPYING in the top level directory
  * PROJECT:     Mathematics
  * FILE:        Mathematics/Constants.cs
@@ -8,6 +7,8 @@
  */
 
 // ReSharper disable MemberCanBeInternal
+
+using System;
 using System.Collections.Generic;
 
 namespace Mathematics
@@ -35,31 +36,31 @@ namespace Mathematics
         /// </value>
         public static Dictionary<int, double> Sinus { get; } = new()
         {
-            {0, 0},
-            {15, SixMinusTwo},
-            {30, 0.5},
-            {45, 1 / Two},
-            {60, Three},
-            {75, SixPlusTwo},
-            {90, 1},
-            {105, SixPlusTwo},
-            {120, Three},
-            {135, 1 / Two},
-            {150, 0.5},
-            {165, SixMinusTwo},
-            {180, 0},
-            {195, MinusSixPlusTwo},
-            {210, -0.5},
-            {225, -1 / Two},
-            {240, -Three},
-            {255, MinusSixMinusTwo},
-            {270, -1},
-            {285, MinusSixMinusTwo},
-            {300, -Three},
-            {315, -1 / Two},
-            {330, -0.5},
-            {345, MinusSixPlusTwo},
-            {360, 0}
+            { 0, 0 },
+            { 15, SixMinusTwo },
+            { 30, 0.5 },
+            { 45, 1 / Two },
+            { 60, Three },
+            { 75, SixPlusTwo },
+            { 90, 1 },
+            { 105, SixPlusTwo },
+            { 120, Three },
+            { 135, 1 / Two },
+            { 150, 0.5 },
+            { 165, SixMinusTwo },
+            { 180, 0 },
+            { 195, MinusSixPlusTwo },
+            { 210, -0.5 },
+            { 225, -1 / Two },
+            { 240, -Three },
+            { 255, MinusSixMinusTwo },
+            { 270, -1 },
+            { 285, MinusSixMinusTwo },
+            { 300, -Three },
+            { 315, -1 / Two },
+            { 330, -0.5 },
+            { 345, MinusSixPlusTwo },
+            { 360, 0 }
         };
 
         /// <summary>
@@ -73,31 +74,31 @@ namespace Mathematics
         /// </value>
         public static Dictionary<int, double> CoSinus { get; } = new()
         {
-            {0, 1},
-            {15, SixPlusTwo},
-            {30, Three},
-            {45, 1 / Two},
-            {60, 0.5},
-            {75, SixMinusTwo},
-            {90, 0},
-            {105, MinusSixPlusTwo},
-            {120, -0.5},
-            {135, -1 / Two},
-            {150, -Three / 2},
-            {165, MinusSixMinusTwo},
-            {180, -1},
-            {195, MinusSixMinusTwo},
-            {210, -Three},
-            {225, -1 / Two},
-            {240, -0.5},
-            {255, MinusSixPlusTwo},
-            {270, 0},
-            {285, SixMinusTwo},
-            {300, 0.5},
-            {315, 1 / Two},
-            {330, Three},
-            {345, SixPlusTwo},
-            {360, 1}
+            { 0, 1 },
+            { 15, SixPlusTwo },
+            { 30, Three },
+            { 45, 1 / Two },
+            { 60, 0.5 },
+            { 75, SixMinusTwo },
+            { 90, 0 },
+            { 105, MinusSixPlusTwo },
+            { 120, -0.5 },
+            { 135, -1 / Two },
+            { 150, -Three / 2 },
+            { 165, MinusSixMinusTwo },
+            { 180, -1 },
+            { 195, MinusSixMinusTwo },
+            { 210, -Three },
+            { 225, -1 / Two },
+            { 240, -0.5 },
+            { 255, MinusSixPlusTwo },
+            { 270, 0 },
+            { 285, SixMinusTwo },
+            { 300, 0.5 },
+            { 315, 1 / Two },
+            { 330, Three },
+            { 345, SixPlusTwo },
+            { 360, 1 }
         };
     }
 }

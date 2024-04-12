@@ -20,6 +20,7 @@
     </AssemblyAttribute>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\DataFormatter\DataFormatter.csproj" />
     <ProjectReference Include="..\ExtendedSystemObjects\ExtendedSystemObjects.csproj" />
   </ItemGroup>
 </Project>

@@ -19,7 +19,6 @@ using System;
 using System.Diagnostics;
 using System.Windows.Media;
 using ExtendedSystemObjects;
-using Mathematics;
 
 namespace Imaging
 {
@@ -422,6 +421,18 @@ namespace Imaging
         private void GetHex()
         {
             Hex = string.Concat("#", $"{R:X2}{G:X2}{B:X2}");
+        }
+
+        /// <summary>
+        ///     Converts to a hex string.
+        ///     Will be used for gifs later
+        /// </summary>
+        /// <returns>
+        ///     A <see cref="string" /> that represents this instance.
+        /// </returns>
+        public override string ToString()
+        {
+            return $"{R:X2} {G:X2} {B:X2}";
         }
     }
 }

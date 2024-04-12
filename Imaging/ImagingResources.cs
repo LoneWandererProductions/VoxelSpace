@@ -44,6 +44,16 @@ namespace Imaging
         internal const char Separator = ',';
 
         /// <summary>
+        ///     Separator (const). Value: " , ".
+        /// </summary>
+        internal const string Indexer = " , ";
+
+        /// <summary>
+        ///     Color string (const). Value: "Color: ".
+        /// </summary>
+        internal const string Color = "Color: ";
+
+        /// <summary>
         ///     The flag that indicates that image is not compressed (const). Value:  "0".
         /// </summary>
         internal const string CifUnCompressed = "0";
@@ -64,6 +74,11 @@ namespace Imaging
         public const string JpgExt = ".jpg";
 
         /// <summary>
+        ///     The jpeg Extension (const). Value: ".jpeg"
+        /// </summary>
+        public const string JpegExt = ".jpeg";
+
+        /// <summary>
         ///     The png Extension (const). Value: ".png"
         /// </summary>
         public const string PngExt = ".png";
@@ -82,7 +97,6 @@ namespace Imaging
         ///     The Tif Extension (const). Value: ".tif"
         /// </summary>
         public const string TifExt = ".tif";
-
 
         /// <summary>
         ///     The File Appendix

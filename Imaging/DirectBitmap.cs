@@ -10,6 +10,8 @@
  */
 
 // ReSharper disable MemberCanBeInternal
+// ReSharper disable MemberCanBePrivate.Global
+// ReSharper disable MemberCanBeInternal
 
 using System;
 using System.Drawing;
@@ -32,7 +34,7 @@ namespace Imaging
         /// <value>
         ///     The bits.
         /// </value>
-        private readonly int[] _bits;
+        private int[] _bits;
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="DirectBitmap" /> class.
@@ -47,10 +49,28 @@ namespace Imaging
         {
             Width = width;
             Height = height;
-            _bits = new int[width * height];
-            BitsHandle = GCHandle.Alloc(_bits, GCHandleType.Pinned);
-            Bitmap = new Bitmap(width, height, width * 4, PixelFormat.Format32bppPArgb,
-                BitsHandle.AddrOfPinnedObject());
+
+            Initiate();
+        }
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="DirectBitmap" /> class.
+        ///     Bitmap which references pixel data directly
+        ///     PixelFormat, Specifies the format of the color data for each pixel in the image.
+        ///     AddrOfPinnedObject, reference to address of pinned object
+        ///     GCHandleType, Retrieves the address of object data in a Pinned handle.
+        /// </summary>
+        /// <param name="btm">The in question.</param>
+        public DirectBitmap(Image btm)
+        {
+            Width = btm.Width;
+            Height = btm.Height;
+
+            Initiate();
+
+            using var graph = Graphics.FromImage(Bitmap);
+            graph.DrawImage(btm, new Rectangle(0, 0, btm.Width, btm.Height), 0, 0, btm.Width, btm.Height,
+                GraphicsUnit.Pixel);
         }
 
         /// <summary>
@@ -59,7 +79,7 @@ namespace Imaging
         /// <value>
         ///     The bitmap.
         /// </value>
-        public Bitmap Bitmap { get; }
+        public Bitmap Bitmap { get; set; }
 
         /// <summary>
         ///     Gets a value indicating whether this <see cref="DirectBitmap" /> is disposed.
@@ -91,7 +111,7 @@ namespace Imaging
         /// <value>
         ///     The bits handle.
         /// </value>
-        private GCHandle BitsHandle { get; }
+        private GCHandle BitsHandle { get; set; }
 
         /// <inheritdoc />
         /// <summary>
@@ -103,6 +123,17 @@ namespace Imaging
         {
             Dispose(true);
             GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        ///     Initiates this instance and sets all Helper Variables.
+        /// </summary>
+        private void Initiate()
+        {
+            _bits = new int[Width * Height];
+            BitsHandle = GCHandle.Alloc(_bits, GCHandleType.Pinned);
+            Bitmap = new Bitmap(Width, Height, Width * 4, PixelFormat.Format32bppPArgb,
+                BitsHandle.AddrOfPinnedObject());
         }
 
         /// <summary>
@@ -121,8 +152,8 @@ namespace Imaging
         }
 
         /// <summary>
-        /// Draws a vertical line with a specified color.
-        /// For now Microsoft's Rectangle Method is faster in certain circumstances
+        ///     Draws a vertical line with a specified color.
+        ///     For now Microsoft's Rectangle Method is faster in certain circumstances
         /// </summary>
         /// <param name="x">The x Coordinate.</param>
         /// <param name="y">The y Coordinate.</param>
@@ -130,27 +161,32 @@ namespace Imaging
         /// <param name="color">The color.</param>
         public void DrawVerticalLine(int x, int y, int height, Color color)
         {
-            for (int i = y; i < height; i++)
+            for (var i = y; i < height; i++)
+            {
                 SetPixel(x, i, color);
+            }
         }
 
         /// <summary>
-        /// Draws a horizontal line with a specified color.
-        /// For now Microsoft's Rectangle Method is faster in certain circumstances
-        /// /// </summary>
+        ///     Draws a horizontal line with a specified color.
+        ///     For now Microsoft's Rectangle Method is faster in certain circumstances
+        ///     ///
+        /// </summary>
         /// <param name="x">The x Coordinate.</param>
         /// <param name="y">The y Coordinate.</param>
         /// <param name="length">The length.</param>
         /// <param name="color">The color.</param>
         public void DrawHorizontalLine(int x, int y, int length, Color color)
         {
-            for (int i = x; i < length; i++)
+            for (var i = x; i < length; i++)
+            {
                 SetPixel(i, y, color);
+            }
         }
 
         /// <summary>
-        /// Draws the rectangle.
-        /// For now Microsoft's Rectangle Method is faster
+        ///     Draws the rectangle.
+        ///     For now Microsoft's Rectangle Method is faster
         /// </summary>
         /// <param name="x">The x Coordinate.</param>
         /// <param name="y">The y Coordinate.</param>
@@ -159,12 +195,16 @@ namespace Imaging
         /// <param name="color">The color.</param>
         public void DrawRectangle(int x, int y, int width, int height, Color color)
         {
-            if(width > height)
+            if (width > height)
+            {
                 Parallel.For(x, height,
                     index => DrawVerticalLine(index, y, width, color));
+            }
             else
+            {
                 Parallel.For(y, width,
                     index => DrawHorizontalLine(x, index, height, color));
+            }
         }
 
         /// <summary>
@@ -190,6 +230,61 @@ namespace Imaging
             var index = x + (y * Width);
             var col = _bits[index];
             return Color.FromArgb(col);
+        }
+
+        /// <summary>
+        ///     Gets the color list.
+        /// </summary>
+        /// <returns>The Image as a list of Colors</returns>
+        public Span<Color> GetColors()
+        {
+            if (_bits == null)
+            {
+                return null;
+            }
+
+            var length = Height * Width;
+
+            var array = new Color[length];
+
+            var span = new Span<Color>(array, 0, length);
+
+            for (var i = 0; i < length; i++)
+            {
+                var col = _bits[i];
+                span[i] = Color.FromArgb(col);
+            }
+
+            return span;
+        }
+
+        /// <summary>
+        ///     Converts to string.
+        /// </summary>
+        /// <returns>
+        ///     A <see cref="string" /> that represents this instance.
+        /// </returns>
+        public override string ToString()
+        {
+            var info = string.Empty;
+
+            for (var i = 0; i < _bits.Length - 1; i++)
+            {
+                info = string.Concat(info, _bits[i], ImagingResources.Indexer);
+            }
+
+            return string.Concat(info, _bits[_bits.Length]);
+        }
+
+        /// <summary>
+        ///     Returns a hash code for this instance.
+        /// </summary>
+        /// <returns>
+        ///     A hash code for this instance, suitable for use in hashing algorithms and data structures like a hash table.
+        /// </returns>
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Height, Width);
         }
 
         /// <summary>
