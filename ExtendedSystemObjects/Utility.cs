@@ -98,7 +98,7 @@ namespace ExtendedSystemObjects
         }
 
         /// <summary>
-        /// Sequencers the specified set.
+        ///     Sequencers the specified set.
         /// </summary>
         /// <param name="set">The set.</param>
         /// <param name="sequence">The sequence.</param>
@@ -109,7 +109,7 @@ namespace ExtendedSystemObjects
             var sequenceGroups = new List<List<int>>();
             var currentSequence = new List<int>();
 
-            List<int> sortedList = new List<int>(set);
+            var sortedList = new List<int>(set);
 
             for (var i = 1; i < sortedList.Count; i++)
             {

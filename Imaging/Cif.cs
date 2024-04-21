@@ -26,19 +26,116 @@ namespace Imaging
     public sealed class Cif
     {
         /// <summary>
-        /// The cif image
+        ///     The cif image
         /// </summary>
-        private readonly Dictionary<Color, SortedSet<int>> _cifImage = new();
+        private Dictionary<Color, SortedSet<int>> _cifImage = new();
 
         /// <summary>
-        /// The cif sorted
+        ///     The cif sorted
         /// </summary>
         private Dictionary<Color, SortedSet<int>> _cifSorted = new();
 
         /// <summary>
-        /// The sort required
+        ///     The sort required
         /// </summary>
         private bool _sortRequired = true;
+
+        /// <summary>
+        ///     Gets a value indicating whether this <see cref="DirectBitmap" /> is disposed.
+        /// </summary>
+        /// <value>
+        ///     <c>true</c> if disposed; otherwise, <c>false</c>.
+        /// </value>
+        private bool Disposed { get; set; }
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="Cif" /> class.
+        /// </summary>
+        /// <param name="path">The path.</param>
+        /// <param name="imageFormat">The image format.</param>
+        /// <exception cref="ArgumentNullException">Interface was null. - ICustomImageFormat</exception>
+        /// <exception cref="ArgumentException">Path was empty. - path</exception>
+        public Cif(string path, ICustomImageFormat imageFormat)
+        {
+            if (imageFormat == null)
+            {
+                throw new ArgumentNullException(nameof(imageFormat), ImagingResources.ErrorInterface);
+            }
+
+            if (string.IsNullOrEmpty(path))
+            {
+                throw new ArgumentException(ImagingResources.ErrorPath, nameof(path));
+            }
+
+            var cif = imageFormat.GetCif(path);
+
+            Height = cif.Height;
+            Width = cif.Width;
+            Compressed = false;
+
+
+            CifImage = cif.CifImage;
+            NumberOfColors = cif.NumberOfColors;
+        }
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="Cif" /> class.
+        /// </summary>
+        /// <param name="image">The image.</param>
+        /// <param name="imageFormat">The custom image format.</param>
+        /// <exception cref="ArgumentNullException">Image was null. - image</exception>
+        public Cif(Bitmap image, ICustomImageFormat imageFormat = null)
+        {
+            if (image == null)
+            {
+                throw new ArgumentNullException(nameof(image), ImagingResources.ErrorImage);
+            }
+
+            if (imageFormat != null)
+            {
+                ImageFormat = imageFormat;
+            }
+
+            Height = image.Height;
+            Width = image.Width;
+            Compressed = false;
+
+            Dictionary<Color, SortedSet<int>> cif;
+
+            if (imageFormat == null)
+            {
+                cif = CifProcessing.ConvertToCifFromBitmap(image);
+                CifImage = cif;
+                NumberOfColors = cif.Count;
+                return;
+            }
+
+            cif = imageFormat.GenerateCifFromBitmap(image).CifImage;
+            CifImage = cif;
+            NumberOfColors = cif.Count;
+        }
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="Cif" /> class.
+        /// </summary>
+        /// <param name="imageFormat">The custom image format.</param>
+        public Cif(ICustomImageFormat imageFormat = null)
+        {
+            if (imageFormat != null)
+            {
+                ImageFormat = imageFormat;
+            }
+
+            Compressed = false;
+        }
+
+        /// <summary>
+        ///     Gets or sets the image format.
+        /// </summary>
+        /// <value>
+        ///     The image format.
+        /// </value>
+        public ICustomImageFormat ImageFormat { get; private set; }
 
         /// <summary>
         ///     The cif image
@@ -46,7 +143,7 @@ namespace Imaging
         public Dictionary<Color, SortedSet<int>> CifImage
         {
             get => _cifImage;
-            init
+            set
             {
                 _cifImage = value;
                 _sortRequired = true;
@@ -94,27 +191,20 @@ namespace Imaging
         public int NumberOfColors { get; init; }
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Cif"/> class.
+        ///     Gets all the colors of an Image.
         /// </summary>
-        /// <param name="image">The image.</param>
-        public Cif(Bitmap image)
-        {
-            var format = CifProcessing.ConvertToCif(image);
-
-            Compressed = false;
-            Height = image.Height;
-            Width = image.Width;
-            CifImage = format;
-            NumberOfColors = format.Count;
-        }
+        /// <value>
+        ///     A list of colors.
+        /// </value>
+        public List<Color> Colors => _cifImage.Keys.ToList();
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="Cif"/> class.
+        /// Gets the color count.
         /// </summary>
-        public Cif()
-        {
-            Compressed = false;
-        }
+        /// <value>
+        /// The color count.
+        /// </value>
+        public Dictionary<Color, int> ColorCount => GetColorCount();
 
         /// <summary>
         ///     Changes the color.
@@ -194,12 +284,18 @@ namespace Imaging
         /// <summary>
         /// Gets the color, it is quite a fast way, if the image is big and the color count is low!
         /// </summary>
-        /// 
         /// <param name="id">The identifier.</param>
-        /// <returns>Color at this point or null, if id was completely wrong.</returns>
+        /// <returns>
+        /// Color at this point or throw an exception, if id was completely wrong.
+        /// </returns>
+        /// <exception cref="System.ArgumentOutOfRangeException">id</exception>
+        /// <exception cref="System.Collections.Generic.KeyNotFoundException">id</exception>
         public Color GetColor(int id)
         {
-            if (id < 0 || id > Height * Width) return Color.Transparent;
+            if (id < 0 || id > Height * Width)
+            {
+                throw new ArgumentOutOfRangeException(nameof(id), ImagingResources.ErrorInterface);
+            }
 
             // Check if sorting is required and perform lazy loading
             if (_sortRequired)
@@ -210,10 +306,13 @@ namespace Imaging
 
             foreach (var (color, value) in _cifSorted)
             {
-                if (value.Contains(id)) return color;
+                if (value.Contains(id))
+                {
+                    return color;
+                }
             }
 
-            return Color.Transparent;
+            throw new KeyNotFoundException(nameof(id));
         }
 
         /// <summary>
@@ -279,7 +378,62 @@ namespace Imaging
         }
 
         /// <summary>
-        /// Sorts the Dictionary.
+        /// Gets the color count.
+        /// </summary>
+        /// <returns>Color and Counts sorted by most first</returns>
+        private Dictionary<Color, int> GetColorCount()
+        {
+            var colorCount = new Dictionary<Color, int>(NumberOfColors);
+
+            foreach (var (color, sortedSet) in CifImage)
+            {
+                colorCount.Add(color, sortedSet.Count);
+            }
+
+            // Sort the dictionary by value in descending order
+            return colorCount.OrderByDescending(kv => kv.Value).ToDictionary(kv => kv.Key, kv => kv.Value);
+        }
+
+        /// <summary>
+        ///     Releases unmanaged and - optionally - managed resources.
+        /// </summary>
+        /// <param name="disposing">
+        ///     <c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only
+        ///     unmanaged resources.
+        /// </param>
+        private void Dispose(bool disposing)
+        {
+            if (Disposed)
+            {
+                return;
+            }
+
+            if (disposing)
+            {
+                // free managed resources
+                _cifImage = null;
+                _cifSorted = null;
+                CifImage = null;
+                ImageFormat = null;
+            }
+
+            Disposed = true;
+        }
+
+        /// <summary>
+        ///     NOTE: Leave out the finalizer altogether if this class doesn't
+        ///     own unmanaged resources, but leave the other methods
+        ///     exactly as they are.
+        ///     Finalizes an instance of the <see cref="Cif" /> class.
+        /// </summary>
+        ~Cif()
+        {
+            // Finalizer calls Dispose(false)
+            Dispose(false);
+        }
+
+        /// <summary>
+        ///     Sorts the Dictionary.
         /// </summary>
         /// <param name="value">The value.</param>
         /// <returns>Sorted Dictionary from biggest Count to lowest</returns>

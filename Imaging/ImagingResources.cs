@@ -44,6 +44,11 @@ namespace Imaging
         internal const char Separator = ',';
 
         /// <summary>
+        ///     The Interval Splitter (const). Value: "-".
+        /// </summary>
+        internal const string IntervalSplitter = "-";
+
+        /// <summary>
         ///     Separator (const). Value: " , ".
         /// </summary>
         internal const string Indexer = " , ";
@@ -97,6 +102,21 @@ namespace Imaging
         ///     The Tif Extension (const). Value: ".tif"
         /// </summary>
         public const string TifExt = ".tif";
+
+        /// <summary>
+        ///     The error, interface is null (const). Value: "Error: Interface is Null."
+        /// </summary>
+        public const string ErrorInterface = "Error: Interface is Null.";
+
+        /// <summary>
+        ///     The error, image is null (const). Value: "Error: Image is Null."
+        /// </summary>
+        public const string ErrorImage = "Error: Image is Null.";
+
+        /// <summary>
+        ///     The error, Path is null (const). Value: "Error: Path is Null."
+        /// </summary>
+        public const string ErrorPath = "Error: Path is Null.";
 
         /// <summary>
         ///     The File Appendix

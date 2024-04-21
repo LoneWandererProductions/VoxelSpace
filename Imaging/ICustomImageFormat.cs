@@ -14,36 +14,43 @@ using System.Drawing;
 namespace Imaging
 {
     /// <summary>
-    /// Interface for Custom Image Format
+    ///     Interface for Custom Image Format
     /// </summary>
-    internal interface ICustomImageFormat
+    public interface ICustomImageFormat
     {
         /// <summary>
-        /// Gets the cif file.
+        ///     Get a cif file from defined path.
+        /// </summary>
+        /// <param name="path">The path.</param>
+        /// <returns>Image as pure Cif format</returns>
+        Cif GetCif(string path);
+
+        /// <summary>
+        ///     Generates Image from Cif.
         /// </summary>
         /// <param name="path">The path.</param>
         /// <returns>A bitmap Image</returns>
-        Bitmap GetCifFile(string path);
+        Bitmap GetImageFromCif(string path);
 
         /// <summary>
-        /// Gets the cif file.
+        ///     Generate Cif from Bitmap
         /// </summary>
         /// <param name="image">The image.</param>
         /// <returns>Custom Image Format of the Image</returns>
-        Cif GetCifFile(Bitmap image);
+        Cif GenerateCifFromBitmap(Bitmap image);
 
         /// <summary>
-        /// Saves to cif file.
+        ///     Saves Bitmap to cif file.
         /// </summary>
         /// <param name="image">The image.</param>
         /// <param name="path">The path.</param>
-        void SaveToCifFile(Bitmap image, string path);
+        void GenerateBitmapToCifFile(Bitmap image, string path);
 
         /// <summary>
-        /// Compressed cif file.
+        ///     Compressed cif file.
         /// </summary>
         /// <param name="image">The image.</param>
         /// <param name="path">The path.</param>
-        void CompressedToCifFile(Bitmap image, string path);
+        void GenerateCifCompressedFromBitmap(Bitmap image, string path);
     }
 }

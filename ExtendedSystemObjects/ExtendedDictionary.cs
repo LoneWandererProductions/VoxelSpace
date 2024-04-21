@@ -45,6 +45,28 @@ namespace ExtendedSystemObjects
         }
 
         /// <summary>
+        ///     Adds the specified key and adds a new initialized SortedList.
+        /// </summary>
+        /// <typeparam name="TKey">The type of the key.</typeparam>
+        /// <typeparam name="TValue">The type of the value.</typeparam>
+        /// <param name="dic">The dic.</param>
+        /// <param name="key">The key.</param>
+        /// <param name="value">The value.</param>
+        public static void Add<TKey, TValue>(this IDictionary<TKey, SortedSet<TValue>> dic,
+            TKey key, TValue value)
+        {
+            if (dic.ContainsKey(key))
+            {
+                dic[key].Add(value);
+            }
+            else
+            {
+                dic.Add(key, new SortedSet<TValue>());
+                dic[key].Add(value);
+            }
+        }
+
+        /// <summary>
         ///     Add or Replace Key Value Pair
         /// </summary>
         /// <typeparam name="TKey">Internal Key</typeparam>

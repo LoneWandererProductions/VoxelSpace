@@ -14,6 +14,8 @@
 // ReSharper disable MemberCanBeInternal
 
 using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.Runtime.InteropServices;
@@ -208,6 +210,19 @@ namespace Imaging
         }
 
         /// <summary>
+        ///     Sets the area.
+        /// </summary>
+        /// <param name="idList">The identifier list.</param>
+        /// <param name="color">The color.</param>
+        public void SetArea(IEnumerable<int> idList, Color color)
+        {
+            foreach (var index in idList)
+            {
+                _bits[index] = color.ToArgb();
+            }
+        }
+
+        /// <summary>
         ///     Sets the pixel.
         /// </summary>
         /// <param name="x">The x.</param>
@@ -236,6 +251,7 @@ namespace Imaging
         ///     Gets the color list.
         /// </summary>
         /// <returns>The Image as a list of Colors</returns>
+        [return: MaybeNull]
         public Span<Color> GetColors()
         {
             if (_bits == null)
@@ -273,7 +289,7 @@ namespace Imaging
                 info = string.Concat(info, _bits[i], ImagingResources.Indexer);
             }
 
-            return string.Concat(info, _bits[_bits.Length]);
+            return string.Concat(info, ImagingResources.Spacing, _bits[_bits.Length]);
         }
 
         /// <summary>
