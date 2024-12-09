@@ -15,11 +15,12 @@
 
 using System;
 using System.Collections.Generic;
-using System.Diagnostics.CodeAnalysis;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Linq;
+using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Threading.Tasks;
 
 namespace Imaging
 {
@@ -30,14 +31,6 @@ namespace Imaging
     /// <seealso cref="T:System.IDisposable" />
     public sealed class DirectBitmap : IDisposable
     {
-        /// <summary>
-        ///     Gets the bits.
-        /// </summary>
-        /// <value>
-        ///     The bits.
-        /// </value>
-        private int[] _bits;
-
         /// <summary>
         ///     Initializes a new instance of the <see cref="DirectBitmap" /> class.
         ///     Bitmap which references pixel data directly
@@ -51,7 +44,6 @@ namespace Imaging
         {
             Width = width;
             Height = height;
-
             Initiate();
         }
 
@@ -67,7 +59,6 @@ namespace Imaging
         {
             Width = btm.Width;
             Height = btm.Height;
-
             Initiate();
 
             using var graph = Graphics.FromImage(Bitmap);
@@ -76,12 +67,20 @@ namespace Imaging
         }
 
         /// <summary>
+        ///     Gets the bits.
+        /// </summary>
+        /// <value>
+        ///     The bits.
+        /// </value>
+        public int[] Bits { get; private set; }
+
+        /// <summary>
         ///     Gets the bitmap.
         /// </summary>
         /// <value>
         ///     The bitmap.
         /// </value>
-        public Bitmap Bitmap { get; set; }
+        public Bitmap Bitmap { get; private set; }
 
         /// <summary>
         ///     Gets a value indicating whether this <see cref="DirectBitmap" /> is disposed.
@@ -132,10 +131,14 @@ namespace Imaging
         /// </summary>
         private void Initiate()
         {
-            _bits = new int[Width * Height];
-            BitsHandle = GCHandle.Alloc(_bits, GCHandleType.Pinned);
+            Bits = new int[Width * Height];
+            BitsHandle = GCHandle.Alloc(Bits, GCHandleType.Pinned);
             Bitmap = new Bitmap(Width, Height, Width * 4, PixelFormat.Format32bppPArgb,
                 BitsHandle.AddrOfPinnedObject());
+
+            // Make the background transparent
+            using var g = Graphics.FromImage(Bitmap);
+            g.Clear(Color.Transparent);
         }
 
         /// <summary>
@@ -163,16 +166,13 @@ namespace Imaging
         /// <param name="color">The color.</param>
         public void DrawVerticalLine(int x, int y, int height, Color color)
         {
-            for (var i = y; i < height; i++)
-            {
-                SetPixel(x, i, color);
-            }
+            var colorArgb = color.ToArgb();
+            for (var i = y; i < y + height && i < Height; i++) Bits[x + i * Width] = colorArgb;
         }
 
         /// <summary>
         ///     Draws a horizontal line with a specified color.
         ///     For now Microsoft's Rectangle Method is faster in certain circumstances
-        ///     ///
         /// </summary>
         /// <param name="x">The x Coordinate.</param>
         /// <param name="y">The y Coordinate.</param>
@@ -180,32 +180,52 @@ namespace Imaging
         /// <param name="color">The color.</param>
         public void DrawHorizontalLine(int x, int y, int length, Color color)
         {
-            for (var i = x; i < length; i++)
-            {
-                SetPixel(i, y, color);
-            }
+            if (y < 0 || y >= Height || length <= 0) return;
+
+            var colorArgb = color.ToArgb();
+            var vectorCount = Vector<int>.Count;
+            var colorVector = new Vector<int>(colorArgb);
+
+            var endX = Math.Min(x + length, Width);
+
+            // Align start position to the next multiple of vectorCount if possible
+            var startX = (x + vectorCount - 1) & ~(vectorCount - 1);
+
+            // Fill initial non-aligned part
+            for (var i = x; i < startX && i < endX; i++) Bits[i + y * Width] = colorArgb;
+
+            // Fill aligned part with SIMD
+            for (var xPos = startX; xPos + vectorCount <= endX; xPos += vectorCount)
+                colorVector.CopyTo(Bits, xPos + y * Width);
+
+            // Fill final non-aligned part
+            for (var i = endX - vectorCount; i < endX; i++) Bits[i + y * Width] = colorArgb;
         }
 
         /// <summary>
         ///     Draws the rectangle.
         ///     For now Microsoft's Rectangle Method is faster
         /// </summary>
-        /// <param name="x">The x Coordinate.</param>
-        /// <param name="y">The y Coordinate.</param>
+        /// <param name="x1">The x Coordinate.</param>
+        /// <param name="y2">The y Coordinate.</param>
         /// <param name="width">The width.</param>
         /// <param name="height">The height.</param>
         /// <param name="color">The color.</param>
-        public void DrawRectangle(int x, int y, int width, int height, Color color)
+        public void DrawRectangle(int x1, int y2, int width, int height, Color color)
         {
-            if (width > height)
+            var colorArgb = color.ToArgb();
+            var vectorCount = Vector<int>.Count;
+            var colorVector = new Vector<int>(colorArgb);
+
+            for (var y = y2; y < y2 + height && y < Height; y++)
+            for (var x = x1; x < x1 + width && x < Width; x += vectorCount)
             {
-                Parallel.For(x, height,
-                    index => DrawVerticalLine(index, y, width, color));
-            }
-            else
-            {
-                Parallel.For(y, width,
-                    index => DrawHorizontalLine(x, index, height, color));
+                var startIndex = x + y * Width;
+                if (startIndex + vectorCount <= Bits.Length)
+                    colorVector.CopyTo(Bits, startIndex);
+                else
+                    for (var j = 0; j < vectorCount && startIndex + j < Bits.Length; j++)
+                        Bits[startIndex + j] = colorArgb;
             }
         }
 
@@ -216,9 +236,28 @@ namespace Imaging
         /// <param name="color">The color.</param>
         public void SetArea(IEnumerable<int> idList, Color color)
         {
-            foreach (var index in idList)
+            var colorArgb = color.ToArgb();
+            var indices = idList.ToArray();
+            var vectorCount = Vector<int>.Count;
+
+            for (var i = 0; i < indices.Length; i += vectorCount)
             {
-                _bits[index] = color.ToArgb();
+                var chunkSize = Math.Min(vectorCount, indices.Length - i);
+
+                if (chunkSize == vectorCount)
+                {
+                    var indexVector = new Vector<int>(indices, i);
+
+                    for (var j = 0; j < chunkSize; j++)
+                        if (indexVector[j] < Bits.Length)
+                            Bits[indexVector[j]] = colorArgb;
+                }
+                else
+                {
+                    for (var j = i; j < i + chunkSize; j++)
+                        if (indices[j] < Bits.Length)
+                            Bits[indices[j]] = colorArgb;
+                }
             }
         }
 
@@ -228,10 +267,58 @@ namespace Imaging
         /// <param name="x">The x.</param>
         /// <param name="y">The y.</param>
         /// <param name="color">The color.</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetPixel(int x, int y, Color color)
         {
-            var index = x + (y * Width);
-            _bits[index] = color.ToArgb();
+            var index = x + y * Width;
+            Bits[index] = color.ToArgb();
+        }
+
+        /// <summary>
+        ///     Sets the pixels using SIMD for performance improvement.
+        ///     Be careful when to return values. The Bitmap might be premature disposed.
+        /// </summary>
+        /// <param name="pixels">
+        ///     An IEnumerable of pixels, each defined by x, y coordinates and a Color.
+        /// </param>
+        /// <summary>
+        ///     Sets the pixels using SIMD for performance improvement.
+        ///     Be careful when to return values. The Bitmap might be premature disposed.
+        /// </summary>
+        public void SetPixelsSimd(IEnumerable<(int x, int y, Color color)> pixels)
+        {
+            var pixelArray = pixels.ToArray();
+            var vectorCount = Vector<int>.Count;
+
+            // Ensure Bits array is properly initialized
+            if (Bits == null || Bits.Length < Width * Height)
+                throw new InvalidOperationException(ImagingResources.ErrorInvalidOperation);
+
+            for (var i = 0; i < pixelArray.Length; i += vectorCount)
+            {
+                var indices = new int[vectorCount];
+                var colors = new int[vectorCount];
+
+                // Load data into vectors
+                for (var j = 0; j < vectorCount; j++)
+                    if (i + j < pixelArray.Length)
+                    {
+                        var (x, y, color) = pixelArray[i + j];
+                        indices[j] = x + y * Width;
+                        colors[j] = color.ToArgb();
+                    }
+                    else
+                    {
+                        // Handle cases where the remaining elements are less than vectorCount
+                        indices[j] = 0;
+                        colors[j] = Color.Transparent.ToArgb(); // Use a default color or handle it as needed
+                    }
+
+                // Write data to Bits array
+                for (var j = 0; j < vectorCount; j++)
+                    if (i + j < pixelArray.Length)
+                        Bits[indices[j]] = colors[j];
+            }
         }
 
         /// <summary>
@@ -240,10 +327,11 @@ namespace Imaging
         /// <param name="x">The x.</param>
         /// <param name="y">The y.</param>
         /// <returns>Color of the Pixel</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public Color GetPixel(int x, int y)
         {
-            var index = x + (y * Width);
-            var col = _bits[index];
+            var index = x + y * Width;
+            var col = Bits[index];
             return Color.FromArgb(col);
         }
 
@@ -251,23 +339,17 @@ namespace Imaging
         ///     Gets the color list.
         /// </summary>
         /// <returns>The Image as a list of Colors</returns>
-        [return: MaybeNull]
         public Span<Color> GetColors()
         {
-            if (_bits == null)
-            {
-                return null;
-            }
+            if (Bits == null) return null;
 
             var length = Height * Width;
-
             var array = new Color[length];
-
             var span = new Span<Color>(array, 0, length);
 
             for (var i = 0; i < length; i++)
             {
-                var col = _bits[i];
+                var col = Bits[i];
                 span[i] = Color.FromArgb(col);
             }
 
@@ -284,12 +366,9 @@ namespace Imaging
         {
             var info = string.Empty;
 
-            for (var i = 0; i < _bits.Length - 1; i++)
-            {
-                info = string.Concat(info, _bits[i], ImagingResources.Indexer);
-            }
+            for (var i = 0; i < Bits.Length - 1; i++) info = string.Concat(info, Bits[i], ImagingResources.Indexer);
 
-            return string.Concat(info, ImagingResources.Spacing, _bits[_bits.Length]);
+            return string.Concat(info, ImagingResources.Spacing, Bits[Bits.Length]);
         }
 
         /// <summary>
@@ -312,16 +391,15 @@ namespace Imaging
         /// </param>
         private void Dispose(bool disposing)
         {
-            if (Disposed)
-            {
-                return;
-            }
+            if (Disposed) return;
 
             if (disposing)
             {
                 // free managed resources
-                Bitmap.Dispose();
-                BitsHandle.Free();
+                Bitmap?.Dispose();
+
+                // Free the GCHandle if it is allocated
+                if (BitsHandle.IsAllocated) BitsHandle.Free();
             }
 
             Disposed = true;

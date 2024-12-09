@@ -12,6 +12,7 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using Color = System.Drawing.Color;
@@ -86,7 +87,7 @@ namespace Imaging
         /// </returns>
         /// <exception cref="ArgumentNullException">if Image is null</exception>
         /// <exception cref="OutOfMemoryException">Memory Exceeded</exception>
-        Bitmap FilterImage(Bitmap image, ImageFilter filter);
+        Bitmap FilterImage(Bitmap image, ImageFilters filter);
 
         /// <summary>
         ///     Combines the bitmaps overlays them and merges them into one Image
@@ -125,6 +126,22 @@ namespace Imaging
         /// <returns>The cut Image</returns>
         /// <exception cref="ArgumentNullException"></exception>
         Bitmap CutBitmap(Bitmap image, int x, int y, int height, int width);
+
+        /// <summary>
+        ///     Cuts the bitmap.
+        /// </summary>
+        /// <param name="image">The image.</param>
+        /// <param name="width">The width.</param>
+        /// <param name="height">The height.</param>
+        /// <param name="shape">The shape.</param>
+        /// <param name="shapeParams">The shape parameters.</param>
+        /// <param name="startPoint">The start point.</param>
+        /// <returns>
+        ///     The cut Image, based on the shape
+        /// </returns>
+        /// <exception cref="ArgumentNullException"></exception>
+        Bitmap CutBitmap(Bitmap image, int width, int height, MaskShape shape, object shapeParams = null,
+            Point? startPoint = null);
 
         /// <summary>
         ///     Cuts a bitmap.
@@ -270,6 +287,14 @@ namespace Imaging
         Bitmap ConvertWhiteToTransparent(Bitmap image, int threshold);
 
         /// <summary>
+        ///     Pixelate the specified image.
+        /// </summary>
+        /// <param name="image">The image.</param>
+        /// <param name="stepWidth">Width of the step.</param>
+        /// <returns>Pixelated Image</returns>
+        Bitmap Pixelate(Bitmap image, int stepWidth = 2);
+
+        /// <summary>
         ///     Gets the pixel.
         /// </summary>
         /// <param name="image">The image.</param>
@@ -320,12 +345,138 @@ namespace Imaging
         Bitmap SetPixel(Bitmap image, Point point, Color color, int radius);
 
         /// <summary>
+        ///     Floods the fill scan line stack.
+        /// </summary>
+        /// <param name="image">The image.</param>
+        /// <param name="x">The x.</param>
+        /// <param name="y">The y.</param>
+        /// <param name="newColor">The new color.</param>
+        /// <returns>Bitmap with filled area</returns>
+        Bitmap FloodFillScanLineStack(Bitmap image, int x, int y, Color newColor);
+
+        /// <summary>
+        ///     Adjusts the brightness.
+        /// </summary>
+        /// <param name="image">The image.</param>
+        /// <param name="brightnessFactor">The brightness factor.</param>
+        /// <returns>
+        ///     The changed image as Bitmap
+        /// </returns>
+        Bitmap AdjustBrightness(Bitmap image, float brightnessFactor);
+
+        /// <summary>
+        ///     Combines two images by averaging their pixel values.
+        /// </summary>
+        /// <param name="imgOne">The first image.</param>
+        /// <param name="imgTwo">The second image.</param>
+        /// <returns>A bitmap resulting from the average of the two images, or null if an error occurs.</returns>
+        Bitmap AverageImages(Image imgOne, Image imgTwo);
+
+        /// <summary>
+        ///     Combines two images by adding their pixel values.
+        /// </summary>
+        /// <param name="imgOne">The first image.</param>
+        /// <param name="imgTwo">The second image.</param>
+        /// <returns>A bitmap resulting from the addition of the two images, or null if an error occurs.</returns>
+        Bitmap AddImages(Image imgOne, Image imgTwo);
+
+        /// <summary>
+        ///     Combines two images by subtracting the pixel values of the first image from the second image.
+        /// </summary>
+        /// <param name="imgOne">The first image.</param>
+        /// <param name="imgTwo">The second image.</param>
+        /// <returns>A bitmap resulting from the subtraction of the two images, or null if an error occurs.</returns>
+        Bitmap SubtractImages(Image imgOne, Image imgTwo);
+
+        /// <summary>
+        ///     Combines two images by multiplying their pixel values.
+        /// </summary>
+        /// <param name="imgOne">The first image.</param>
+        /// <param name="imgTwo">The second image.</param>
+        /// <returns>A bitmap resulting from the multiplication of the two images, or null if an error occurs.</returns>
+        Bitmap MultiplyImages(Image imgOne, Image imgTwo);
+
+        /// <summary>
+        ///     Cross-fades between two images based on the given factor.
+        /// </summary>
+        /// <param name="imgOne">The first image.</param>
+        /// <param name="imgTwo">The second image.</param>
+        /// <param name="factor">The blending factor (0.0 to 1.0).</param>
+        /// <returns>A bitmap resulting from the cross-fading of the two images, or null if an error occurs.</returns>
+        Bitmap CrossFadeImages(Image imgOne, Image imgTwo, float factor);
+
+        /// <summary>
+        ///     Finds the minimum color values from two images.
+        /// </summary>
+        /// <param name="imgOne">The first image.</param>
+        /// <param name="imgTwo">The second image.</param>
+        /// <returns>A bitmap resulting from the minimum values of the two images, or null if an error occurs.</returns>
+        Bitmap MinImages(Image imgOne, Image imgTwo);
+
+        /// <summary>
+        ///     Finds the maximum color values from two images.
+        /// </summary>
+        /// <param name="imgOne">The first image.</param>
+        /// <param name="imgTwo">The second image.</param>
+        /// <returns>A bitmap resulting from the maximum values of the two images, or null if an error occurs.</returns>
+        Bitmap MaxImages(Image imgOne, Image imgTwo);
+
+        /// <summary>
+        ///     Calculates the amplitude of the pixel values between two images.
+        /// </summary>
+        /// <param name="imgOne">The first image.</param>
+        /// <param name="imgTwo">The second image.</param>
+        /// <returns>A bitmap resulting from the amplitude of the two images, or null if an error occurs.</returns>
+        Bitmap AmplitudeImages(Image imgOne, Image imgTwo);
+
+        /// <summary>
+        ///     Adjusts the hue.
+        /// </summary>
+        /// <param name="image">The image.</param>
+        /// <param name="hueShift">The hue shift.</param>
+        /// <returns>Bitmap with adjusted Hue.</returns>
+        Bitmap AdjustHue(Bitmap image, double hueShift);
+
+        /// <summary>
+        ///     Adjusts the saturation.
+        /// </summary>
+        /// <param name="image">The image.</param>
+        /// <param name="saturationFactor">The saturation factor.</param>
+        /// <returns>Bitmap with adjusted Saturation.</returns>
+        Bitmap AdjustSaturation(Bitmap image, double saturationFactor);
+
+        /// <summary>
+        ///     Adjusts the brightness.
+        /// </summary>
+        /// <param name="image">The image.</param>
+        /// <param name="brightnessFactor">The brightness factor.</param>
+        /// <returns>Bitmap with adjusted brightness.</returns>
+        Bitmap AdjustBrightness(Bitmap image, double brightnessFactor);
+
+        /// <summary>
+        ///     Applies the gamma correction.
+        /// </summary>
+        /// <param name="image">The image.</param>
+        /// <param name="gamma">The gamma.</param>
+        /// <returns>Bitmap with adjusted Gamma.</returns>
+        Bitmap ApplyGammaCorrection(Bitmap image, double gamma);
+
+        /// <summary>
+        ///     Adjusts the color.
+        /// </summary>
+        /// <param name="image">The image.</param>
+        /// <param name="sourceColor">Color of the source.</param>
+        /// <param name="targetColor">Color of the target.</param>
+        /// <returns>Color adjusted Bitmap</returns>
+        Bitmap AdjustColor(Bitmap image, Color sourceColor, Color targetColor);
+
+        /// <summary>
         ///     Splits the GIF.
         /// </summary>
         /// <param name="path">The path.</param>
         /// <returns>List of Images from gif</returns>
         /// <exception cref="IOException">Could not find the File</exception>
-        List<Bitmap> SplitGif(string path);
+        Task<List<Bitmap>> SplitGif(string path);
 
         /// <summary>
         ///     Loads the GIF.
@@ -333,7 +484,7 @@ namespace Imaging
         /// <param name="path">The path.</param>
         /// <returns>List of Images from gif as ImageSource</returns>
         /// <exception cref="IOException">Could not find the File</exception>
-        List<ImageSource> LoadGif(string path);
+        Task<List<ImageSource>> LoadGifAsync(string path);
 
         /// <summary>
         ///     Creates a gif.
@@ -348,5 +499,26 @@ namespace Imaging
         /// <param name="path">The paths of the images.</param>
         /// <param name="target">The target File.</param>
         void CreateGif(List<string> path, string target);
+
+        /// <summary>
+        /// Creates a gif.
+        /// </summary>
+        /// <param name="images">List off bitmaps and timer data</param>
+        /// <param name="target">The target File.</param>
+        void CreateGif(List<FrameInfo> images, string target);
+
+        /// <summary>
+        ///     Bitmaps to base64.
+        /// </summary>
+        /// <param name="bitmap">The bitmap.</param>
+        /// <returns>Image as string</returns>
+        string BitmapToBase64(Bitmap bitmap);
+
+        /// <summary>
+        ///     Bitmaps the image to base64.
+        /// </summary>
+        /// <param name="bitmapImage">The bitmap image.</param>
+        /// <returns>Image as string</returns>
+        string BitmapImageToBase64(BitmapImage bitmapImage);
     }
 }

@@ -1,14 +1,14 @@
 ﻿/*
- * COPYRIGHT:   See COPYING in the top level directory
- * PROJECT:     Imaging
- * FILE:        Imaging/ColorHsv.cs
- * PURPOSE:     General Conversions of all Types of Color Displays, Todo Sort out Degree and radian a bit more
- * PROGRAMER:   Peter Geinitz (Wayfarer)
- * SOURCE:      https://manufacture.tistory.com/33
- *              https://www.rapidtables.com/convert/color/rgb-to-hsv.html
- *              https://en.wikipedia.org/wiki/HSL_and_HSV
- *              https://docs.microsoft.com/de-de/dotnet/fundamentals/code-analysis/quality-rules/ca1036
- */
+* COPYRIGHT:   See COPYING in the top level directory
+* PROJECT:     Imaging
+* FILE:        Imaging/ColorHsv.cs
+* PURPOSE:     General Conversions of all Types of Color Displays, Todo Sort out Degree and radian a bit more
+* PROGRAMER:   Peter Geinitz (Wayfarer)
+* SOURCE:      https://manufacture.tistory.com/33
+*              https://www.rapidtables.com/convert/color/rgb-to-hsv.html
+*              https://en.wikipedia.org/wiki/HSL_and_HSV
+*              https://docs.microsoft.com/de-de/dotnet/fundamentals/code-analysis/quality-rules/ca1036
+*/
 
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable MemberCanBeInternal
@@ -32,6 +32,15 @@ namespace Imaging
         /// <summary>
         ///     Initializes a new instance of the <see cref="ColorHsv" /> class.
         /// </summary>
+        /// <param name="color">The color.</param>
+        public ColorHsv(int color)
+        {
+            ColorToHsv(color);
+        }
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="ColorHsv" /> class.
+        /// </summary>
         /// <param name="h">The h. Hue.</param>
         /// <param name="s">The s. Saturation</param>
         /// <param name="v">The v. Value</param>
@@ -50,20 +59,11 @@ namespace Imaging
         /// <param name="a">The Hue value.</param>
         public ColorHsv(int r, int g, int b, int a)
         {
-            if (r == -1)
-            {
-                return;
-            }
+            if (r == -1) return;
 
-            if (g == -1)
-            {
-                return;
-            }
+            if (g == -1) return;
 
-            if (b == -1)
-            {
-                return;
-            }
+            if (b == -1) return;
 
             ColorToHsv(r, g, b, a);
         }
@@ -97,17 +97,17 @@ namespace Imaging
         /// <summary>
         ///     The Hue Value, in our Case x.
         /// </summary>
-        public int R { get; private set; }
+        public int R { get; internal set; }
 
         /// <summary>
         ///     The s Value, saturation.
         /// </summary>
-        public int G { get; private set; }
+        public int G { get; internal set; }
 
         /// <summary>
         ///     The v, value
         /// </summary>
-        public int B { get; private set; }
+        public int B { get; internal set; }
 
         /// <summary>
         ///     The A, value, Alpha Channel
@@ -127,25 +127,13 @@ namespace Imaging
         /// <returns>If equal or not</returns>
         public bool Equals(ColorHsv other)
         {
-            if (other == null)
-            {
-                return false;
-            }
+            if (other == null) return false;
 
-            if (R != other.R)
-            {
-                return false;
-            }
+            if (R != other.R) return false;
 
-            if (G != other.G)
-            {
-                return false;
-            }
+            if (G != other.G) return false;
 
-            if (B != other.B)
-            {
-                return false;
-            }
+            if (B != other.B) return false;
 
             return A == other.A;
         }
@@ -167,13 +155,10 @@ namespace Imaging
 
             var degree = h * 180 / Math.PI;
 
-            if (degree is > 360 or < 0 || s is > 1 or < 0 || v is > 1 or < 0)
-            {
-                return;
-            }
+            if (degree is > 360 or < 0 || s is > 1 or < 0 || v is > 1 or < 0) return;
 
             var c = v * s;
-            var x = c * (1 - Math.Abs((degree / 60 % 2) - 1));
+            var x = c * (1 - Math.Abs(degree / 60 % 2 - 1));
             var m = v - c;
 
             double r = 0, g = 0, b = 0;
@@ -227,10 +212,7 @@ namespace Imaging
         /// <param name="hex">The hexadecimal.</param>
         public void RbgHex(string hex)
         {
-            if (string.IsNullOrEmpty(hex))
-            {
-                return;
-            }
+            if (string.IsNullOrEmpty(hex)) return;
 
             Color color;
 
@@ -238,14 +220,9 @@ namespace Imaging
             {
                 color = (Color)ColorConverter.ConvertFromString(hex);
             }
-            catch (NullReferenceException e)
+            catch (Exception ex) when (ex is NullReferenceException or FormatException)
             {
-                Trace.WriteLine(e);
-                return;
-            }
-            catch (FormatException e)
-            {
-                Trace.WriteLine(e);
+                Trace.WriteLine(ex);
                 return;
             }
 
@@ -271,11 +248,37 @@ namespace Imaging
             var min = Math.Min(r, Math.Min(g, b));
 
             H = GetHue(r, g, b);
-            S = max == 0 ? 0 : 1d - (1d * min / max);
+            S = max == 0 ? 0 : 1d - 1d * min / max;
             V = max / 255d;
 
             GetHex();
         }
+
+        /// <summary>
+        ///     Gets the RGBA values from an int.
+        /// </summary>
+        /// <returns>A tuple containing the RGBA values.</returns>
+        public void ColorToHsv(int color)
+        {
+            // Extract ARGB values from the unsigned integer
+            A = (byte)((color >> 24) & 0xFF); // Alpha
+            R = (byte)((color >> 16) & 0xFF); // Red
+            G = (byte)((color >> 8) & 0xFF); // Green
+            B = (byte)(color & 0xFF); // Blue
+
+            // Calculate max and min values for HSV conversion
+            var max = Math.Max(R, Math.Max(G, B));
+            var min = Math.Min(R, Math.Min(G, B));
+
+            // Calculate the hue, saturation, and value
+            H = GetHue(R, G, B);
+            S = max == 0 ? 0 : 1d - 1d * min / max;
+            V = max / 255d;
+
+            // Update the hex representation of the color
+            GetHex();
+        }
+
 
         /// <summary>
         ///     Hexadecimals to color.
@@ -283,10 +286,7 @@ namespace Imaging
         /// <param name="hex">The hexadecimal.</param>
         public void HexToColor(string hex)
         {
-            if (string.IsNullOrEmpty(hex))
-            {
-                return;
-            }
+            if (string.IsNullOrEmpty(hex)) return;
 
             var color = (Color)ColorConverter.ConvertFromString(hex);
 
@@ -305,6 +305,15 @@ namespace Imaging
         public Color GetColor()
         {
             return Color.FromArgb((byte)R, (byte)G, (byte)B, (byte)A);
+        }
+
+        /// <summary>
+        ///     Gets the color of the drawing.
+        /// </summary>
+        /// <returns>Color as System.Drawing</returns>
+        public System.Drawing.Color GetDrawingColor()
+        {
+            return System.Drawing.Color.FromArgb(A, R, G, B);
         }
 
         /// <summary>
@@ -337,14 +346,17 @@ namespace Imaging
         /// </returns>
         public static bool operator ==(ColorHsv left, ColorHsv right)
         {
-            return left?.Equals(right) == true;
+            if (ReferenceEquals(left, right)) return true; // Same reference
+            if (left is null || right is null) return false; // One is null
+
+            return left.Equals(right);
         }
 
         /// <summary>
         ///     Overwrite not equal
         /// </summary>
-        /// <param name="left"></param>
-        /// <param name="right"></param>
+        /// <param name="left">The left Operator</param>
+        /// <param name="right">The right Operator</param>
         /// <returns>Check if it is not equal</returns>
         public static bool operator !=(ColorHsv left, ColorHsv right)
         {
@@ -354,8 +366,8 @@ namespace Imaging
         /// <summary>
         ///     Overwrite smaller as
         /// </summary>
-        /// <param name="left"></param>
-        /// <param name="right"></param>
+        /// <param name="left">The left Operator</param>
+        /// <param name="right">The right Operator</param>
         /// <returns>Check if smaller</returns>
         public static bool operator <(ColorHsv left, ColorHsv right)
         {
@@ -365,8 +377,8 @@ namespace Imaging
         /// <summary>
         ///     Overwrite bigger as
         /// </summary>
-        /// <param name="left"></param>
-        /// <param name="right"></param>
+        /// <param name="left">The left Operator</param>
+        /// <param name="right">The right Operator</param>
         /// <returns>Check if bigger</returns>
         public static bool operator >(ColorHsv left, ColorHsv right)
         {
@@ -385,32 +397,20 @@ namespace Imaging
             double min = Math.Min(Math.Min(r, g), b);
             double max = Math.Max(Math.Max(r, g), b);
 
-            if (min.IsEqualTo(max, 10))
-            {
-                return 0;
-            }
+            if (min.IsEqualTo(max, 10)) return 0;
 
             double hue;
 
             if (max.IsEqualTo(r, 10))
-            {
                 hue = (g - b) / (max - min);
-            }
             else if (max.IsEqualTo(g, 10))
-            {
-                hue = 2f + ((b - r) / (max - min));
-            }
+                hue = 2f + (b - r) / (max - min);
             else
-            {
-                hue = 4f + ((r - g) / (max - min));
-            }
+                hue = 4f + (r - g) / (max - min);
 
             hue *= 60;
 
-            if (hue < 0)
-            {
-                hue += 360;
-            }
+            if (hue < 0) hue += 360;
 
             return hue * Math.PI / 180;
         }

@@ -23,6 +23,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Main", "Main\Main.csproj", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FileHandler", "FileHandler\FileHandler.csproj", "{347026CE-CFF4-42DA-88E7-00FC65932EBD}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RenderEngine", "RenderEngine\RenderEngine.csproj", "{9231255A-1ED2-4885-94F8-9455A951FCBB}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -57,6 +59,10 @@ Global
 		{347026CE-CFF4-42DA-88E7-00FC65932EBD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{347026CE-CFF4-42DA-88E7-00FC65932EBD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{347026CE-CFF4-42DA-88E7-00FC65932EBD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{9231255A-1ED2-4885-94F8-9455A951FCBB}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{9231255A-1ED2-4885-94F8-9455A951FCBB}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{9231255A-1ED2-4885-94F8-9455A951FCBB}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{9231255A-1ED2-4885-94F8-9455A951FCBB}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

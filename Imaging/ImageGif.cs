@@ -1,14 +1,16 @@
 ﻿/*
- * COPYRIGHT:   See COPYING in the top level directory
- * PROJECT:     Imaging
- * FILE:        Imaging/ImageGif.cs
- * PURPOSE:     Extends the Image Control and adds Gif Support via SourceGif Property
- * PROGRAMER:   Peter Geinitz (Wayfarer)
- */
+* COPYRIGHT:   See COPYING in the top level directory
+* PROJECT:     Imaging
+* FILE:        Imaging/ImageGif.cs
+* PURPOSE:     Extends the Image Control and adds Gif Support via SourceGif Property
+* PROGRAMER:   Peter Geinitz (Wayfarer)
+*/
 
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media;
@@ -16,12 +18,12 @@ using System.Windows.Media.Animation;
 
 namespace Imaging
 {
-    /// <inheritdoc />
+    /// <inheritdoc cref="Image" />
     /// <summary>
     ///     Extension for Image to play e.g. gif Images
     /// </summary>
     /// <seealso cref="Image" />
-    public sealed class ImageGif : Image
+    public sealed class ImageGif : Image, IDisposable
     {
         /// <summary>
         ///     The frame index property
@@ -55,9 +57,19 @@ namespace Imaging
         private List<ImageSource> _imageList;
 
         /// <summary>
+        ///     The is disposed
+        /// </summary>
+        private bool _isDisposed;
+
+        /// <summary>
         ///     The is initialized
         /// </summary>
         private bool _isInitialized;
+
+        /// <summary>
+        ///     The storyboard
+        /// </summary>
+        private Storyboard _storyboard;
 
         /// <inheritdoc />
         /// <summary>
@@ -72,9 +84,6 @@ namespace Imaging
         /// <summary>
         ///     Gets or sets the index of the frame.
         /// </summary>
-        /// <value>
-        ///     The index of the frame.
-        /// </value>
         public int FrameIndex
         {
             get => (int)GetValue(FrameIndexProperty);
@@ -82,7 +91,7 @@ namespace Imaging
         }
 
         /// <summary>
-        ///     Defines whether the animation starts on it's own
+        ///     Defines whether the animation starts on its own.
         /// </summary>
         public bool AutoStart
         {
@@ -93,103 +102,117 @@ namespace Imaging
         /// <summary>
         ///     Gets or sets the GIF source.
         /// </summary>
-        /// <value>
-        ///     The GIF source.
-        /// </value>
         public string GifSource
         {
             get => (string)GetValue(GifSourceProperty);
             set => SetValue(GifSourceProperty, value);
         }
 
+        /// <inheritdoc />
+        /// <summary>
+        ///     Releases unmanaged and - optionally - managed resources.
+        /// </summary>
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        ///     Occurs when [image loaded].
+        /// </summary>
+        public event EventHandler ImageLoaded;
+
         /// <summary>
         ///     Initializes this instance.
         /// </summary>
-        private void Initialize()
+        private async Task InitializeAsync()
         {
-            //check if Image exists
+            // Check if the image exists
             if (!File.Exists(GifSource))
-            {
+                // Log or show an error message
                 return;
-            }
 
-            var info = ImageGifHandler.GetImageInfo(GifSource);
-
-            //Todo Error News perhaps
-            if (info == null)
+            try
             {
-                return;
+                // Extract GIF metadata using ImageGifMetadataExtractor
+                var info = ImageGifMetadataExtractor.ExtractGifMetadata(GifSource);
+
+                // Handle possible error if GIF is not animated
+                if (info.Frames.Count == 0) return;
+
+                // Load the GIF frames using the handler
+                _imageList = await ImageGifHandler.LoadGif(GifSource);
+                Source = _imageList[0];
+
+                // Create a new storyboard for the GIF animation
+                _storyboard = new Storyboard();
+
+                // Create an animation for each frame
+                for (var i = 0; i < info.Frames.Count; i++)
+                {
+                    var frame = info.Frames[i];
+
+                    // Create an Int32Animation for the frame index
+                    var frameAnimation = new Int32Animation
+                    {
+                        From = i,
+                        To = i,
+                        Duration = new Duration(TimeSpan.FromSeconds(frame.DelayTime)),
+                        BeginTime = TimeSpan.FromSeconds(i * frame.DelayTime)
+                    };
+
+                    // Set the target property for the animation
+                    Storyboard.SetTarget(frameAnimation, this);
+                    Storyboard.SetTargetProperty(frameAnimation, new PropertyPath(FrameIndexProperty));
+
+                    // Add the frame animation to the storyboard
+                    _storyboard.Children.Add(frameAnimation);
+                }
+
+                // Set the storyboard to loop indefinitely
+                _storyboard.RepeatBehavior = RepeatBehavior.Forever;
+
+                _isInitialized = true;
+
+                // Fire the ImageLoaded event to notify that the GIF is ready
+                ImageLoaded?.Invoke(this, EventArgs.Empty);
+
+                // Optionally start the animation automatically if AutoStart is true
+                if (AutoStart) StartAnimation();
             }
-
-            _imageList = ImageGifHandler.LoadGif(GifSource);
-
-            Source = _imageList[0];
-
-            if (!info.IsAnimated)
+            catch (Exception ex)
             {
-                return;
-            }
-
-            var time = info.Frames / 10;
-
-            if (time < 1)
-            {
-                time = 1;
-            }
-
-            _animation = new Int32Animation(0, info.Frames - 1,
-                new Duration(new TimeSpan(0, 0, 0, time, 0))) { RepeatBehavior = RepeatBehavior.Forever };
-
-            Source = _imageList[0];
-
-            _isInitialized = true;
-
-            if (AutoStart)
-            {
-                StartAnimation();
+                Trace.Write(ex); // Log the error
             }
         }
 
         /// <summary>
         ///     Visibilities the property changed.
         /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The <see cref="DependencyPropertyChangedEventArgs" /> instance containing the event data.</param>
         private static void VisibilityPropertyChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
         {
             if ((Visibility)e.NewValue == Visibility.Visible)
-            {
                 ((ImageGif)sender).StartAnimation();
-            }
             else
-            {
                 ((ImageGif)sender).StopAnimation();
-            }
         }
 
         /// <summary>
         ///     Changing the index of the frame.
         /// </summary>
-        /// <param name="obj">The object.</param>
-        /// <param name="ev">The <see cref="DependencyPropertyChangedEventArgs" /> instance containing the event data.</param>
         private static void ChangingFrameIndex(DependencyObject obj, DependencyPropertyChangedEventArgs ev)
         {
-            if (!((ImageGif)obj).AutoStart)
-            {
-                return;
-            }
+            if (obj is not ImageGif { AutoStart: true } gifImage) return;
 
-            if (obj is ImageGif gifImage)
-            {
-                gifImage.Source = gifImage._imageList[(int)ev.NewValue];
-            }
+            var newIndex = (int)ev.NewValue;
+            if (newIndex >= 0 && newIndex < gifImage._imageList.Count)
+                gifImage.Source = gifImage._imageList[newIndex];
         }
 
         /// <summary>
         ///     Automatics the start property changed.
         /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The <see cref="DependencyPropertyChangedEventArgs" /> instance containing the event data.</param>
         private static void AutoStartPropertyChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
         {
             (sender as ImageGif)?.StartAnimation();
@@ -198,32 +221,63 @@ namespace Imaging
         /// <summary>
         ///     GIFs the source property changed.
         /// </summary>
-        /// <param name="sender">The sender.</param>
-        /// <param name="e">The <see cref="DependencyPropertyChangedEventArgs" /> instance containing the event data.</param>
         private static void GifSourcePropertyChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
         {
-            (sender as ImageGif)?.Initialize();
+            (sender as ImageGif)?.InitializeAsync();
         }
 
         /// <summary>
-        ///     Starts the animation
+        ///     Starts the animation.
         /// </summary>
         private void StartAnimation()
         {
             if (!_isInitialized)
             {
-                Initialize();
+                _ = InitializeAsync();
+                return;
             }
 
-            BeginAnimation(FrameIndexProperty, _animation);
+            // Start the storyboard
+            _storyboard?.Begin(this, true);
         }
 
         /// <summary>
-        ///     Stops the animation
+        ///     Stops the animation.
+        /// </summary>
+        /// <summary>
+        ///     Stops the animation.
         /// </summary>
         public void StopAnimation()
         {
-            BeginAnimation(FrameIndexProperty, null);
+            // Stop the storyboard
+            _storyboard?.Stop(this);
+        }
+
+        /// <summary>
+        ///     Disposes the specified disposing.
+        /// </summary>
+        /// <param name="disposing">if set to <c>true</c> [disposing].</param>
+        private void Dispose(bool disposing)
+        {
+            if (_isDisposed) return;
+
+            if (disposing)
+            {
+                // Free managed resources
+                StopAnimation();
+                _imageList?.Clear();
+            }
+
+            _isDisposed = true;
+        }
+
+        /// <summary>
+        ///     Finalizes this instance.
+        /// </summary>
+        /// <returns>Freed Resources</returns>
+        ~ImageGif()
+        {
+            Dispose(false);
         }
     }
 }

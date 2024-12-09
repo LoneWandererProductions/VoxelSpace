@@ -26,15 +26,16 @@ namespace DataFormatter
         /// <summary>
         ///     Reads a file line for line
         /// </summary>
-        /// <param name="filepath">path of the file</param>
+        /// <param name="filePath">path of the file</param>
         /// <returns>the values as String[]. Can return null.</returns>
         [return: MaybeNull]
-        public static List<string> ReadFile(string filepath)
+        public static List<string> ReadFile(string filePath)
         {
             var parts = new List<string>();
             try
             {
-                using var reader = new StreamReader(filepath);
+                var encoding = DataHelper.GetFileEncoding(filePath);
+                using var reader = new StreamReader(filePath, encoding);
                 while (reader.ReadLine() is { } line)
                 {
                     parts.Add(line);
@@ -42,11 +43,11 @@ namespace DataFormatter
             }
             catch (IOException ex)
             {
-                Trace.WriteLine(ex.ToString());
+                Trace.WriteLine(ex.Message);
             }
             catch (ArgumentException ex)
             {
-                Trace.WriteLine(ex.ToString());
+                Trace.WriteLine(ex.Message);
             }
 
             return parts;
@@ -65,12 +66,12 @@ namespace DataFormatter
             }
             catch (IOException ex)
             {
-                Trace.WriteLine(ex.ToString());
+                Trace.WriteLine(ex.Message);
                 throw new IOException(string.Empty, ex);
             }
             catch (ArgumentException ex)
             {
-                Trace.WriteLine(ex.ToString());
+                Trace.WriteLine(ex.Message);
                 throw new ArgumentException(string.Empty, ex);
             }
         }

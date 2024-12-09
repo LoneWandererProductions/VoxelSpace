@@ -19,15 +19,18 @@ using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using ExtendedSystemObjects;
 using FileHandler;
-using Size = System.Drawing.Size;
 
 namespace Imaging
 {
+    /// <summary>
+    /// Central Entry class for all things related to gifs
+    /// </summary>
     public static class ImageGifHandler
     {
         /// <summary>
@@ -37,48 +40,21 @@ namespace Imaging
         /// <returns>gif Infos</returns>
         public static ImageGifInfo GetImageInfo(string path)
         {
-            var info = new ImageGifInfo();
+            ImageGifInfo info = null;
 
             try
             {
-                using var image = Image.FromFile(path);
-                info.Height = image.Height;
-                info.Width = image.Width;
-                info.Name = Path.GetFileName(path);
-                info.Size = image.Size;
-
-                if (!image.RawFormat.Equals(ImageFormat.Gif))
-                {
-                    return null;
-                }
-
-                if (!ImageAnimator.CanAnimate(image))
-                {
-                    return info;
-                }
-
-                var frameDimension = new FrameDimension(image.FrameDimensionsList[0]);
-
-                var frameCount = image.GetFrameCount(frameDimension);
-
-                info.AnimationLength = frameCount / 10 * frameCount;
-
-                info.IsAnimated = true;
-
-                info.IsLooped = BitConverter.ToInt16(image.GetPropertyItem(20737)?.Value!, 0) != 1;
-
-                info.Frames = frameCount;
+                info = ImageGifMetadataExtractor.ExtractGifMetadata(path);
             }
-            catch (OutOfMemoryException ex)
+            catch (FileNotFoundException ex)
             {
-                var currentProcess = Process.GetCurrentProcess();
-                var memorySize = currentProcess.PrivateMemorySize64;
-
-                Trace.WriteLine(string.Concat(ex, ImagingResources.Separator, ImagingResources.ErrorMemory,
-                    memorySize));
-
-                //enforce clean up and hope for the best
-                GC.Collect();
+                Trace.WriteLine(ex.Message);
+                //TODo fill up
+            }
+            catch (InvalidDataException ex)
+            {
+                Trace.WriteLine(ex.Message);
+                //TODo fill up
             }
 
             return info;
@@ -89,14 +65,14 @@ namespace Imaging
         /// </summary>
         /// <param name="path">The path.</param>
         /// <returns>List of Images from gif</returns>
-        internal static List<Bitmap> SplitGif(string path)
+        internal static async Task<List<Bitmap>> SplitGifAsync(string path)
         {
             if (string.IsNullOrEmpty(path) || !File.Exists(path))
             {
                 var innerException = path != null
                     ? new IOException(string.Concat(nameof(path), ImagingResources.Spacing, path))
                     : new IOException(nameof(path));
-                throw new IOException(ImagingResources.ErrorMissingFile, innerException);
+                throw new IOException(ImagingResources.ErrorFileNotFound, innerException);
             }
 
             var lst = new List<Bitmap>();
@@ -110,11 +86,15 @@ namespace Imaging
                 for (var i = 0; i < numberOfFrames; i++)
                 {
                     image.SelectActiveFrame(FrameDimension.Time, i);
-                    var bmp = new Bitmap(image);
-                    lst.Add(bmp);
+
+                    // Process each frame asynchronously
+                    await Task.Run(() =>
+                    {
+                        var bmp = new Bitmap(image);
+                        lst.Add(bmp);
+                    });
                 }
             }
-            //try to handle potential Memory problem, a bit of a hack
             catch (OutOfMemoryException ex)
             {
                 var currentProcess = Process.GetCurrentProcess();
@@ -123,14 +103,13 @@ namespace Imaging
                 Trace.WriteLine(string.Concat(ex, ImagingResources.Separator, ImagingResources.ErrorMemory,
                     memorySize));
                 lst.Clear();
-                //enforce clean up and hope for the best
                 GC.Collect();
 
                 ImageRegister.Count++;
 
                 if (ImageRegister.Count < 3)
                 {
-                    SplitGif(path);
+                    await SplitGifAsync(path);
                 }
                 else
                 {
@@ -147,11 +126,13 @@ namespace Imaging
         /// </summary>
         /// <param name="path">The path.</param>
         /// <returns>List of Images from gif as ImageSource</returns>
-        internal static List<ImageSource> LoadGif(string path)
+        internal static async Task<List<ImageSource>> LoadGif(string path)
         {
-            var list = SplitGif(path);
+            // Await the result from the async SplitGifAsync method
+            var bitmapList = await SplitGifAsync(path);
 
-            return list.Select(image => image.ToBitmapImage()).Cast<ImageSource>().ToList();
+            // Convert each Bitmap to ImageSource and return the list
+            return bitmapList.Select(image => image.ToBitmapImage()).Cast<ImageSource>().ToList();
         }
 
         /// <summary>
@@ -172,25 +153,36 @@ namespace Imaging
             //collect and convert all images
             var btm = lst.ConvertAll(ImageStream.GetOriginalBitmap);
 
-            if (btm.IsNullOrEmpty())
-            {
-                return;
-            }
+            if (btm.IsNullOrEmpty()) return;
 
-            CreateGif(btm, target);
+            GifCreator(btm, target);
         }
 
+        /// <summary>
+        ///     Creates the GIF.
+        /// </summary>
+        /// <param name="path">The path.</param>
+        /// <param name="target">The target.</param>
         internal static void CreateGif(List<string> path, string target)
         {
             //collect and convert all images
             var btm = path.ConvertAll(ImageStream.GetOriginalBitmap);
 
-            if (btm.IsNullOrEmpty())
-            {
-                return;
-            }
+            if (btm.IsNullOrEmpty()) return;
 
-            CreateGif(btm, target);
+            GifCreator(btm, target);
+        }
+
+        /// <summary>
+        /// Creates the GIF.
+        /// </summary>
+        /// <param name="frames">The frames.</param>
+        /// <param name="target">The target.</param>
+        internal static void CreateGif(IEnumerable<FrameInfo> frames, string target)
+        {
+            if (frames== null) return;
+
+            GifCreator(frames, target);
         }
 
         /// <summary>
@@ -198,13 +190,9 @@ namespace Imaging
         /// </summary>
         /// <param name="btm">A list of Bitmaps.</param>
         /// <param name="target">The target.</param>
-        private static void CreateGif(IEnumerable<Bitmap> btm, string target)
+        private static void GifCreator(IEnumerable<Bitmap> btm, string target)
         {
             var gEnc = new GifBitmapEncoder();
-
-            //TODO encode and change to one size, add more sanity checks
-            //TODO possible Thumbnail
-            //TODO add more encoding
 
             foreach (var src in btm.Select(bmpImage => bmpImage.GetHbitmap()).Select(bmp =>
                          System.Windows.Interop.Imaging.CreateBitmapSourceFromHBitmap(
@@ -212,9 +200,7 @@ namespace Imaging
                              IntPtr.Zero,
                              Int32Rect.Empty,
                              BitmapSizeOptions.FromEmptyOptions())))
-            {
                 gEnc.Frames.Add(BitmapFrame.Create(src));
-            }
 
             using var ms = new MemoryStream();
             gEnc.Save(ms);
@@ -229,75 +215,39 @@ namespace Imaging
             newBytes.AddRange(fileBytes.Skip(13));
             File.WriteAllBytes(target, newBytes.ToArray());
         }
-    }
-
-    /// <summary>
-    ///     The infos about the gif
-    /// </summary>
-    public sealed class ImageGifInfo
-    {
-        /// <summary>
-        ///     Gets the height.
-        /// </summary>
-        /// <value>
-        ///     The height.
-        /// </value>
-        public int Height { get; internal set; }
 
         /// <summary>
-        ///     Gets the width.
+        /// Creates the GIF.
         /// </summary>
-        /// <value>
-        ///     The width.
-        /// </value>
-        public int Width { get; internal set; }
+        /// <param name="frames">The frames.</param>
+        /// <param name="target">The target.</param>
+        private static void GifCreator(IEnumerable<FrameInfo> frames, string target)
+        {
+            var gEnc = new GifBitmapEncoder();
 
-        /// <summary>
-        ///     Gets the length of the animation.
-        /// </summary>
-        /// <value>
-        ///     The length of the animation.
-        /// </value>
-        public int AnimationLength { get; internal set; }
+            foreach (var frameInfo in frames)
+            {
+                var bitmapSource = BitmapFrame.Create(
+                    BitmapSource.Create(
+                        frameInfo.Image.Width,
+                        frameInfo.Image.Height,
+                        96, 96, // DPI
+                        PixelFormats.Bgra32, // Or appropriate format
+                        null, // No palette for Bgra32
+                        frameInfo.Image.LockBits(new Rectangle(0, 0, frameInfo.Image.Width, frameInfo.Image.Height),
+                            ImageLockMode.ReadOnly,
+                            System.Drawing.Imaging.PixelFormat.Format32bppArgb).Scan0,
+                        frameInfo.Image.Height * frameInfo.Image.Width * 4, // Image byte size
+                        frameInfo.Image.Width * 4)); // Bytes per row
 
-        /// <summary>
-        ///     Gets a value indicating whether this instance is animated.
-        /// </summary>
-        /// <value>
-        ///     <c>true</c> if this instance is animated; otherwise, <c>false</c>.
-        /// </value>
-        internal bool IsAnimated { get; set; }
+                var metadata = new BitmapMetadata(ImagingResources.GifMetadata);
+                metadata.SetQuery(ImagingResources.GifMetadataQueryDelay, (ushort)(frameInfo.DelayTime * 100)); // Delay in hundredths of seconds
 
-        /// <summary>
-        ///     Gets a value indicating whether this instance is looped.
-        /// </summary>
-        /// <value>
-        ///     <c>true</c> if this instance is looped; otherwise, <c>false</c>.
-        /// </value>
-        internal bool IsLooped { get; set; }
+                gEnc.Frames.Add(BitmapFrame.Create(bitmapSource, null, metadata, null));
+            }
 
-        /// <summary>
-        ///     Gets the frames.
-        /// </summary>
-        /// <value>
-        ///     The frames.
-        /// </value>
-        public int Frames { get; internal set; }
-
-        /// <summary>
-        ///     Gets the name.
-        /// </summary>
-        /// <value>
-        ///     The name.
-        /// </value>
-        public string Name { get; internal set; }
-
-        /// <summary>
-        ///     Gets the size.
-        /// </summary>
-        /// <value>
-        ///     The size.
-        /// </value>
-        public Size Size { get; internal set; }
+            using var fs = new FileStream(target, FileMode.Create, FileAccess.Write);
+            gEnc.Save(fs);
+        }
     }
 }

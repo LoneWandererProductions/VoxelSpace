@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net5.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="SkiaSharp.Views.Desktop.Common" Version="3.116.1" />
+    <PackageReference Include="SkiaSharp.Views.WPF" Version="2.88.7" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Mathematics\Mathematics.csproj" />
+  </ItemGroup>
+
+</Project>
