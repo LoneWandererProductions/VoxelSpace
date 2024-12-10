@@ -189,9 +189,10 @@ namespace Voxels
         {
             if (_heightMap == null) return null;
 
+            var raster = new Raster();
 
-            _raster = Raster.GenerateRaster(_colorMap, _heightMap, Camera, _topographyHeight , _topographyWidth, _colorHeight, _colorWidth);
-            return Raster.CreateBitmapFromContainer(_raster, Camera.ScreenWidth, Camera.ScreenHeight, Camera.BackgroundColor);
+            _raster = raster.GenerateRaster(_colorMap, _heightMap, Camera, _topographyHeight , _topographyWidth, _colorHeight, _colorWidth);
+            return raster.CreateBitmapFromContainer(_raster, Camera.ScreenWidth, Camera.ScreenHeight, Camera.BackgroundColor);
         }
 
         /// <summary>
