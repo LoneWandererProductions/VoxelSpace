@@ -44,7 +44,7 @@ namespace Main
 
             _voxel = new VoxelRaster(100, 100, 0, 100, 120, 120, 300, colorMap, heightMap);
 
-            var bmp = _voxel.Render();
+            var bmp = _voxel.RenderDirect();
             ImageView.Source = bmp.ToBitmapImage();
 
             TxtBox.Text = string.Concat(TxtBox.Text, " x: ", _voxel.Camera.X, " y: ", _voxel.Camera.Y, Environment.NewLine);
@@ -62,7 +62,7 @@ namespace Main
             var timer = new Stopwatch();
 
             timer.Start();
-            var bmp = _voxel.Render();
+            var bmp = _voxel.RenderDirect();
             ImageView.Source = bmp.ToBitmapImage();
 
             timer.Stop();

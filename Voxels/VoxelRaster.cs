@@ -122,20 +122,18 @@ namespace Voxels
         public Camera Camera { get; set; }
 
         /// <summary>
-        ///     Renders this instance.
+        /// Renders the image directly onto the Bitmap.
         /// </summary>
-        /// <returns>The finished Image</returns>
-        public Bitmap Render()
+        /// <returns>The finished Bitmap created directly.</returns>
+        public Bitmap RenderDirect()
         {
-            //if (_colorMap == null || _heightMap == null) return null;
             if (_colorMapCif == null || _heightMap == null) return null;
 
             var bmp = ClearFrame();
-            _raster = new List<Slice>();
-
             _yBuffer = new float[Camera.ScreenWidth];
 
-            for (var i = 0; i < _yBuffer.Length; i++) _yBuffer[i] = Camera.ScreenHeight;
+            for (var i = 0; i < _yBuffer.Length; i++)
+                _yBuffer[i] = Camera.ScreenHeight;
 
             var sinPhi = ExtendedMath.CalcSin(Camera.Angle);
             var cosPhi = ExtendedMath.CalcCos(Camera.Angle);
@@ -146,22 +144,22 @@ namespace Voxels
             while (z < Camera.ZFar)
             {
                 var pLeft = new PointF(
-                    (float) (-cosPhi * z - sinPhi * z) + Camera.X,
-                    (float) (sinPhi * z - cosPhi * z) + Camera.Y);
+                    (float)(-cosPhi * z - sinPhi * z) + Camera.X,
+                    (float)(sinPhi * z - cosPhi * z) + Camera.Y);
 
                 var pRight = new PointF(
-                    (float) (cosPhi * z - sinPhi * z) + Camera.X,
-                    (float) (-sinPhi * z - cosPhi * z) + Camera.Y);
+                    (float)(cosPhi * z - sinPhi * z) + Camera.X,
+                    (float)(-sinPhi * z - cosPhi * z) + Camera.Y);
 
                 var dx = (pRight.X - pLeft.X) / Camera.ScreenWidth;
                 var dy = (pRight.Y - pLeft.Y) / Camera.ScreenWidth;
 
                 for (var i = 0; i < Camera.ScreenWidth; i++)
                 {
-                    var diffuseX = (int) pLeft.X;
-                    var diffuseY = (int) pLeft.Y;
-                    var heightX = (int) pLeft.X;
-                    var heightY = (int) pLeft.Y;
+                    var diffuseX = (int)pLeft.X;
+                    var diffuseY = (int)pLeft.Y;
+                    var heightX = (int)pLeft.X;
+                    var heightY = (int)pLeft.Y;
 
                     Color color;
                     int heightOfHeightMap;
@@ -188,9 +186,11 @@ namespace Voxels
 
                     var heightOnScreen = (Camera.Height - heightOfHeightMap) / z * Camera.Scale + Camera.Horizon;
 
-                    GenerateSlice(color, i, (int) heightOnScreen, _yBuffer[i]);
+                    DrawVerticalLine(color, i, (int)heightOnScreen, (int)_yBuffer[i], bmp);
 
-                    if (heightOnScreen < _yBuffer[i]) _yBuffer[i] = heightOnScreen;
+                    if (heightOnScreen < _yBuffer[i])
+                        _yBuffer[i] = heightOnScreen;
+
                     pLeft.X += dx;
                     pLeft.Y += dy;
                 }
@@ -199,7 +199,108 @@ namespace Voxels
                 dz += 0.005f;
             }
 
-            return DrawRaster(bmp);
+            return bmp;
+        }
+
+        /// <summary>
+        /// Renders the image by creating the data in a container, then creating the Bitmap.
+        /// </summary>
+        /// <returns>The finished Bitmap created via container data.</returns>
+        public Bitmap RenderWithContainer()
+        {
+            if (_colorMapCif == null || _heightMap == null) return null;
+
+            _raster = new List<Slice>();
+            _yBuffer = new float[Camera.ScreenWidth];
+
+            for (var i = 0; i < _yBuffer.Length; i++)
+                _yBuffer[i] = Camera.ScreenHeight;
+
+            var sinPhi = ExtendedMath.CalcSin(Camera.Angle);
+            var cosPhi = ExtendedMath.CalcCos(Camera.Angle);
+
+            float z = 1;
+            float dz = 1;
+
+            while (z < Camera.ZFar)
+            {
+                var pLeft = new PointF(
+                    (float)(-cosPhi * z - sinPhi * z) + Camera.X,
+                    (float)(sinPhi * z - cosPhi * z) + Camera.Y);
+
+                var pRight = new PointF(
+                    (float)(cosPhi * z - sinPhi * z) + Camera.X,
+                    (float)(-sinPhi * z - cosPhi * z) + Camera.Y);
+
+                var dx = (pRight.X - pLeft.X) / Camera.ScreenWidth;
+                var dy = (pRight.Y - pLeft.Y) / Camera.ScreenWidth;
+
+                for (var i = 0; i < Camera.ScreenWidth; i++)
+                {
+                    var diffuseX = (int)pLeft.X;
+                    var diffuseY = (int)pLeft.Y;
+                    var heightX = (int)pLeft.X;
+                    var heightY = (int)pLeft.Y;
+
+                    Color color;
+                    int heightOfHeightMap;
+
+                    if (CifFormat)
+                    {
+                        var x = diffuseX & (_colorWidth - 1);
+                        var y = diffuseY & (_colorHeight - 1);
+                        var id = (y * _colorWidth) + x;
+                        color = _colorMapCif.GetColor(id);
+
+                        x = heightX & (_topographyWidth - 1);
+                        y = heightY & (_topographyHeight - 1);
+                        id = (y * _colorWidth) + x;
+                        heightOfHeightMap = _heightMapCif.GetColor(id).R;
+                    }
+                    else
+                    {
+                        heightOfHeightMap =
+                            _heightMap[heightX & (_topographyWidth - 1), heightY & (_topographyHeight - 1)];
+
+                        color = _colorMap[diffuseX & (_colorWidth - 1), diffuseY & (_colorHeight - 1)];
+                    }
+
+                    var heightOnScreen = (Camera.Height - heightOfHeightMap) / z * Camera.Scale + Camera.Horizon;
+
+                    _raster.Add(new Slice
+                    {
+                        Shade = color,
+                        X1 = i,
+                        Y1 = (int)heightOnScreen,
+                        Y2 = (int)_yBuffer[i]
+                    });
+
+                    if (heightOnScreen < _yBuffer[i])
+                        _yBuffer[i] = heightOnScreen;
+
+                    pLeft.X += dx;
+                    pLeft.Y += dy;
+                }
+
+                z += dz;
+                dz += 0.005f;
+            }
+
+            return CreateBitmapFromContainer();
+        }
+
+        /// <summary>
+        /// Creates a Bitmap using the data in the _raster container.
+        /// </summary>
+        /// <returns>The created Bitmap.</returns>
+        private Bitmap CreateBitmapFromContainer()
+        {
+            var bmp = ClearFrame();
+
+            foreach (var slice in _raster)
+                DrawVerticalLine(slice.Shade, slice.X1, slice.Y1, slice.Y2, bmp);
+
+            return bmp;
         }
 
         /// <summary>
@@ -251,16 +352,6 @@ namespace Voxels
             };
 
             _raster.Add(slice);
-        }
-
-        /// <summary>
-        /// Draws the raster with our DirectBitmap.
-        /// </summary>
-        /// <param name="bmp">The bitmap we draw on.</param>
-        private Bitmap DrawRaster(Bitmap bmp)
-        {
-            foreach (var slice in _raster) DrawVerticalLine(slice.Shade, slice.X1, slice.Y1, slice.Y2, bmp);
-            return bmp;
         }
 
         /// <summary>

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.34301.259
+# Visual Studio Version 17
+VisualStudioVersion = 17.11.35327.3
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mathematics", "Mathematics\Mathematics.csproj", "{692E3E3E-264E-4099-A7D8-5A15741D9BFA}"
 EndProject
@@ -24,6 +24,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FileHandler", "FileHandler\FileHandler.csproj", "{347026CE-CFF4-42DA-88E7-00FC65932EBD}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RenderEngine", "RenderEngine\RenderEngine.csproj", "{9231255A-1ED2-4885-94F8-9455A951FCBB}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SpeedTests", "SpeedTests\SpeedTests.csproj", "{A75E2941-678A-41B7-A855-7FFE8495D960}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -63,6 +65,10 @@ Global
 		{9231255A-1ED2-4885-94F8-9455A951FCBB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9231255A-1ED2-4885-94F8-9455A951FCBB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9231255A-1ED2-4885-94F8-9455A951FCBB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A75E2941-678A-41B7-A855-7FFE8495D960}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A75E2941-678A-41B7-A855-7FFE8495D960}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A75E2941-678A-41B7-A855-7FFE8495D960}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A75E2941-678A-41B7-A855-7FFE8495D960}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
