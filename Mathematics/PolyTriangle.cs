@@ -26,10 +26,7 @@ namespace Mathematics
         {
             Vertices = new Vector3D[array.Count];
 
-            for (var i = 0; i < array.Count; i++)
-            {
-                Vertices[i] = array[i];
-            }
+            for (var i = 0; i < array.Count; i++) Vertices[i] = array[i];
         }
 
         /// <summary>
@@ -90,31 +87,18 @@ namespace Mathematics
         public bool Equals(PolyTriangle other)
         {
             // If the other object is null, return false
-            if (other == null)
-            {
-                return false;
-            }
+            if (other == null) return false;
 
             // If the other object is the same instance as this object, return true
-            if (ReferenceEquals(this, other))
-            {
-                return true;
-            }
+            if (ReferenceEquals(this, other)) return true;
 
             // If the number of vertices is different, the triangles are not equal
-            if (VertexCount != other.VertexCount)
-            {
-                return false;
-            }
+            if (VertexCount != other.VertexCount) return false;
 
             // Compare each vertex of the triangles
             for (var i = 0; i < VertexCount; i++)
-            {
                 if (Vertices[i] != other.Vertices[i])
-                {
                     return false;
-                }
-            }
 
             // If all vertices are equal, the triangles are equal
             return true;
@@ -177,9 +161,7 @@ namespace Mathematics
             var str = string.Empty;
 
             for (var i = 0; i < Vertices.Length; i++)
-            {
                 str = string.Concat(str, i, MathResources.Separator, Vertices[i].ToString(), Environment.NewLine);
-            }
 
             return str;
         }

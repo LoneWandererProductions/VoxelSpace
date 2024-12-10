@@ -749,7 +749,7 @@ namespace Imaging
 
         /// <inheritdoc />
         /// <summary>
-        /// Creates a gif.
+        ///     Creates a gif.
         /// </summary>
         /// <param name="images">List off bitmaps and timer data</param>
         /// <param name="target">The target File.</param>

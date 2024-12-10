@@ -63,10 +63,7 @@ namespace Mathematics
         /// <value>
         ///     The zero Vector.
         /// </value>
-        public static Vector2D ZeroVector
-        {
-            get;
-        } = new(0d, 0d);
+        public static Vector2D ZeroVector { get; } = new(0d, 0d);
 
         /// <summary>
         ///     Gets the Unit vector.
@@ -74,10 +71,7 @@ namespace Mathematics
         /// <value>
         ///     The Unit vector.
         /// </value>
-        public static Vector2D UnitVector
-        {
-            get;
-        } = new(1d, 1d);
+        public static Vector2D UnitVector { get; } = new(1d, 1d);
 
         /// <summary>
         ///     Gets the rounded x.
@@ -227,7 +221,7 @@ namespace Mathematics
         /// </returns>
         public static double operator *(Vector2D first, Vector2D second)
         {
-            return (first.X * second.X) + (first.Y * second.Y);
+            return first.X * second.X + first.Y * second.Y;
         }
 
         /// <summary>
@@ -304,7 +298,7 @@ namespace Mathematics
         /// </returns>
         public double CrossProduct(Vector2D second)
         {
-            return (X * second.Y) - (Y * second.X);
+            return X * second.Y - Y * second.X;
         }
 
         /// <summary>

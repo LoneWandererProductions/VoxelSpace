@@ -9,8 +9,6 @@
 
 // ReSharper disable PossibleLossOfFraction
 
-using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -26,6 +24,10 @@ namespace Voxels
     /// </summary>
     public sealed class VoxelRaster
     {
+        private readonly object _lock = new();
+
+        private readonly Dictionary<int, Bitmap> _panoramaCache = new();
+
         /// <summary>
         ///     The color height
         /// </summary>
@@ -49,12 +51,6 @@ namespace Voxels
         private int[,] _heightMap;
 
         /// <summary>
-        ///     The height map
-        ///     Holds the height values (1024*1024)
-        /// </summary>
-        private Cif _heightMapCif;
-
-        /// <summary>
         ///     The Slices of the Image
         /// </summary>
         private List<Slice> _raster;
@@ -68,15 +64,6 @@ namespace Voxels
         ///     The topography width
         /// </summary>
         private int _topographyWidth;
-
-        /// <summary>
-        ///     The y buffer
-        /// </summary>
-        private float[] YBuffer { get; set; }
-
-        private readonly Dictionary<int, Bitmap> _panoramaCache = new();
-
-        private readonly object _lock = new();
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="VoxelRaster" /> class.
@@ -110,6 +97,11 @@ namespace Voxels
         }
 
         /// <summary>
+        ///     The y buffer
+        /// </summary>
+        private float[] YBuffer { get; set; }
+
+        /// <summary>
         ///     Gets or sets the camera.
         ///     Only here just in case if KeyInput is not available
         /// </summary>
@@ -119,7 +111,7 @@ namespace Voxels
         public Camera Camera { get; set; }
 
         /// <summary>
-        /// Renders the image directly onto the Bitmap.
+        ///     Renders the image directly onto the Bitmap.
         /// </summary>
         /// <returns>The finished Bitmap created directly.</returns>
         public Bitmap RenderDirect()
@@ -158,13 +150,9 @@ namespace Voxels
                     var heightX = (int)pLeft.X;
                     var heightY = (int)pLeft.Y;
 
-                    Color color;
-                    int heightOfHeightMap;
+                    var heightOfHeightMap = _heightMap[heightX & (_topographyWidth - 1), heightY & (_topographyHeight - 1)];
 
-                    heightOfHeightMap =
-                            _heightMap[heightX & (_topographyWidth - 1), heightY & (_topographyHeight - 1)];
-
-                    color = _colorMap[diffuseX & (_colorWidth - 1), diffuseY & (_colorHeight - 1)];
+                    var color = _colorMap[diffuseX & (_colorWidth - 1), diffuseY & (_colorHeight - 1)];
 
 
                     var heightOnScreen = (Camera.Height - heightOfHeightMap) / z * Camera.Scale + Camera.Horizon;
@@ -186,7 +174,7 @@ namespace Voxels
         }
 
         /// <summary>
-        /// Renders the image by creating the data in a container, then creating the Bitmap.
+        ///     Renders the image by creating the data in a container, then creating the Bitmap.
         /// </summary>
         /// <returns>The finished Bitmap created via container data.</returns>
         public Bitmap RenderWithBitmapDepthBuffer()
@@ -195,11 +183,12 @@ namespace Voxels
 
             var raster = new Raster();
 
-            return raster.CreateBitmapWithDepthBuffer(_colorMap, _heightMap, Camera, _topographyHeight, _topographyWidth, _colorHeight, _colorWidth);
+            return raster.CreateBitmapWithDepthBuffer(_colorMap, _heightMap, Camera, _topographyHeight,
+                _topographyWidth, _colorHeight, _colorWidth);
         }
 
         /// <summary>
-        /// Renders the with container.
+        ///     Renders the with container.
         /// </summary>
         /// <returns></returns>
         public Bitmap RenderWithContainer()
@@ -208,12 +197,14 @@ namespace Voxels
 
             var raster = new Raster();
 
-            _raster = raster.GenerateRaster(_colorMap, _heightMap, Camera, _topographyHeight, _topographyWidth, _colorHeight, _colorWidth);
-            return raster.CreateBitmapFromContainer(_raster, Camera.ScreenWidth, Camera.ScreenHeight, Camera.BackgroundColor);
+            _raster = raster.GenerateRaster(_colorMap, _heightMap, Camera, _topographyHeight, _topographyWidth,
+                _colorHeight, _colorWidth);
+            return raster.CreateBitmapFromContainer(_raster, Camera.ScreenWidth, Camera.ScreenHeight,
+                Camera.BackgroundColor);
         }
 
         /// <summary>
-        /// Renders the panoramic.
+        ///     Renders the panoramic.
         /// </summary>
         /// <param name="numberOfFrames">The number of frames.</param>
         /// <returns></returns>
@@ -228,30 +219,28 @@ namespace Voxels
             YBuffer = new float[Camera.ScreenWidth];
 
             // Create a new graphics object to draw on the panoramicBitmap
-            using (var g = Graphics.FromImage(panoramicBitmap))
+            using var g = Graphics.FromImage(panoramicBitmap);
+            // For each frame (view), adjust the camera angle and render the scene
+            for (var frame = 0; frame < numberOfFrames; frame++)
             {
-                // For each frame (view), adjust the camera angle and render the scene
-                for (var frame = 0; frame < numberOfFrames; frame++)
-                {
-                    // Adjust the camera's angle slightly for each frame to create the panorama
-                    Camera.Angle += (360 / numberOfFrames);
+                // Adjust the camera's angle slightly for each frame to create the panorama
+                Camera.Angle += 360 / numberOfFrames;
 
-                    // Render the scene and get the resulting bitmap
-                    var frameBitmap = RenderWithContainer();  // You can also use RenderWithContainer() if needed
+                // Render the scene and get the resulting bitmap
+                var frameBitmap = RenderWithContainer(); // You can also use RenderWithContainer() if needed
 
-                    // Draw the frame on the panoramic bitmap at the correct position
-                    g.DrawImage(frameBitmap, new Point(frame * Camera.ScreenWidth, 0));
+                // Draw the frame on the panoramic bitmap at the correct position
+                g.DrawImage(frameBitmap, new Point(frame * Camera.ScreenWidth, 0));
 
-                    // Optionally, you can adjust the angle for the next frame
-                    // for more flexibility you can adjust Camera.Angle dynamically or based on the field of view.
-                }
+                // Optionally, you can adjust the angle for the next frame
+                // for more flexibility you can adjust Camera.Angle dynamically or based on the field of view.
             }
 
             return panoramicBitmap;
         }
 
         /// <summary>
-        /// Generates the panoramic view.
+        ///     Generates the panoramic view.
         /// </summary>
         /// <param name="angleStep">The angle step.</param>
         /// <returns></returns>
@@ -279,10 +268,8 @@ namespace Voxels
             lock (_lock)
             {
                 if (!_panoramaCache.ContainsKey(angle))
-                {
                     // Render and cache if not already available
                     _panoramaCache[angle] = RenderAtAngle(angle);
-                }
 
                 return _panoramaCache[angle];
             }
@@ -291,7 +278,8 @@ namespace Voxels
         private Bitmap RenderAtAngle(int angle)
         {
             var raster = new Raster();
-            return raster.CreateBitmapWithDepthBuffer(_colorMap, _heightMap, Camera, _topographyHeight, _topographyWidth, _colorHeight, _colorWidth);
+            return raster.CreateBitmapWithDepthBuffer(_colorMap, _heightMap, Camera, _topographyHeight,
+                _topographyWidth, _colorHeight, _colorWidth);
         }
 
         /// <summary>
@@ -342,7 +330,7 @@ namespace Voxels
         }
 
         /// <summary>
-        /// Clears the frame.
+        ///     Clears the frame.
         /// </summary>
         /// <returns>A new frame to draw on</returns>
         private Bitmap ClearFrame()
@@ -374,8 +362,8 @@ namespace Voxels
 
             _heightMap = new int[bmp.Width, bmp.Height];
             for (var i = 0; i < bmp.Width; i++)
-                for (var j = 0; j < bmp.Height; j++)
-                    _heightMap[i, j] = dbm.GetPixel(i, j).R;
+            for (var j = 0; j < bmp.Height; j++)
+                _heightMap[i, j] = dbm.GetPixel(i, j).R;
         }
 
         /// <summary>
@@ -393,8 +381,8 @@ namespace Voxels
 
             _colorMap = new Color[bmp.Width, bmp.Height];
             for (var i = 0; i < bmp.Width; i++)
-                for (var j = 0; j < bmp.Height; j++)
-                    _colorMap[i, j] = dbm.GetPixel(i, j);
+            for (var j = 0; j < bmp.Height; j++)
+                _colorMap[i, j] = dbm.GetPixel(i, j);
         }
     }
 }

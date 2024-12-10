@@ -21,157 +21,160 @@ namespace Imaging
         // General Messages
 
         /// <summary>
-        /// The error message displayed when a file is not found. Value: "File not found."
+        ///     The error message displayed when a file is not found. Value: "File not found."
         /// </summary>
         internal const string FileNotFoundMessage = "File not found.";
 
         /// <summary>
-        /// The error message displayed when the file is not a valid GIF. Value: "Not a valid GIF file."
+        ///     The error message displayed when the file is not a valid GIF. Value: "Not a valid GIF file."
         /// </summary>
         internal const string InvalidGifMessage = "Not a valid GIF file.";
 
         /// <summary>
-        /// The message displayed when skipping padding or a sub-block terminator. Value: "Skipping padding or sub-block terminator (0x00)"
+        ///     The message displayed when skipping padding or a sub-block terminator. Value: "Skipping padding or sub-block
+        ///     terminator (0x00)"
         /// </summary>
         internal const string SkipPaddingMessage = "Skipping padding or sub-block terminator (0x00)";
 
         /// <summary>
-        /// The message displayed when the GIF trailer is found, signaling the parsing is complete. Value: "GIF Trailer found, parsing complete."
+        ///     The message displayed when the GIF trailer is found, signaling the parsing is complete. Value: "GIF Trailer found,
+        ///     parsing complete."
         /// </summary>
         internal const string GifTrailerMessage = "GIF Trailer found, parsing complete.";
 
         /// <summary>
-        /// The description for image frames. Value: "Image Frame"
+        ///     The description for image frames. Value: "Image Frame"
         /// </summary>
         internal const string ImageFrameDescription = "Image Frame";
 
         // Formatting
 
         /// <summary>
-        /// The message format for processing a block. Example: "Processing block: 0x{0:X2}"
+        ///     The message format for processing a block. Example: "Processing block: 0x{0:X2}"
         /// </summary>
         internal const string ProcessingBlockMessage = "Processing block: 0x{0:X2}";
 
         /// <summary>
-        /// The message format for an unknown block being encountered. Example: "Unknown block encountered: 0x{0:X2}. Skipping."
+        ///     The message format for an unknown block being encountered. Example: "Unknown block encountered: 0x{0:X2}.
+        ///     Skipping."
         /// </summary>
         internal const string UnknownBlockMessage = "Unknown block encountered: 0x{0:X2}. Skipping.";
 
         /// <summary>
-        /// The message format for skipping an unknown block. Example: "Skipping unknown block: 0x{0:X2}"
+        ///     The message format for skipping an unknown block. Example: "Skipping unknown block: 0x{0:X2}"
         /// </summary>
         internal const string SkipUnknownBlockMessage = "Skipping unknown block: 0x{0:X2}";
 
         /// <summary>
-        /// The message format for skipping an extension block. Example: "Skipping extension block of size: {0}"
+        ///     The message format for skipping an extension block. Example: "Skipping extension block of size: {0}"
         /// </summary>
         internal const string SkipExtensionBlockMessage = "Skipping extension block of size: {0}";
 
         // GIF Format
 
         /// <summary>
-        /// The length of the GIF header in bytes. Value: 6
+        ///     The length of the GIF header in bytes. Value: 6
         /// </summary>
         internal const int GifHeaderLength = 6;
 
         /// <summary>
-        /// The expected start string for a valid GIF header. Value: "GIF"
+        ///     The expected start string for a valid GIF header. Value: "GIF"
         /// </summary>
         internal const string GifHeaderStart = "GIF";
 
         /// <summary>
-        /// The meta data needed for a valid GIF header. Value: "gif"
+        ///     The meta data needed for a valid GIF header. Value: "gif"
         /// </summary>
         internal const string GifMetadata = "gif";
 
         /// <summary>
-        /// The GIF metadata query delay. Value: "/grctlext/Delay"
+        ///     The GIF metadata query delay. Value: "/grctlext/Delay"
         /// </summary>
         internal const string GifMetadataQueryDelay = "/grctlext/Delay";
 
         /// <summary>
-        /// The flag indicating the presence of a global color table in the GIF file. Value: 0x80
+        ///     The flag indicating the presence of a global color table in the GIF file. Value: 0x80
         /// </summary>
         internal const int GlobalColorTableFlag = 0x80;
 
         /// <summary>
-        /// The bitmask for extracting the color resolution field from the packed fields in the GIF file. Value: 0x70
+        ///     The bitmask for extracting the color resolution field from the packed fields in the GIF file. Value: 0x70
         /// </summary>
         internal const int ColorResolutionMask = 0x70;
 
         /// <summary>
-        /// The bitmask for extracting the size of the color table from the packed fields in the GIF file. Value: 0x07
+        ///     The bitmask for extracting the size of the color table from the packed fields in the GIF file. Value: 0x07
         /// </summary>
         internal const int TableSizeMask = 0x07;
 
         // Blocks and IDs
 
         /// <summary>
-        /// The ID for padding or sub-block terminator in GIF files. Value: 0x00
+        ///     The ID for padding or sub-block terminator in GIF files. Value: 0x00
         /// </summary>
         internal const byte PaddingBlockId = 0x00;
 
         /// <summary>
-        /// The ID indicating an extension introducer in the GIF file. Value: 0x21
+        ///     The ID indicating an extension introducer in the GIF file. Value: 0x21
         /// </summary>
         internal const byte ExtensionIntroducer = 0x21;
 
         /// <summary>
-        /// The label for application extensions in the GIF file. Value: 0xFF
+        ///     The label for application extensions in the GIF file. Value: 0xFF
         /// </summary>
         internal const byte ApplicationExtensionLabel = 0xFF;
 
         /// <summary>
-        /// The label for graphics control extensions in the GIF file. Value: 0xF9
+        ///     The label for graphics control extensions in the GIF file. Value: 0xF9
         /// </summary>
         internal const byte GraphicsControlExtensionLabel = 0xF9;
 
         /// <summary>
-        /// The ID for image descriptors in the GIF file. Value: 0x2C
+        ///     The ID for image descriptors in the GIF file. Value: 0x2C
         /// </summary>
         internal const byte ImageDescriptorId = 0x2C;
 
         /// <summary>
-        /// The ID for the trailer block in the GIF file, signaling the end of the file. Value: 0x3B
+        ///     The ID for the trailer block in the GIF file, signaling the end of the file. Value: 0x3B
         /// </summary>
         internal const byte TrailerBlockId = 0x3B;
 
         /// <summary>
-        /// The length of the image descriptor block in the GIF file, in bytes. Value: 9
+        ///     The length of the image descriptor block in the GIF file, in bytes. Value: 9
         /// </summary>
         internal const int ImageDescriptorLength = 9;
 
         /// <summary>
-        /// The flag indicating the presence of a local color table in the GIF file. Value: 0x80
+        ///     The flag indicating the presence of a local color table in the GIF file. Value: 0x80
         /// </summary>
         internal const byte LocalColorTableFlag = 0x80;
 
         // Application Extension
 
         /// <summary>
-        /// The identifier string for the NETSCAPE application extension. Value: "NETSCAPE"
+        ///     The identifier string for the NETSCAPE application extension. Value: "NETSCAPE"
         /// </summary>
         internal const string NetScapeIdentifier = "NETSCAPE";
 
         /// <summary>
-        /// The length of the application identifier in the application extension block. Value: 8
+        ///     The length of the application identifier in the application extension block. Value: 8
         /// </summary>
         internal const int AppIdentifierLength = 8;
 
         /// <summary>
-        /// The length of the application authentication code in the application extension block. Value: 3
+        ///     The length of the application authentication code in the application extension block. Value: 3
         /// </summary>
         internal const int AppAuthCodeLength = 3;
 
         // Miscellaneous
 
         /// <summary>
-        /// The divisor used for converting delay times in the GIF file from hundredths of a second to seconds. Value: 100.0
+        ///     The divisor used for converting delay times in the GIF file from hundredths of a second to seconds. Value: 100.0
         /// </summary>
         internal const double DelayDivisor = 100.0;
 
         /// <summary>
-        /// The ID for the block terminator in the GIF file. Value: 0x00
+        ///     The ID for the block terminator in the GIF file. Value: 0x00
         /// </summary>
         internal const byte TerminatorBlockId = 0x00;
 

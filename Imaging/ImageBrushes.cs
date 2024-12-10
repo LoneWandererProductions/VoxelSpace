@@ -7,7 +7,7 @@ namespace Imaging
     public static class ImageBrushes
     {
         /// <summary>
-        /// Applies a gradient brush effect to a specific path on a Bitmap.
+        ///     Applies a gradient brush effect to a specific path on a Bitmap.
         /// </summary>
         /// <param name="image">The input Bitmap image.</param>
         /// <param name="brushPath">The GraphicsPath defining the area to apply the brush.</param>
@@ -36,17 +36,17 @@ namespace Imaging
             if (blendPositions.Length != blendFactors.Length)
                 throw new ArgumentException("Blend positions and factors must have the same length.");
 
-            int width = image.Width;
-            int height = image.Height;
+            var width = image.Width;
+            var height = image.Height;
 
             // Create a mask image to store the gradient
-            Bitmap maskImage = new Bitmap(width, height);
+            var maskImage = new Bitmap(width, height);
 
-            using (Graphics gr = Graphics.FromImage(maskImage))
+            using (var gr = Graphics.FromImage(maskImage))
             {
                 gr.Clear(Color.Transparent);
 
-                using (PathGradientBrush brush = new PathGradientBrush(brushPath))
+                using (var brush = new PathGradientBrush(brushPath))
                 {
                     // Configure the brush with input parameters
                     brush.CenterPoint = new PointF(width / 2f, height / 2f); // Adjust as needed
@@ -54,7 +54,7 @@ namespace Imaging
                     brush.SurroundColors = new[] { edgeColor };
 
                     // Apply blending settings
-                    Blend blend = new Blend
+                    var blend = new Blend
                     {
                         Positions = blendPositions,
                         Factors = blendFactors
@@ -71,14 +71,14 @@ namespace Imaging
         }
 
         /// <summary>
-        /// Merges the input image with the gradient mask to create the brush effect.
+        ///     Merges the input image with the gradient mask to create the brush effect.
         /// </summary>
         /// <param name="baseImage">The base image to which the mask is applied.</param>
         /// <param name="maskImage">The gradient mask image.</param>
         /// <returns>A new Bitmap with the merged result.</returns>
         private static Bitmap MergeWithMask(Bitmap baseImage, Bitmap maskImage)
         {
-            Bitmap outputImage = new Bitmap(baseImage.Width, baseImage.Height);
+            var outputImage = new Bitmap(baseImage.Width, baseImage.Height);
 
             // Use your efficient pixel blending logic here
             ApplyAlphaMask(baseImage, maskImage, outputImage);
@@ -87,7 +87,7 @@ namespace Imaging
         }
 
         /// <summary>
-        /// Placeholder for your efficient pixel-handling solution.
+        ///     Placeholder for your efficient pixel-handling solution.
         /// </summary>
         /// <param name="baseImage">The base image.</param>
         /// <param name="maskImage">The gradient mask image.</param>

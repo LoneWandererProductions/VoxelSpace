@@ -45,7 +45,7 @@ namespace Voxels
         /// <value>
         ///     The height.
         /// </value>
-        public int Height { get; set; }
+        public int Height { get; init; }
 
         /// <summary>
         ///     Gets or sets the horizon.

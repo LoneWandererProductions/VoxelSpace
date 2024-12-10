@@ -28,9 +28,7 @@ namespace DataFormatter
         internal static List<string> ReadFileContent(string filepath)
         {
             if (string.IsNullOrEmpty(filepath))
-            {
                 throw new ArgumentException(DataFormatterResources.ThrowFileEmpty, nameof(filepath));
-            }
 
             try
             {

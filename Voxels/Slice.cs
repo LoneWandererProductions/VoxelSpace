@@ -11,39 +11,39 @@ using System.Drawing;
 namespace Voxels
 {
     /// <summary>
-    /// Slice of the rendered Image
+    ///     Slice of the rendered Image
     /// </summary>
     public sealed class Slice
     {
         /// <summary>
-        /// Gets the shade.
+        ///     Gets the shade.
         /// </summary>
         /// <value>
-        /// The shade.
+        ///     The shade.
         /// </value>
         public Color Shade { get; init; }
 
         /// <summary>
-        /// Gets the x1.
+        ///     Gets the x1.
         /// </summary>
         /// <value>
-        /// The x1.
+        ///     The x1.
         /// </value>
         public int X1 { get; init; }
 
         /// <summary>
-        /// Gets the y1.
+        ///     Gets the y1.
         /// </summary>
         /// <value>
-        /// The y1.
+        ///     The y1.
         /// </value>
         public int Y1 { get; init; }
 
         /// <summary>
-        /// Gets the y2.
+        ///     Gets the y2.
         /// </summary>
         /// <value>
-        /// The y2.
+        ///     The y2.
         /// </value>
         public int Y2 { get; init; }
     }

@@ -28,10 +28,7 @@ namespace FileHandler
         {
             var lst = FileHandleSearch.GetAllFiles(folder, subFolder);
 
-            if (lst == null || lst.Count == 0)
-            {
-                return 0;
-            }
+            if (lst == null || lst.Count == 0) return 0;
 
             var count = 0;
 
@@ -43,15 +40,10 @@ namespace FileHandler
 
                 if (string.IsNullOrEmpty(file) ||
                     string.Equals(str, file, StringComparison.OrdinalIgnoreCase))
-                {
                     continue;
-                }
 
                 var directory = Path.GetDirectoryName(path);
-                if (string.IsNullOrEmpty(directory))
-                {
-                    continue;
-                }
+                if (string.IsNullOrEmpty(directory)) continue;
 
                 var target = Path.Combine(directory, file);
 
@@ -78,10 +70,7 @@ namespace FileHandler
         {
             var lst = FileHandleSearch.GetAllFiles(folder, subFolder);
 
-            if (lst == null || lst.Count == 0)
-            {
-                return 0;
-            }
+            if (lst == null || lst.Count == 0) return 0;
 
             var count = 0;
 
@@ -93,15 +82,10 @@ namespace FileHandler
 
                 if (string.IsNullOrEmpty(file) ||
                     string.Equals(str, file, StringComparison.OrdinalIgnoreCase))
-                {
                     continue;
-                }
 
                 var directory = Path.GetDirectoryName(path);
-                if (string.IsNullOrEmpty(directory))
-                {
-                    continue;
-                }
+                if (string.IsNullOrEmpty(directory)) continue;
 
                 var target = Path.Combine(directory, file);
 
@@ -129,10 +113,7 @@ namespace FileHandler
         {
             var lst = FileHandleSearch.GetAllFiles(folder, subFolder);
 
-            if (lst == null || lst.Count == 0)
-            {
-                return 0;
-            }
+            if (lst == null || lst.Count == 0) return 0;
 
             var count = 0;
 
@@ -143,15 +124,10 @@ namespace FileHandler
 
                 if (string.IsNullOrEmpty(file) ||
                     string.Equals(str, file, StringComparison.OrdinalIgnoreCase))
-                {
                     continue;
-                }
 
                 var directory = Path.GetDirectoryName(path);
-                if (string.IsNullOrEmpty(directory))
-                {
-                    continue;
-                }
+                if (string.IsNullOrEmpty(directory)) continue;
 
                 file = file.Replace(targetStr, update);
 
@@ -182,10 +158,7 @@ namespace FileHandler
         {
             var lst = FileHandleSearch.GetAllFiles(folder, subFolder);
 
-            if (lst == null || lst.Count == 0)
-            {
-                return 0;
-            }
+            if (lst == null || lst.Count == 0) return 0;
 
             var count = 0;
 
@@ -197,17 +170,12 @@ namespace FileHandler
                 var file = str.ReOrderNumbers();
                 if (string.IsNullOrEmpty(file) ||
                     string.Equals(str, file, StringComparison.OrdinalIgnoreCase))
-                {
                     continue;
-                }
 
                 file = string.Concat(file, ext);
 
                 var directory = Path.GetDirectoryName(path);
-                if (string.IsNullOrEmpty(directory))
-                {
-                    continue;
-                }
+                if (string.IsNullOrEmpty(directory)) continue;
 
                 file = Path.Combine(directory, file);
 

@@ -1,7 +1,6 @@
-﻿using Mathematics;
-using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Drawing;
+using Mathematics;
 
 namespace Voxels
 {
@@ -9,7 +8,8 @@ namespace Voxels
     {
         private float[] _yBuffer;
 
-        internal List<Slice> GenerateRaster(Color[,] colorMap, int[,] heightMap, Camera camera, int topographyHeight, int topographyWidth, int colorHeight, int colorWidth)
+        internal List<Slice> GenerateRaster(Color[,] colorMap, int[,] heightMap, Camera camera, int topographyHeight,
+            int topographyWidth, int colorHeight, int colorWidth)
         {
             var raster = new List<Slice>();
             _yBuffer = new float[camera.ScreenWidth];
@@ -44,8 +44,9 @@ namespace Voxels
                     var heightY = (int)pLeftY;
 
                     // Access height map and color map for each pixel
-                    int heightOfHeightMap = heightMap[heightX & (topographyWidth - 1), heightY & (topographyHeight - 1)];
-                    Color color = colorMap[diffuseX & (colorWidth - 1), diffuseY & (colorHeight - 1)];
+                    var heightOfHeightMap =
+                        heightMap[heightX & (topographyWidth - 1), heightY & (topographyHeight - 1)];
+                    var color = colorMap[diffuseX & (colorWidth - 1), diffuseY & (colorHeight - 1)];
 
                     // Calculate height on screen
                     var heightOnScreen = (camera.Height - heightOfHeightMap) / z * camera.Scale + camera.Horizon;
@@ -70,21 +71,22 @@ namespace Voxels
 
                 // Move to the next slice
                 z += dz;
-                dz += 0.005f;  // Increment dz for the next depth slice
+                dz += 0.005f; // Increment dz for the next depth slice
             }
 
             return raster;
         }
 
-        internal Bitmap CreateBitmapWithDepthBuffer(Color[,] colorMap, int[,] heightMap, Camera camera, int topographyHeight, int topographyWidth, int colorHeight, int colorWidth)
+        internal Bitmap CreateBitmapWithDepthBuffer(Color[,] colorMap, int[,] heightMap, Camera camera,
+            int topographyHeight, int topographyWidth, int colorHeight, int colorWidth)
         {
             var bmp = new Bitmap(camera.ScreenWidth, camera.ScreenHeight);
             var depthBuffer = new float[camera.ScreenWidth, camera.ScreenHeight];
 
             // Initialize depth buffer with "infinity" (or a very large value)
-            for (int x = 0; x < camera.ScreenWidth; x++)
-                for (int y = 0; y < camera.ScreenHeight; y++)
-                    depthBuffer[x, y] = float.MaxValue;
+            for (var x = 0; x < camera.ScreenWidth; x++)
+            for (var y = 0; y < camera.ScreenHeight; y++)
+                depthBuffer[x, y] = float.MaxValue;
 
             using var g = Graphics.FromImage(bmp);
             g.Clear(Color.Black); // Background color
@@ -111,13 +113,13 @@ namespace Voxels
                     var heightX = (int)pLeftX;
                     var heightY = (int)pLeftY;
 
-                    int height = heightMap[heightX & (topographyWidth - 1), heightY & (topographyHeight - 1)];
-                    Color color = colorMap[heightX & (colorWidth - 1), heightY & (colorHeight - 1)];
+                    var height = heightMap[heightX & (topographyWidth - 1), heightY & (topographyHeight - 1)];
+                    var color = colorMap[heightX & (colorWidth - 1), heightY & (colorHeight - 1)];
 
                     var heightOnScreen = (camera.Height - height) / z * camera.Scale + camera.Horizon;
 
                     // Check depth buffer for visibility
-                    int screenY = (int)heightOnScreen;
+                    var screenY = (int)heightOnScreen;
                     if (screenY >= 0 && screenY < camera.ScreenHeight && z < depthBuffer[x, screenY])
                     {
                         // Update depth buffer and set pixel color
@@ -139,8 +141,8 @@ namespace Voxels
         }
 
 
-
-        internal Bitmap CreateBitmapFromContainer(List<Slice> raster, int screenWidth, int screenHeight, Color backgroundColor)
+        internal Bitmap CreateBitmapFromContainer(List<Slice> raster, int screenWidth, int screenHeight,
+            Color backgroundColor)
         {
             {
                 var bmp = new Bitmap(screenWidth, screenHeight);

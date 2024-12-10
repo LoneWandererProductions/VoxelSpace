@@ -58,10 +58,7 @@ namespace DataFormatter
             int startLine = 0, int endLine = int.MaxValue)
         {
             var lst = ReadText.ReadFile(filepath);
-            if (lst == null || lst.Count == 0 || startLine > endLine || startLine >= lst.Count)
-            {
-                return null;
-            }
+            if (lst == null || lst.Count == 0 || startLine > endLine || startLine >= lst.Count) return null;
 
             var result = new List<T>();
 
@@ -69,10 +66,7 @@ namespace DataFormatter
             {
                 var parts = DataHelper.GetParts(lst[i], separator).ConvertAll(s => s.Trim());
                 var obj = converter(parts);
-                if (obj != null)
-                {
-                    result.Add(obj);
-                }
+                if (obj != null) result.Add(obj);
             }
 
             return result;
@@ -88,10 +82,7 @@ namespace DataFormatter
         {
             var file = new StringBuilder();
 
-            foreach (var line in csv.Select(row => string.Join(separator, row)))
-            {
-                file.AppendLine(line);
-            }
+            foreach (var line in csv.Select(row => string.Join(separator, row))) file.AppendLine(line);
 
             CsvHelper.WriteContentToFile(filepath, file);
         }

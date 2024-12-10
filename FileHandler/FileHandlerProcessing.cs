@@ -49,20 +49,14 @@ namespace FileHandler
             var index = 0;
             while (index < len)
             {
-                if (root[index] != element[index])
-                {
-                    break;
-                }
+                if (root[index] != element[index]) break;
 
                 index++;
             }
 
             element = element.Remove(0, index);
 
-            if (element.Length == 0)
-            {
-                return target;
-            }
+            if (element.Length == 0) return target;
 
             //Needed to remove the trailing \
             element = element.Remove(0, 1);
@@ -80,20 +74,11 @@ namespace FileHandler
         [return: MaybeNull]
         internal static List<string> GetFilesByExtension(string path, string appendix, bool subdirectories)
         {
-            if (string.IsNullOrEmpty(path))
-            {
-                throw new FileHandlerException(FileHandlerResources.ErrorEmptyString);
-            }
+            if (string.IsNullOrEmpty(path)) throw new FileHandlerException(FileHandlerResources.ErrorEmptyString);
 
-            if (!Directory.Exists(path))
-            {
-                return null;
-            }
+            if (!Directory.Exists(path)) return null;
 
-            if (string.IsNullOrEmpty(appendix))
-            {
-                appendix = FileHandlerResources.Star;
-            }
+            if (string.IsNullOrEmpty(appendix)) appendix = FileHandlerResources.Star;
 
             //cleanups just in Case
             appendix = appendix.Replace(FileHandlerResources.Dot, string.Empty);

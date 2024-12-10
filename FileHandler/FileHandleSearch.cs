@@ -30,10 +30,7 @@ namespace FileHandler
         /// <exception cref="FileHandlerException">>No Correct Path was provided</exception>
         public static bool FileExists(string path)
         {
-            if (string.IsNullOrEmpty(path))
-            {
-                throw new FileHandlerException(FileHandlerResources.ErrorEmptyString);
-            }
+            if (string.IsNullOrEmpty(path)) throw new FileHandlerException(FileHandlerResources.ErrorEmptyString);
 
             return File.Exists(path);
         }
@@ -51,18 +48,12 @@ namespace FileHandler
         {
             var lst = new List<string>();
 
-            if (string.IsNullOrEmpty(path) || !Directory.Exists(path))
-            {
-                return null;
-            }
+            if (string.IsNullOrEmpty(path) || !Directory.Exists(path)) return null;
 
             foreach (var file in appendix.Select(app =>
                          FileHandlerProcessing.GetFilesByExtension(path, app, subdirectories)))
             {
-                if (file == null)
-                {
-                    return null;
-                }
+                if (file == null) return null;
 
                 lst.AddRange(file);
             }
@@ -95,10 +86,7 @@ namespace FileHandler
         {
             var files = FileHandlerProcessing.GetFilesByExtension(path, appendix, subdirectories);
 
-            if (files == null)
-            {
-                return null;
-            }
+            if (files == null) return null;
 
             var lst = new List<string>();
             lst.AddRange(files.Select(Path.GetFileName));
@@ -126,10 +114,7 @@ namespace FileHandler
         [return: MaybeNull]
         public static FileDetails GetFileDetails(string path)
         {
-            if (!File.Exists(path))
-            {
-                return null;
-            }
+            if (!File.Exists(path)) return null;
 
             var fileInfo = FileVersionInfo.GetVersionInfo(path);
             var fi = new FileInfo(path);
@@ -157,10 +142,7 @@ namespace FileHandler
         [return: MaybeNull]
         public static List<FileDetails> GetFilesDetails(List<string> files)
         {
-            if (files == null || files.Count == 0)
-            {
-                return null;
-            }
+            if (files == null || files.Count == 0) return null;
 
             var data = new List<FileDetails>(files.Count);
 
@@ -181,10 +163,7 @@ namespace FileHandler
         {
             var files = FileHandlerProcessing.GetFilesByExtension(path, appendix, subdirectories);
 
-            if (files == null)
-            {
-                return null;
-            }
+            if (files == null) return null;
 
             var lst = new List<string>();
             lst.AddRange(files.Select(Path.GetFileNameWithoutExtension));
@@ -201,15 +180,9 @@ namespace FileHandler
         [return: MaybeNull]
         public static List<string> GetAllSubfolders(string path)
         {
-            if (string.IsNullOrEmpty(path))
-            {
-                throw new FileHandlerException(FileHandlerResources.ErrorEmptyString);
-            }
+            if (string.IsNullOrEmpty(path)) throw new FileHandlerException(FileHandlerResources.ErrorEmptyString);
 
-            if (!Directory.Exists(path))
-            {
-                return null;
-            }
+            if (!Directory.Exists(path)) return null;
 
             var list = Directory.GetDirectories(path).ToList();
 
@@ -224,15 +197,9 @@ namespace FileHandler
         /// <exception cref="FileHandlerException">No Correct Path was provided</exception>
         public static bool CheckIfFolderContainsElement(string path)
         {
-            if (string.IsNullOrEmpty(path))
-            {
-                throw new FileHandlerException(FileHandlerResources.ErrorEmptyString);
-            }
+            if (string.IsNullOrEmpty(path)) throw new FileHandlerException(FileHandlerResources.ErrorEmptyString);
 
-            if (!Directory.Exists(path))
-            {
-                return false;
-            }
+            if (!Directory.Exists(path)) return false;
 
             var fileCheck = Directory.GetFiles(path).FirstOrDefault();
             return fileCheck != null;
@@ -253,10 +220,7 @@ namespace FileHandler
         {
             var lst = GetFilesByExtensionFullPath(path, appendix, subdirectories);
 
-            if (lst == null || lst.Count == 0)
-            {
-                return null;
-            }
+            if (lst == null || lst.Count == 0) return null;
 
             var list = new List<string>();
 

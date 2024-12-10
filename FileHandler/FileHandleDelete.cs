@@ -35,15 +35,9 @@ namespace FileHandler
         /// <exception cref="FileHandlerException">No Correct Path was provided</exception>
         public static bool DeleteFile(string path)
         {
-            if (string.IsNullOrEmpty(path))
-            {
-                throw new FileHandlerException(FileHandlerResources.ErrorEmptyString);
-            }
+            if (string.IsNullOrEmpty(path)) throw new FileHandlerException(FileHandlerResources.ErrorEmptyString);
 
-            if (!File.Exists(path))
-            {
-                return false;
-            }
+            if (!File.Exists(path)) return false;
 
             var count = 0;
 
@@ -97,17 +91,11 @@ namespace FileHandler
         /// <exception cref="FileHandlerException">No Correct Path was provided</exception>
         public static bool DeleteFiles(List<string> paths)
         {
-            if (paths == null || paths.Count == 0)
-            {
-                throw new FileHandlerException(FileHandlerResources.ErrorEmptyList);
-            }
+            if (paths == null || paths.Count == 0) throw new FileHandlerException(FileHandlerResources.ErrorEmptyList);
 
             var check = true;
 
-            foreach (var path in paths)
-            {
-                check = DeleteFile(path);
-            }
+            foreach (var path in paths) check = DeleteFile(path);
 
             return check;
         }
@@ -121,10 +109,7 @@ namespace FileHandler
         /// <exception cref="FileHandlerException">No Correct Path was provided</exception>
         public static bool DeleteCompleteFolder(string path)
         {
-            if (string.IsNullOrEmpty(path))
-            {
-                throw new FileHandlerException(FileHandlerResources.ErrorEmptyString);
-            }
+            if (string.IsNullOrEmpty(path)) throw new FileHandlerException(FileHandlerResources.ErrorEmptyString);
 
             _ = DeleteAllContents(path, true);
 
@@ -142,15 +127,9 @@ namespace FileHandler
         /// <exception cref="FileHandlerException">No Correct Path was provided</exception>
         public static bool DeleteAllContents(string path, bool subdirectories)
         {
-            if (string.IsNullOrEmpty(path))
-            {
-                throw new FileHandlerException(FileHandlerResources.ErrorEmptyString);
-            }
+            if (string.IsNullOrEmpty(path)) throw new FileHandlerException(FileHandlerResources.ErrorEmptyString);
 
-            if (!Directory.Exists(path))
-            {
-                return false;
-            }
+            if (!Directory.Exists(path)) return false;
 
             var check = true;
 
@@ -168,15 +147,9 @@ namespace FileHandler
 
                 FileHandlerRegister.SendOverview?.Invoke(nameof(DeleteAllContents), itm);
 
-                if (myFiles.Length == 0)
-                {
-                    return false;
-                }
+                if (myFiles.Length == 0) return false;
 
-                foreach (var file in myFiles)
-                {
-                    _ = DeleteFile(file);
-                }
+                foreach (var file in myFiles) _ = DeleteFile(file);
             }
             catch (UnauthorizedAccessException ex)
             {
@@ -204,20 +177,11 @@ namespace FileHandler
         /// <exception cref="FileHandlerException">No Correct Path was provided</exception>
         public static bool DeleteFolderContentsByExtension(string path, List<string> fileExtList, bool subdirectories)
         {
-            if (string.IsNullOrEmpty(path))
-            {
-                throw new FileHandlerException(FileHandlerResources.ErrorEmptyString);
-            }
+            if (string.IsNullOrEmpty(path)) throw new FileHandlerException(FileHandlerResources.ErrorEmptyString);
 
-            if (!Directory.Exists(path))
-            {
-                return false;
-            }
+            if (!Directory.Exists(path)) return false;
 
-            if (fileExtList == null)
-            {
-                return false;
-            }
+            if (fileExtList == null) return false;
 
             fileExtList = FileHandlerProcessing.CleanUpExtensionList(fileExtList);
 
@@ -230,10 +194,7 @@ namespace FileHandler
                          appendix => FileHandleSearch.GetFilesByExtensionFullPath(path, appendix, subdirectories))
                     )
             {
-                if (files == null)
-                {
-                    return false;
-                }
+                if (files == null) return false;
 
                 myFiles.AddRange(files);
 
@@ -246,15 +207,9 @@ namespace FileHandler
                 FileHandlerRegister.SendOverview?.Invoke(nameof(DeleteFolderContentsByExtension), itm);
             }
 
-            if (myFiles.Count == 0)
-            {
-                return false;
-            }
+            if (myFiles.Count == 0) return false;
 
-            foreach (var unused in myFiles.Select(DeleteFile).Where(cache => !cache))
-            {
-                check = false;
-            }
+            foreach (var unused in myFiles.Select(DeleteFile).Where(cache => !cache)) check = false;
 
             return check;
         }
@@ -266,15 +221,9 @@ namespace FileHandler
         /// <exception cref="FileHandlerException">No Correct Path was provided</exception>
         public static bool DeleteFolder(string path)
         {
-            if (string.IsNullOrEmpty(path))
-            {
-                throw new FileHandlerException(FileHandlerResources.ErrorEmptyString);
-            }
+            if (string.IsNullOrEmpty(path)) throw new FileHandlerException(FileHandlerResources.ErrorEmptyString);
 
-            if (!Directory.Exists(path))
-            {
-                return true;
-            }
+            if (!Directory.Exists(path)) return true;
 
             try
             {

@@ -25,11 +25,12 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using ExtendedSystemObjects;
 using FileHandler;
+using PixelFormat = System.Drawing.Imaging.PixelFormat;
 
 namespace Imaging
 {
     /// <summary>
-    /// Central Entry class for all things related to gifs
+    ///     Central Entry class for all things related to gifs
     /// </summary>
     public static class ImageGifHandler
     {
@@ -174,13 +175,13 @@ namespace Imaging
         }
 
         /// <summary>
-        /// Creates the GIF.
+        ///     Creates the GIF.
         /// </summary>
         /// <param name="frames">The frames.</param>
         /// <param name="target">The target.</param>
         internal static void CreateGif(IEnumerable<FrameInfo> frames, string target)
         {
-            if (frames== null) return;
+            if (frames == null) return;
 
             GifCreator(frames, target);
         }
@@ -217,7 +218,7 @@ namespace Imaging
         }
 
         /// <summary>
-        /// Creates the GIF.
+        ///     Creates the GIF.
         /// </summary>
         /// <param name="frames">The frames.</param>
         /// <param name="target">The target.</param>
@@ -236,12 +237,13 @@ namespace Imaging
                         null, // No palette for Bgra32
                         frameInfo.Image.LockBits(new Rectangle(0, 0, frameInfo.Image.Width, frameInfo.Image.Height),
                             ImageLockMode.ReadOnly,
-                            System.Drawing.Imaging.PixelFormat.Format32bppArgb).Scan0,
+                            PixelFormat.Format32bppArgb).Scan0,
                         frameInfo.Image.Height * frameInfo.Image.Width * 4, // Image byte size
                         frameInfo.Image.Width * 4)); // Bytes per row
 
                 var metadata = new BitmapMetadata(ImagingResources.GifMetadata);
-                metadata.SetQuery(ImagingResources.GifMetadataQueryDelay, (ushort)(frameInfo.DelayTime * 100)); // Delay in hundredths of seconds
+                metadata.SetQuery(ImagingResources.GifMetadataQueryDelay,
+                    (ushort)(frameInfo.DelayTime * 100)); // Delay in hundredths of seconds
 
                 gEnc.Frames.Add(BitmapFrame.Create(bitmapSource, null, metadata, null));
             }

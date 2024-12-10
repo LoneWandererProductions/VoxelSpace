@@ -1,9 +1,8 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using System.IO;
-using System.Drawing;
 using System.Diagnostics;
+using System.Drawing;
+using System.IO;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Voxels;
-using Imaging;
 
 namespace SpeedTests
 {
@@ -13,7 +12,7 @@ namespace SpeedTests
         private VoxelRaster _voxel;
 
         /// <summary>
-        /// Initializes this instance.
+        ///     Initializes this instance.
         /// </summary>
         [TestInitialize]
         public void Initialize()
@@ -31,7 +30,7 @@ namespace SpeedTests
         }
 
         /// <summary>
-        /// Speeds the and result comparison tests.
+        ///     Speeds the and result comparison tests.
         /// </summary>
         [TestMethod]
         public void SpeedAndResultComparisonTests()
@@ -62,13 +61,14 @@ namespace SpeedTests
             Assert.IsNotNull(depthBitmap, "Container rendering produced a null Bitmap.");
 
             // Compare the two images
-            Assert.IsTrue(AreBitmapsEqual(directBitmap, containerBitmap), "The images rendered by the two methods are not identical. (depth, container)");
+            Assert.IsTrue(AreBitmapsEqual(directBitmap, containerBitmap),
+                "The images rendered by the two methods are not identical. (depth, container)");
 
             // Compare the two images (depth, direct) is not possible since they are different
         }
 
         /// <summary>
-        /// Checks the speed panorama.
+        ///     Checks the speed panorama.
         /// </summary>
         [TestMethod]
         public void CheckSpeedPanorama()
@@ -92,7 +92,7 @@ namespace SpeedTests
         }
 
         /// <summary>
-        /// Tests the generate panoramic view.
+        ///     Tests the generate panoramic view.
         /// </summary>
         [TestMethod]
         public void TestGeneratePanoramicView()
@@ -106,17 +106,14 @@ namespace SpeedTests
 
             Assert.AreEqual(360 / angleStep, panoramicViews.Count, "Panoramic views count mismatch.");
 
-            foreach (var kvp in panoramicViews)
-            {
-                Assert.IsNotNull(kvp.Value, $"Bitmap for angle {kvp.Key} is null.");
-            }
+            foreach (var kvp in panoramicViews) Assert.IsNotNull(kvp.Value, $"Bitmap for angle {kvp.Key} is null.");
 
             Trace.WriteLine("Panoramic views generated successfully.");
         }
 
 
         /// <summary>
-        /// Compares two Bitmaps pixel by pixel.
+        ///     Compares two Bitmaps pixel by pixel.
         /// </summary>
         /// <param name="bmp1">The first Bitmap.</param>
         /// <param name="bmp2">The second Bitmap.</param>
@@ -126,14 +123,10 @@ namespace SpeedTests
             if (bmp1.Width != bmp2.Width || bmp1.Height != bmp2.Height)
                 return false;
 
-            for (int x = 0; x < bmp1.Width; x++)
-            {
-                for (int y = 0; y < bmp1.Height; y++)
-                {
-                    if (bmp1.GetPixel(x, y) != bmp2.GetPixel(x, y))
-                        return false;
-                }
-            }
+            for (var x = 0; x < bmp1.Width; x++)
+            for (var y = 0; y < bmp1.Height; y++)
+                if (bmp1.GetPixel(x, y) != bmp2.GetPixel(x, y))
+                    return false;
 
             return true;
         }

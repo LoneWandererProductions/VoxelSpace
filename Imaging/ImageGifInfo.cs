@@ -22,82 +22,82 @@ namespace Imaging
     public sealed class ImageGifInfo
     {
         /// <summary>
-        /// Gets or sets the header.
+        ///     Gets or sets the header.
         /// </summary>
         /// <value>
-        /// The header.
+        ///     The header.
         /// </value>
         public string Header { get; set; }
 
         /// <summary>
-        /// Gets or sets the width.
+        ///     Gets or sets the width.
         /// </summary>
         /// <value>
-        /// The width.
+        ///     The width.
         /// </value>
         public int Width { get; set; }
 
         /// <summary>
-        /// Gets or sets the height.
+        ///     Gets or sets the height.
         /// </summary>
         /// <value>
-        /// The height.
+        ///     The height.
         /// </value>
         public int Height { get; set; }
 
         /// <summary>
-        /// Gets or sets a value indicating whether this instance has global color table.
+        ///     Gets or sets a value indicating whether this instance has global color table.
         /// </summary>
         /// <value>
-        ///   <c>true</c> if this instance has global color table; otherwise, <c>false</c>.
+        ///     <c>true</c> if this instance has global color table; otherwise, <c>false</c>.
         /// </value>
         public bool HasGlobalColorTable { get; set; }
 
         /// <summary>
-        /// Gets or sets the size of the global color table.
+        ///     Gets or sets the size of the global color table.
         /// </summary>
         /// <value>
-        /// The size of the global color table.
+        ///     The size of the global color table.
         /// </value>
         public int GlobalColorTableSize { get; set; }
 
         /// <summary>
-        /// Gets or sets the color resolution.
+        ///     Gets or sets the color resolution.
         /// </summary>
         /// <value>
-        /// The color resolution.
+        ///     The color resolution.
         /// </value>
         public int ColorResolution { get; set; }
 
         /// <summary>
-        /// Gets or sets the index of the background color.
+        ///     Gets or sets the index of the background color.
         /// </summary>
         /// <value>
-        /// The index of the background color.
+        ///     The index of the background color.
         /// </value>
         public int BackgroundColorIndex { get; set; }
 
         /// <summary>
-        /// Gets or sets the pixel aspect ratio.
+        ///     Gets or sets the pixel aspect ratio.
         /// </summary>
         /// <value>
-        /// The pixel aspect ratio.
+        ///     The pixel aspect ratio.
         /// </value>
         public int PixelAspectRatio { get; set; }
 
         /// <summary>
-        /// Gets or sets the loop count.
+        ///     Gets or sets the loop count.
         /// </summary>
         /// <value>
-        /// The loop count.
+        ///     The loop count.
         /// </value>
         public int? LoopCount { get; set; } // Nullable, since not all GIFs have this
 
         /// <summary>
-        /// Gets or sets the frames.
+        ///     Gets or sets the frames.
         /// </summary>
         /// <value>
-        /// The frames.
+        ///     The frames.
         /// </value>
         public List<FrameInfo> Frames { get; set; } = new();
 
@@ -110,49 +110,49 @@ namespace Imaging
         public double TotalDuration => Frames.Sum(f => f.DelayTime); // In seconds
 
         /// <summary>
-        /// Gets or sets the name.
+        ///     Gets or sets the name.
         /// </summary>
         /// <value>
-        /// The name.
+        ///     The name.
         /// </value>
         public string Name { get; set; }
 
         /// <summary>
-        /// Gets or sets the size.
+        ///     Gets or sets the size.
         /// </summary>
         /// <value>
-        /// The size.
+        ///     The size.
         /// </value>
         public long Size { get; set; }
     }
 
     /// <summary>
-    /// Infos about the frame and timing
+    ///     Infos about the frame and timing
     /// </summary>
     public sealed class FrameInfo
     {
         /// <summary>
-        /// Gets or sets the description.
+        ///     Gets or sets the description.
         /// </summary>
         /// <value>
-        /// The description.
+        ///     The description.
         /// </value>
         public string Description { get; set; }
 
         /// <summary>
-        /// Gets or sets the delay time.
+        ///     Gets or sets the delay time.
         /// </summary>
         /// <value>
-        /// The delay time.
+        ///     The delay time.
         /// </value>
         public double DelayTime { get; set; } // Delay time in seconds
 
 
         /// <summary>
-        /// Gets or sets the image.
+        ///     Gets or sets the image.
         /// </summary>
         /// <value>
-        /// The image.
+        ///     The image.
         /// </value>
         public Bitmap Image { get; set; } // Image of the frame
     }
