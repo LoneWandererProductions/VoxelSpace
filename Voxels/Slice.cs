@@ -45,6 +45,6 @@ namespace Voxels
         /// <value>
         /// The y2.
         /// </value>
-        public float Y2 { get; init; }
+        public int Y2 { get; init; }
     }
 }

@@ -38,12 +38,6 @@ namespace Voxels
         private Color[,] _colorMap;
 
         /// <summary>
-        /// The color map cif
-        /// Holds the color values (1024*1024)
-        /// </summary>
-        private Cif _colorMapCif;
-
-        /// <summary>
         ///     The color width
         /// </summary>
         private int _colorWidth;
@@ -78,7 +72,7 @@ namespace Voxels
         /// <summary>
         ///     The y buffer
         /// </summary>
-        private float[] _yBuffer;
+        private float[] _yBuffer { get; set; }
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="VoxelRaster" /> class.
@@ -126,7 +120,7 @@ namespace Voxels
         /// <returns>The finished Bitmap created directly.</returns>
         public Bitmap RenderDirect()
         {
-            if (_colorMapCif == null || _heightMap == null) return null;
+            if (_heightMap == null) return null;
 
             var bmp = ClearFrame();
             _yBuffer = new float[Camera.ScreenWidth];
@@ -193,71 +187,11 @@ namespace Voxels
         /// <returns>The finished Bitmap created via container data.</returns>
         public Bitmap RenderWithContainer()
         {
-            if (_colorMapCif == null || _heightMap == null) return null;
-
-            _raster = new List<Slice>();
-            _yBuffer = new float[Camera.ScreenWidth];
-
-            for (var i = 0; i < _yBuffer.Length; i++)
-                _yBuffer[i] = Camera.ScreenHeight;
-
-            var sinPhi = ExtendedMath.CalcSin(Camera.Angle);
-            var cosPhi = ExtendedMath.CalcCos(Camera.Angle);
-
-            float z = 1;
-            float dz = 1;
-
-            while (z < Camera.ZFar)
-            {
-                var pLeft = new PointF(
-                    (float)(-cosPhi * z - sinPhi * z) + Camera.X,
-                    (float)(sinPhi * z - cosPhi * z) + Camera.Y);
-
-                var pRight = new PointF(
-                    (float)(cosPhi * z - sinPhi * z) + Camera.X,
-                    (float)(-sinPhi * z - cosPhi * z) + Camera.Y);
-
-                var dx = (pRight.X - pLeft.X) / Camera.ScreenWidth;
-                var dy = (pRight.Y - pLeft.Y) / Camera.ScreenWidth;
-
-                for (var i = 0; i < Camera.ScreenWidth; i++)
-                {
-                    var diffuseX = (int)pLeft.X;
-                    var diffuseY = (int)pLeft.Y;
-                    var heightX = (int)pLeft.X;
-                    var heightY = (int)pLeft.Y;
-
-                    Color color;
-                    int heightOfHeightMap;
-
-                    heightOfHeightMap =
-                        _heightMap[heightX & (_topographyWidth - 1), heightY & (_topographyHeight - 1)];
-
-                    color = _colorMap[diffuseX & (_colorWidth - 1), diffuseY & (_colorHeight - 1)];
+            if (_heightMap == null) return null;
 
 
-                    var heightOnScreen = (Camera.Height - heightOfHeightMap) / z * Camera.Scale + Camera.Horizon;
-
-                    _raster.Add(new Slice
-                    {
-                        Shade = color,
-                        X1 = i,
-                        Y1 = (int)heightOnScreen,
-                        Y2 = (int)_yBuffer[i]
-                    });
-
-                    if (heightOnScreen < _yBuffer[i])
-                        _yBuffer[i] = heightOnScreen;
-
-                    pLeft.X += dx;
-                    pLeft.Y += dy;
-                }
-
-                z += dz;
-                dz += 0.005f;
-            }
-
-            return CreateBitmapFromContainer();
+            _raster = Raster.GenerateRaster(_colorMap, _heightMap, Camera, _topographyHeight , _topographyWidth, _colorHeight, _colorWidth);
+            return Raster.CreateBitmapFromContainer(_raster, Camera.ScreenWidth, Camera.ScreenHeight, Camera.BackgroundColor);
         }
 
         /// <summary>
@@ -267,7 +201,7 @@ namespace Voxels
         /// <returns></returns>
         public Bitmap RenderPanoramic(int numberOfFrames)
         {
-            if (_colorMapCif == null || _heightMap == null) return null;
+            if (_heightMap == null) return null;
 
             // Width of the final panoramic image
             int panoramicWidth = Camera.ScreenWidth * numberOfFrames;
@@ -300,7 +234,7 @@ namespace Voxels
 
         public Dictionary<int, Bitmap> RenderPanoramicParallel(int numberOfFrames)
         {
-            if (_colorMapCif == null || _heightMap == null) return null;
+            if (_heightMap == null) return null;
 
             // Use a thread-safe dictionary to store the frame bitmaps
             var frameBitmaps = new ConcurrentDictionary<int, Bitmap>();
@@ -427,8 +361,6 @@ namespace Voxels
 
             var dbm = DirectBitmap.GetInstance(bmp);
 
-            _heightMapCif = new Cif(bmp);
-
             _heightMap = new int[bmp.Width, bmp.Height];
             for (var i = 0; i < bmp.Width; i++)
                 for (var j = 0; j < bmp.Height; j++)
@@ -447,8 +379,6 @@ namespace Voxels
             _colorWidth = bmp.Width;
 
             var dbm = DirectBitmap.GetInstance(bmp);
-
-            _colorMapCif = new Cif(bmp);
 
             _colorMap = new Color[bmp.Width, bmp.Height];
             for (var i = 0; i < bmp.Width; i++)
