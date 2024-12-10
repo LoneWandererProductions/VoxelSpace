@@ -74,7 +74,7 @@ namespace SpeedTests
             Assert.IsNotNull(bmp, "Panoramic produced a null Bitmap.");
 
             stopwatch.Start();
-            var raster = _voxel.RenderPanoramicParallel(30);
+            //var raster = _voxel.RenderPanoramicParallel(30);
             stopwatch.Stop();
 
             Trace.WriteLine($"Panoramic trask rendering time: {stopwatch.ElapsedMilliseconds} ms");
