@@ -19,6 +19,16 @@ namespace Mathematics
         internal const double Tolerance = 1e-6;
 
         /// <summary>
+        ///     The error in Statistics input (const). Value: "Input list cannot be null or empty.".
+        /// </summary>
+        internal const string StatisticsErrorInput = "Input list cannot be null or empty.";
+
+        /// <summary>
+        ///     The Value was negative Matrix generation (const). Value: "Matrix size must be a positive integer.".
+        /// </summary>
+        internal const string MatrixErrorNegativeValue = "Matrix size must be a positive integer.";
+
+        /// <summary>
         ///     The matrix error inverse (const). Value: "Unable to compute inverse.".
         /// </summary>
         internal const string MatrixErrorInverse = "Unable to compute inverse.";

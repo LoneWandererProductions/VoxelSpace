@@ -7,6 +7,10 @@
  * SOURCES:    https://welt-der-bwl.de/Streuungsma%C3%9Fe
  */
 
+// ReSharper disable MemberCanBeInternal
+// ReSharper disable UnusedAutoPropertyAccessor.Global
+// ReSharper disable MemberCanBePrivate.Global
+
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,16 +30,11 @@ namespace Mathematics
         {
             if (row == null || row.Count == 0)
             {
-                return;
+                throw new ArgumentException(MathResources.StatisticsErrorInput);
             }
 
             Row = row;
-            CalcArithmeticMean();
-            CalcVariance();
-            CalcStandardDeviation();
-            CalcCoefficientOfVariation();
-            CalcSpan();
-            CalcMeanAbsoluteDeviation();
+            CalculateStatistics();
         }
 
         /// <summary>
@@ -95,30 +94,56 @@ namespace Mathematics
         public double MeanAbsoluteDeviation { get; private set; }
 
         /// <summary>
+        ///     Gets the median.
+        /// </summary>
+        /// <value>
+        ///     The median.
+        /// </value>
+        public double Median { get; private set; }
+
+        /// <summary>
+        ///     Gets the mode.
+        /// </summary>
+        /// <value>
+        ///     The mode.
+        /// </value>
+        public double Mode { get; private set; }
+
+        /// <summary>
+        ///     Calculates the statistics.
+        /// </summary>
+        private void CalculateStatistics()
+        {
+            CalculateArithmeticMean();
+            CalculateVariance();
+            CalculateStandardDeviation();
+            CalculateCoefficientOfVariation();
+            CalculateSpan();
+            CalculateMeanAbsoluteDeviation();
+            CalculateMedian();
+            CalculateMode();
+        }
+
+        /// <summary>
         ///     Calculates the arithmetic mean.
         /// </summary>
-        private void CalcArithmeticMean()
+        private void CalculateArithmeticMean()
         {
-            var mean = Row.Aggregate<double, double>(0, (current, element) => element + current);
-
-            ArithmeticMean = mean / Row.Count;
+            ArithmeticMean = Row.Average();
         }
 
         /// <summary>
         ///     Calculates the variance.
         /// </summary>
-        private void CalcVariance()
+        private void CalculateVariance()
         {
-            var variance = Row.Select(element => Math.Pow(element - ArithmeticMean, 2))
-                .Aggregate<double, double>(0, (current, cache) => cache + current);
-
-            Variance = variance / Row.Count;
+            Variance = Row.Average(element => Math.Pow(element - ArithmeticMean, 2));
         }
 
         /// <summary>
         ///     Calculates the standard deviation.
         /// </summary>
-        private void CalcStandardDeviation()
+        private void CalculateStandardDeviation()
         {
             StandardDeviation = Math.Sqrt(Variance);
         }
@@ -126,7 +151,7 @@ namespace Mathematics
         /// <summary>
         ///     Calculates the coefficient of variation.
         /// </summary>
-        private void CalcCoefficientOfVariation()
+        private void CalculateCoefficientOfVariation()
         {
             CoefficientOfVariation = StandardDeviation / ArithmeticMean;
         }
@@ -134,35 +159,37 @@ namespace Mathematics
         /// <summary>
         ///     Calculates the span.
         /// </summary>
-        private void CalcSpan()
+        private void CalculateSpan()
         {
-            double max = Row[0], min = Row[0];
-
-            foreach (var element in Row)
-            {
-                if (min >= element)
-                {
-                    min = element;
-                }
-
-                if (max <= element)
-                {
-                    max = element;
-                }
-            }
-
-            Span = max - min;
+            Span = Row.Max() - Row.Min();
         }
 
         /// <summary>
         ///     Calculates the mean absolute deviation.
         /// </summary>
-        private void CalcMeanAbsoluteDeviation()
+        private void CalculateMeanAbsoluteDeviation()
         {
-            var variance = Row.Select(element => Math.Abs(element - ArithmeticMean))
-                .Aggregate<double, double>(0, (current, cache) => cache + current);
+            MeanAbsoluteDeviation = Row.Average(element => Math.Abs(element - ArithmeticMean));
+        }
 
-            MeanAbsoluteDeviation = variance / Row.Count;
+        /// <summary>
+        ///     Calculates the median.
+        /// </summary>
+        private void CalculateMedian()
+        {
+            var sortedList = Row.OrderBy(x => x).ToList();
+            var n = sortedList.Count;
+            Median = n % 2 == 0 ? (sortedList[(n / 2) - 1] + sortedList[n / 2]) / 2.0 : sortedList[n / 2];
+        }
+
+        /// <summary>
+        ///     Calculates the mode.
+        /// </summary>
+        private void CalculateMode()
+        {
+            var groups = Row.GroupBy(x => x);
+            var maxCount = groups.Max(g => g.Count());
+            Mode = groups.First(g => g.Count() == maxCount).Key;
         }
     }
 }

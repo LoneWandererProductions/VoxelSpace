@@ -72,7 +72,11 @@ namespace Voxels
         /// <summary>
         ///     The y buffer
         /// </summary>
-        private float[] _yBuffer { get; set; }
+        private float[] YBuffer { get; set; }
+
+        private readonly Dictionary<int, Bitmap> _panoramaCache = new();
+
+        private readonly object _lock = new();
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="VoxelRaster" /> class.
@@ -123,10 +127,10 @@ namespace Voxels
             if (_heightMap == null) return null;
 
             var bmp = ClearFrame();
-            _yBuffer = new float[Camera.ScreenWidth];
+            YBuffer = new float[Camera.ScreenWidth];
 
-            for (var i = 0; i < _yBuffer.Length; i++)
-                _yBuffer[i] = Camera.ScreenHeight;
+            for (var i = 0; i < YBuffer.Length; i++)
+                YBuffer[i] = Camera.ScreenHeight;
 
             var sinPhi = ExtendedMath.CalcSin(Camera.Angle);
             var cosPhi = ExtendedMath.CalcCos(Camera.Angle);
@@ -165,10 +169,10 @@ namespace Voxels
 
                     var heightOnScreen = (Camera.Height - heightOfHeightMap) / z * Camera.Scale + Camera.Horizon;
 
-                    DrawVerticalLine(color, i, (int)heightOnScreen, (int)_yBuffer[i], bmp);
+                    DrawVerticalLine(color, i, (int)heightOnScreen, (int)YBuffer[i], bmp);
 
-                    if (heightOnScreen < _yBuffer[i])
-                        _yBuffer[i] = heightOnScreen;
+                    if (heightOnScreen < YBuffer[i])
+                        YBuffer[i] = heightOnScreen;
 
                     pLeft.X += dx;
                     pLeft.Y += dy;
@@ -185,13 +189,26 @@ namespace Voxels
         /// Renders the image by creating the data in a container, then creating the Bitmap.
         /// </summary>
         /// <returns>The finished Bitmap created via container data.</returns>
+        public Bitmap RenderWithBitmapDepthBuffer()
+        {
+            if (_heightMap == null) return null;
+
+            var raster = new Raster();
+
+            return raster.CreateBitmapWithDepthBuffer(_colorMap, _heightMap, Camera, _topographyHeight, _topographyWidth, _colorHeight, _colorWidth);
+        }
+
+        /// <summary>
+        /// Renders the with container.
+        /// </summary>
+        /// <returns></returns>
         public Bitmap RenderWithContainer()
         {
             if (_heightMap == null) return null;
 
             var raster = new Raster();
 
-            _raster = raster.GenerateRaster(_colorMap, _heightMap, Camera, _topographyHeight , _topographyWidth, _colorHeight, _colorWidth);
+            _raster = raster.GenerateRaster(_colorMap, _heightMap, Camera, _topographyHeight, _topographyWidth, _colorHeight, _colorWidth);
             return raster.CreateBitmapFromContainer(_raster, Camera.ScreenWidth, Camera.ScreenHeight, Camera.BackgroundColor);
         }
 
@@ -205,22 +222,22 @@ namespace Voxels
             if (_heightMap == null) return null;
 
             // Width of the final panoramic image
-            int panoramicWidth = Camera.ScreenWidth * numberOfFrames;
-            Bitmap panoramicBitmap = new Bitmap(panoramicWidth, Camera.ScreenHeight);
+            var panoramicWidth = Camera.ScreenWidth * numberOfFrames;
+            var panoramicBitmap = new Bitmap(panoramicWidth, Camera.ScreenHeight);
 
-            _yBuffer = new float[Camera.ScreenWidth];
+            YBuffer = new float[Camera.ScreenWidth];
 
             // Create a new graphics object to draw on the panoramicBitmap
             using (var g = Graphics.FromImage(panoramicBitmap))
             {
                 // For each frame (view), adjust the camera angle and render the scene
-                for (int frame = 0; frame < numberOfFrames; frame++)
+                for (var frame = 0; frame < numberOfFrames; frame++)
                 {
                     // Adjust the camera's angle slightly for each frame to create the panorama
                     Camera.Angle += (360 / numberOfFrames);
 
                     // Render the scene and get the resulting bitmap
-                    Bitmap frameBitmap = RenderWithContainer();  // You can also use RenderWithContainer() if needed
+                    var frameBitmap = RenderWithContainer();  // You can also use RenderWithContainer() if needed
 
                     // Draw the frame on the panoramic bitmap at the correct position
                     g.DrawImage(frameBitmap, new Point(frame * Camera.ScreenWidth, 0));
@@ -233,55 +250,48 @@ namespace Voxels
             return panoramicBitmap;
         }
 
-        public Dictionary<int, Bitmap> RenderPanoramicParallel(int numberOfFrames)
+        /// <summary>
+        /// Generates the panoramic view.
+        /// </summary>
+        /// <param name="angleStep">The angle step.</param>
+        /// <returns></returns>
+        public Dictionary<int, Bitmap> GeneratePanoramicView(int angleStep)
         {
-            if (_heightMap == null) return null;
+            var panoramicViews = new Dictionary<int, Bitmap>();
 
-            // Use a thread-safe dictionary to store the frame bitmaps
-            var frameBitmaps = new ConcurrentDictionary<int, Bitmap>();
-
-            // Create a list of tasks to render each frame in parallel
-            List<Task> tasks = new List<Task>();
-
-            for (int frame = 0; frame < numberOfFrames; frame++)
+            // Generate views in parallel for performance
+            _ = Parallel.ForEach(Enumerable.Range(0, 360 / angleStep), step =>
             {
-                int currentFrame = frame; // Capture the current frame for the closure
+                var angle = step * angleStep;
+                var renderedBitmap = RenderAtAngle(angle);
 
-                // Start a new task for each frame, adjusting the camera angle and rendering the scene
-                var task = Task.Run(() =>
+                lock (_lock)
                 {
-                    // Adjust the camera's angle slightly for each frame to create the panorama
-                    Camera.Angle += (360 / numberOfFrames);
+                    panoramicViews[angle] = renderedBitmap;
+                }
+            });
 
-                    // Render the scene and get the resulting bitmap
-                    Bitmap frameBitmap = RenderWithContainer();
-
-                    // Store the frame bitmap in the thread-safe dictionary
-                    frameBitmaps[currentFrame] = frameBitmap;
-                });
-
-                tasks.Add(task);
-            }
-
-            // Wait for all tasks to complete (with proper synchronization)
-            Task.WhenAll(tasks).Wait();
-
-            // Return the dictionary with frame indices and corresponding bitmaps
-            return frameBitmaps.ToDictionary(kv => kv.Key, kv => kv.Value);
+            return panoramicViews;
         }
 
-        /// <summary>
-        /// Creates a Bitmap using the data in the _raster container.
-        /// </summary>
-        /// <returns>The created Bitmap.</returns>
-        private Bitmap CreateBitmapFromContainer()
+        public Bitmap GetViewAtAngle(int angle)
         {
-            var bmp = ClearFrame();
+            lock (_lock)
+            {
+                if (!_panoramaCache.ContainsKey(angle))
+                {
+                    // Render and cache if not already available
+                    _panoramaCache[angle] = RenderAtAngle(angle);
+                }
 
-            foreach (var slice in _raster)
-                DrawVerticalLine(slice.Shade, slice.X1, slice.Y1, slice.Y2, bmp);
+                return _panoramaCache[angle];
+            }
+        }
 
-            return bmp;
+        private Bitmap RenderAtAngle(int angle)
+        {
+            var raster = new Raster();
+            return raster.CreateBitmapWithDepthBuffer(_colorMap, _heightMap, Camera, _topographyHeight, _topographyWidth, _colorHeight, _colorWidth);
         }
 
         /// <summary>

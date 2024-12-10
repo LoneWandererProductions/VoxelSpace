@@ -11,6 +11,7 @@
 // ReSharper disable UnusedMember.Global
 
 using System;
+using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using ExtendedSystemObjects;
 
@@ -30,6 +31,16 @@ namespace Mathematics
         /// <param name="dimY">The Height.</param>
         public BaseMatrix(int dimX, int dimY)
         {
+            if (dimX <= 0)
+            {
+                throw new ArgumentException(MathResources.MatrixErrorNegativeValue, nameof(dimX));
+            }
+
+            if (dimY <= 0)
+            {
+                throw new ArgumentException(MathResources.MatrixErrorNegativeValue, nameof(dimY));
+            }
+
             Matrix = new double[dimX, dimY];
         }
 
@@ -39,6 +50,11 @@ namespace Mathematics
         /// <param name="matrix">Basic Matrix</param>
         public BaseMatrix(double[,] matrix)
         {
+            if (matrix.GetLength(0) <= 0 || matrix.GetLength(1) <= 0)
+            {
+                throw new ArgumentException(MathResources.MatrixErrorNegativeValue, nameof(matrix));
+            }
+
             Matrix = matrix;
         }
 
@@ -165,6 +181,26 @@ namespace Mathematics
 
             var result = MatrixInverse.Inverse(Matrix);
             return new BaseMatrix(result);
+        }
+
+        /// <summary>
+        ///     Lus the decomposition.
+        /// </summary>
+        /// <returns>Key Value Pair of L and U Matrix</returns>
+        /// <exception cref="System.NotImplementedException"></exception>
+        public KeyValuePair<BaseMatrix, BaseMatrix> LuDecomposition()
+        {
+            if (Height != Width)
+            {
+                throw new NotImplementedException(MathResources.MatrixErrorInverseNotCubic);
+            }
+
+            var (l, u) = MatrixInverse.LuDecomposition(Matrix);
+
+            var lMatrix = new BaseMatrix(l);
+            var uMatrix = new BaseMatrix(u);
+
+            return new KeyValuePair<BaseMatrix, BaseMatrix>(lMatrix, uMatrix);
         }
 
         /// <summary>

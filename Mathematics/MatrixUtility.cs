@@ -22,10 +22,15 @@ namespace Mathematics
         /// <summary>
         ///     Create an Identity Matrix.
         /// </summary>
-        /// <param name="n">The n.</param>
+        /// <param name="n">The size of the identity matrix.</param>
         /// <returns>An Identity Matrix</returns>
         public static BaseMatrix MatrixIdentity(int n)
         {
+            if (n <= 0)
+            {
+                throw new ArgumentException(MathResources.MatrixErrorNegativeValue, nameof(n));
+            }
+
             var result = new double[n, n];
 
             for (var i = 0; i < n; ++i)
@@ -37,7 +42,7 @@ namespace Mathematics
         }
 
         /// <summary>
-        ///     Unsafe Matrix  multiplication.
+        ///     Unsafe Matrix multiplication.
         ///     Source:
         ///     https://bratched.com/en/?s=matrix
         /// </summary>
@@ -124,8 +129,6 @@ namespace Mathematics
 
             var h = mOne.Height;
             var w = mOne.Width;
-
-            var result = new BaseMatrix(h, w);
 
             fixed (double* pmOne = mOne.Matrix, pmTwo = mTwo.Matrix)
             {

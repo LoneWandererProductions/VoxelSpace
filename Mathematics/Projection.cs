@@ -91,10 +91,10 @@ namespace Mathematics
 
             cache = ProjectionRaster.Clipping(cache);
 
-            Trace.WriteLine(MathResources.Debug3DTransformation);
 
             if (Debug)
             {
+                Trace.WriteLine(MathResources.Debug3DTransformation);
                 CreateDump(transform);
             }
 

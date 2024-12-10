@@ -24,7 +24,7 @@ namespace Mathematics
         /// </summary>
         /// <param name="from">From.</param>
         /// <param name="to">To.</param>
-        /// <returns></returns>
+        /// <returns>List of Coordinates as line</returns>
         public static List<Coordinate2D> LinearLine(Coordinate2D from, Coordinate2D to)
         {
             var lst = new List<Coordinate2D>();
@@ -79,7 +79,7 @@ namespace Mathematics
         /// </summary>
         /// <param name="from">From.</param>
         /// <param name="to">To.</param>
-        /// <returns></returns>
+        /// <returns>List of Coordinates as line</returns>
         public static List<Vector3D> LinearLine(Vector3D from, Vector3D to)
         {
             var lst = new List<Vector3D>();

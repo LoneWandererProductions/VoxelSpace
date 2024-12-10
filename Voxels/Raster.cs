@@ -76,6 +76,69 @@ namespace Voxels
             return raster;
         }
 
+        internal Bitmap CreateBitmapWithDepthBuffer(Color[,] colorMap, int[,] heightMap, Camera camera, int topographyHeight, int topographyWidth, int colorHeight, int colorWidth)
+        {
+            var bmp = new Bitmap(camera.ScreenWidth, camera.ScreenHeight);
+            var depthBuffer = new float[camera.ScreenWidth, camera.ScreenHeight];
+
+            // Initialize depth buffer with "infinity" (or a very large value)
+            for (int x = 0; x < camera.ScreenWidth; x++)
+                for (int y = 0; y < camera.ScreenHeight; y++)
+                    depthBuffer[x, y] = float.MaxValue;
+
+            using var g = Graphics.FromImage(bmp);
+            g.Clear(Color.Black); // Background color
+
+            var sinPhi = ExtendedMath.CalcSin(camera.Angle);
+            var cosPhi = ExtendedMath.CalcCos(camera.Angle);
+
+            float z = 1;
+            float dz = 1;
+
+            while (z < camera.ZFar)
+            {
+                var pLeftX = (float)(-cosPhi * z - sinPhi * z) + camera.X;
+                var pLeftY = (float)(sinPhi * z - cosPhi * z) + camera.Y;
+
+                var pRightX = (float)(cosPhi * z - sinPhi * z) + camera.X;
+                var pRightY = (float)(-sinPhi * z - cosPhi * z) + camera.Y;
+
+                var dx = (pRightX - pLeftX) / camera.ScreenWidth;
+                var dy = (pRightY - pLeftY) / camera.ScreenWidth;
+
+                for (var x = 0; x < camera.ScreenWidth; x++)
+                {
+                    var heightX = (int)pLeftX;
+                    var heightY = (int)pLeftY;
+
+                    int height = heightMap[heightX & (topographyWidth - 1), heightY & (topographyHeight - 1)];
+                    Color color = colorMap[heightX & (colorWidth - 1), heightY & (colorHeight - 1)];
+
+                    var heightOnScreen = (camera.Height - height) / z * camera.Scale + camera.Horizon;
+
+                    // Check depth buffer for visibility
+                    int screenY = (int)heightOnScreen;
+                    if (screenY >= 0 && screenY < camera.ScreenHeight && z < depthBuffer[x, screenY])
+                    {
+                        // Update depth buffer and set pixel color
+                        depthBuffer[x, screenY] = z;
+                        bmp.SetPixel(x, screenY, color);
+                    }
+
+                    // Update for next pixel
+                    pLeftX += dx;
+                    pLeftY += dy;
+                }
+
+                // Move to the next slice
+                z += dz;
+                dz += 0.005f; // Increment dz for the next depth slice
+            }
+
+            return bmp;
+        }
+
+
 
         internal Bitmap CreateBitmapFromContainer(List<Slice> raster, int screenWidth, int screenHeight, Color backgroundColor)
         {

@@ -228,6 +228,12 @@ namespace Mathematics
             return x;
         }
 
+        /// <summary>
+        ///     LU decomposition.
+        ///     https://en.wikipedia.org/wiki/LU_decomposition
+        /// </summary>
+        /// <param name="matrix">The matrix.</param>
+        /// <returns>LU decomposition</returns>
         internal static KeyValuePair<double[,], double[,]> LuDecomposition(double[,] matrix)
         {
             var width = matrix.GetLength(0);

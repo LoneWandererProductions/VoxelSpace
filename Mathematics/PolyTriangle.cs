@@ -166,7 +166,6 @@ namespace Mathematics
             return Vertices[0].GetHashCode();
         }
 
-
         /// <summary>
         ///     Converts to string.
         /// </summary>

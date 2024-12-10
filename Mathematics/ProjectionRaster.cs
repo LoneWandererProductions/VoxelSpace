@@ -150,8 +150,7 @@ namespace Mathematics
             foreach (var triangle in triangles)
             {
                 // Scale into view, we moved the normalising into cartesian space
-                // out of the matrix.vector function from the previous videos, so
-                // do this manually
+
                 triangle[0] /= triangle[0].W;
                 triangle[1] /= triangle[1].W;
                 triangle[2] /= triangle[2].W;

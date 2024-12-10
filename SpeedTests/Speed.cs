@@ -54,8 +54,17 @@ namespace SpeedTests
 
             Assert.IsNotNull(containerBitmap, "Container rendering produced a null Bitmap.");
 
+            stopwatch.Restart();
+            var depthBitmap = _voxel.RenderWithBitmapDepthBuffer();
+            stopwatch.Stop();
+            Trace.WriteLine($"Depth rendering time: {stopwatch.ElapsedMilliseconds} ms");
+
+            Assert.IsNotNull(depthBitmap, "Container rendering produced a null Bitmap.");
+
             // Compare the two images
-            Assert.IsTrue(AreBitmapsEqual(directBitmap, containerBitmap), "The images rendered by the two methods are not identical.");
+            Assert.IsTrue(AreBitmapsEqual(directBitmap, containerBitmap), "The images rendered by the two methods are not identical. (depth, container)");
+
+            // Compare the two images (depth, direct) is not possible since they are different
         }
 
         /// <summary>
@@ -81,6 +90,30 @@ namespace SpeedTests
 
             //Assert.IsNotNull(raster, "Panoramic trask produced a null Bitmap.");
         }
+
+        /// <summary>
+        /// Tests the generate panoramic view.
+        /// </summary>
+        [TestMethod]
+        public void TestGeneratePanoramicView()
+        {
+            var angleStep = 30;
+            var stopwatch = new Stopwatch();
+            stopwatch.Start();
+            var panoramicViews = _voxel.GeneratePanoramicView(angleStep);
+            stopwatch.Stop();
+            Trace.WriteLine($"Panoramic rendering time: {stopwatch.ElapsedMilliseconds} ms");
+
+            Assert.AreEqual(360 / angleStep, panoramicViews.Count, "Panoramic views count mismatch.");
+
+            foreach (var kvp in panoramicViews)
+            {
+                Assert.IsNotNull(kvp.Value, $"Bitmap for angle {kvp.Key} is null.");
+            }
+
+            Trace.WriteLine("Panoramic views generated successfully.");
+        }
+
 
         /// <summary>
         /// Compares two Bitmaps pixel by pixel.

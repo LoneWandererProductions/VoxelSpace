@@ -9,6 +9,7 @@
 // ReSharper disable SwitchStatementHandlesSomeKnownEnumValuesWithDefault
 
 using System;
+using System.Diagnostics;
 
 namespace Mathematics
 {
@@ -42,7 +43,7 @@ namespace Mathematics
         /// <value>
         ///     Up.
         /// </value>
-        public Vector3D Up { get; set; }
+        public Vector3D Up { get; set; } = new(0, 1, 0);
 
         /// <summary>
         ///     Gets or sets the right.
@@ -51,7 +52,7 @@ namespace Mathematics
         /// <value>
         ///     The right.
         /// </value>
-        public Vector3D Right { get; set; } = new();
+        public Vector3D Right { get; set; } = new(1, 0, 0);
 
         /// <summary>
         ///     Gets or sets the forward.
@@ -60,7 +61,7 @@ namespace Mathematics
         /// <value>
         ///     The forward.
         /// </value>
-        public Vector3D Forward { get; set; } = new();
+        public Vector3D Forward { get; set; } = new(0, 0, 1);
 
         /// <summary>
         ///     Gets or sets the pitch.
@@ -133,7 +134,9 @@ namespace Mathematics
                 Position = new Vector3D(),
                 Translation = new Vector3D(),
                 Rotation = new Vector3D(),
-                Scale = Vector3D.UnitVector
+                Scale = Vector3D.UnitVector,
+                Right = new Vector3D(1, 0, 0),
+                Forward = new Vector3D(0, 0, 1)
             };
         }
 
@@ -153,7 +156,9 @@ namespace Mathematics
                 Position = new Vector3D(),
                 Translation = translation,
                 Rotation = rotation,
-                Scale = scale
+                Scale = scale,
+                Right = new Vector3D(1, 0, 0),
+                Forward = new Vector3D(0, 0, 1)
             };
         }
 
@@ -201,7 +206,9 @@ namespace Mathematics
             switch (CameraType)
             {
                 case Cameras.Orbit:
-                    Position += Right * x;
+                    Position -= Right * x; //switch
+                    Trace.WriteLine("pos l right: " + Position);
+                    Trace.WriteLine("pos l: " + Position);
                     break;
                 case Cameras.PointAt:
                     Position.X -= x;
@@ -219,7 +226,10 @@ namespace Mathematics
             switch (CameraType)
             {
                 case Cameras.Orbit:
-                    Position -= Right * x;
+                    Position += Right * x; //switch
+                    Trace.WriteLine("pos r right: " + Position);
+                    Trace.WriteLine("pos r: " + Position);
+
                     break;
                 case Cameras.PointAt:
                     Position.X += x;

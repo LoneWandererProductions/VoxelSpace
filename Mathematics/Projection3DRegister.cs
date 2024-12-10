@@ -26,7 +26,7 @@ namespace Mathematics
         /// <value>
         ///     The z near.
         /// </value>
-        public static double ZNear { get; set; } = 0.1f;
+        public static double ZNear { get; set; } = 0.1d;
 
         /// <summary>
         ///     Gets or sets the z, how far we can see
@@ -34,7 +34,7 @@ namespace Mathematics
         /// <value>
         ///     The z far.
         /// </value>
-        public static double ZFar { get; set; } = 1000.0f;
+        public static double ZFar { get; set; } = 1000.0d;
 
         /// <summary>
         ///     Gets or sets the angle for the view
@@ -42,7 +42,7 @@ namespace Mathematics
         /// <value>
         ///     The allowed angle.
         /// </value>
-        public static double Angle { get; set; } = 90.0f;
+        public static double Angle { get; set; } = 90.0d;
 
         /// <summary>
         ///     Gets or sets the height of the display area.
@@ -66,7 +66,7 @@ namespace Mathematics
         /// <value>
         ///     A, as Aspect Ratio
         /// </value>
-        internal static double A => (double)Height / Width;
+        internal static double A => (double)Width / Height;
 
         /// <summary>
         ///     field of view, degree
