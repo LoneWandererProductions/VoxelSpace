@@ -3,6 +3,7 @@ using System.IO;
 using System.Drawing;
 using System.Diagnostics;
 using Voxels;
+using Imaging;
 
 namespace SpeedTests
 {
@@ -11,6 +12,9 @@ namespace SpeedTests
     {
         private VoxelRaster _voxel;
 
+        /// <summary>
+        /// Initializes this instance.
+        /// </summary>
         [TestInitialize]
         public void Initialize()
         {
@@ -26,6 +30,9 @@ namespace SpeedTests
             _voxel = new VoxelRaster(100, 100, 0, 100, 120, 120, 300, colorMap, heightMap);
         }
 
+        /// <summary>
+        /// Speeds the and result comparison tests.
+        /// </summary>
         [TestMethod]
         public void SpeedAndResultComparisonTests()
         {
@@ -49,6 +56,22 @@ namespace SpeedTests
 
             // Compare the two images
             Assert.IsTrue(AreBitmapsEqual(directBitmap, containerBitmap), "The images rendered by the two methods are not identical.");
+        }
+
+        /// <summary>
+        /// Checks the speed panorama.
+        /// </summary>
+        [TestMethod]
+        public void CheckSpeedPanorama()
+        {
+            var stopwatch = new Stopwatch();
+            // Measure the performance of RenderPanoramic Parallel
+            stopwatch.Start();
+            var bmp = _voxel.RenderPanoramic(30);
+            stopwatch.Stop();
+            Trace.WriteLine($"Panoramic rendering time: {stopwatch.ElapsedMilliseconds} ms");
+
+            Assert.IsNotNull(bmp, "Panoramic produced a null Bitmap.");
         }
 
         /// <summary>

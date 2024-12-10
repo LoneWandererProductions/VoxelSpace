@@ -9,8 +9,10 @@
 
 // ReSharper disable PossibleLossOfFraction
 
+using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using Imaging;
 using Mathematics;
@@ -289,6 +291,45 @@ namespace Voxels
             return CreateBitmapFromContainer();
         }
 
+
+        /// <summary>
+        /// Renders the panoramic.
+        /// </summary>
+        /// <param name="numberOfFrames">The number of frames.</param>
+        /// <returns></returns>
+        public Bitmap RenderPanoramic(int numberOfFrames)
+        {
+            if (_colorMapCif == null || _heightMap == null) return null;
+
+            // Width of the final panoramic image
+            int panoramicWidth = Camera.ScreenWidth * numberOfFrames;
+            Bitmap panoramicBitmap = new Bitmap(panoramicWidth, Camera.ScreenHeight);
+
+            _yBuffer = new float[Camera.ScreenWidth];
+
+            // Create a new graphics object to draw on the panoramicBitmap
+            using (var g = Graphics.FromImage(panoramicBitmap))
+            {
+                // For each frame (view), adjust the camera angle and render the scene
+                for (int frame = 0; frame < numberOfFrames; frame++)
+                {
+                    // Adjust the camera's angle slightly for each frame to create the panorama
+                    Camera.Angle += (360 / numberOfFrames);
+
+                    // Render the scene and get the resulting bitmap
+                    Bitmap frameBitmap = RenderWithContainer();  // You can also use RenderWithContainer() if needed
+
+                    // Draw the frame on the panoramic bitmap at the correct position
+                    g.DrawImage(frameBitmap, new Point(frame * Camera.ScreenWidth, 0));
+
+                    // Optionally, you can adjust the angle for the next frame
+                    // for more flexibility you can adjust Camera.Angle dynamically or based on the field of view.
+                }
+            }
+
+            return panoramicBitmap;
+        }
+
         /// <summary>
         /// Creates a Bitmap using the data in the _raster container.
         /// </summary>
@@ -332,26 +373,6 @@ namespace Voxels
                     Camera.Horizon -= 10;
                     break;
             }
-        }
-
-        /// <summary>
-        ///     Generates the slice.
-        /// </summary>
-        /// <param name="color">The color.</param>
-        /// <param name="x">The x.</param>
-        /// <param name="heightOnScreen">The height on screen.</param>
-        /// <param name="buffer">The buffer.</param>
-        private void GenerateSlice(Color color, int x, int heightOnScreen, float buffer)
-        {
-            var slice = new Slice
-            {
-                Shade = color,
-                X1 = x,
-                Y1 = heightOnScreen,
-                Y2 = buffer
-            };
-
-            _raster.Add(slice);
         }
 
         /// <summary>
