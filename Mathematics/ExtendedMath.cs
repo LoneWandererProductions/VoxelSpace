@@ -10,13 +10,14 @@
 // ReSharper disable UnusedMember.Global
 
 using System;
+using System.Runtime.CompilerServices;
 
 namespace Mathematics
 {
     /// <summary>
     ///     Adds some further improvements to certain Math functions
     /// </summary>
-    public static partial class ExtendedMath
+    public static class ExtendedMath
     {
         /// <summary>
         ///     Calculate cos.
@@ -24,6 +25,7 @@ namespace Mathematics
         /// </summary>
         /// <param name="degree">Degree we want to Rotate</param>
         /// <returns>The <see cref="double" />.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double CalcCos(int degree)
         {
             double cos;
@@ -53,6 +55,7 @@ namespace Mathematics
         /// </summary>
         /// <param name="degree">Degree we want to Rotate</param>
         /// <returns>The <see cref="double" />.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double CalcSin(int degree)
         {
             double sin;

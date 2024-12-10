@@ -14,12 +14,7 @@ using System;
 
 namespace Mathematics
 {
-    /// <summary>
-    ///     Basic fraction calculations
-    /// </summary>
-    public static partial class ExtendedMath
-    {
-        /// <inheritdoc />
+    /// <inheritdoc />
         /// <summary>
         ///     Basic Fraction Object
         /// </summary>
@@ -303,5 +298,4 @@ namespace Mathematics
                 }
             }
         }
-    }
 }
