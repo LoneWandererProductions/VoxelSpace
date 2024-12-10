@@ -10,8 +10,10 @@
 // ReSharper disable PossibleLossOfFraction
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Imaging;
@@ -24,11 +26,6 @@ namespace Voxels
     /// </summary>
     public sealed class VoxelRaster
     {
-        /// <summary>
-        /// If the cif Format is active or not
-        /// </summary>
-        private const bool CifFormat = false;
-
         /// <summary>
         ///     The color height
         /// </summary>
@@ -166,25 +163,11 @@ namespace Voxels
                     Color color;
                     int heightOfHeightMap;
 
-                    if (CifFormat)
-                    {
-                        var x = diffuseX & (_colorWidth - 1);
-                        var y = diffuseY & (_colorHeight - 1);
-                        var id = (y * _colorWidth) + x;
-                        color = _colorMapCif.GetColor(id);
-
-                        x = heightX & (_topographyWidth - 1);
-                        y = heightY & (_topographyHeight - 1);
-                        id = (y * _colorWidth) + x;
-                        heightOfHeightMap = _heightMapCif.GetColor(id).R;
-                    }
-                    else
-                    {
-                        heightOfHeightMap =
+                    heightOfHeightMap =
                             _heightMap[heightX & (_topographyWidth - 1), heightY & (_topographyHeight - 1)];
 
-                        color = _colorMap[diffuseX & (_colorWidth - 1), diffuseY & (_colorHeight - 1)];
-                    }
+                    color = _colorMap[diffuseX & (_colorWidth - 1), diffuseY & (_colorHeight - 1)];
+
 
                     var heightOnScreen = (Camera.Height - heightOfHeightMap) / z * Camera.Scale + Camera.Horizon;
 
@@ -247,25 +230,11 @@ namespace Voxels
                     Color color;
                     int heightOfHeightMap;
 
-                    if (CifFormat)
-                    {
-                        var x = diffuseX & (_colorWidth - 1);
-                        var y = diffuseY & (_colorHeight - 1);
-                        var id = (y * _colorWidth) + x;
-                        color = _colorMapCif.GetColor(id);
+                    heightOfHeightMap =
+                        _heightMap[heightX & (_topographyWidth - 1), heightY & (_topographyHeight - 1)];
 
-                        x = heightX & (_topographyWidth - 1);
-                        y = heightY & (_topographyHeight - 1);
-                        id = (y * _colorWidth) + x;
-                        heightOfHeightMap = _heightMapCif.GetColor(id).R;
-                    }
-                    else
-                    {
-                        heightOfHeightMap =
-                            _heightMap[heightX & (_topographyWidth - 1), heightY & (_topographyHeight - 1)];
+                    color = _colorMap[diffuseX & (_colorWidth - 1), diffuseY & (_colorHeight - 1)];
 
-                        color = _colorMap[diffuseX & (_colorWidth - 1), diffuseY & (_colorHeight - 1)];
-                    }
 
                     var heightOnScreen = (Camera.Height - heightOfHeightMap) / z * Camera.Scale + Camera.Horizon;
 
@@ -290,7 +259,6 @@ namespace Voxels
 
             return CreateBitmapFromContainer();
         }
-
 
         /// <summary>
         /// Renders the panoramic.
@@ -330,6 +298,43 @@ namespace Voxels
             return panoramicBitmap;
         }
 
+        public Dictionary<int, Bitmap> RenderPanoramicParallel(int numberOfFrames)
+        {
+            if (_colorMapCif == null || _heightMap == null) return null;
+
+            // Use a thread-safe dictionary to store the frame bitmaps
+            var frameBitmaps = new ConcurrentDictionary<int, Bitmap>();
+
+            // Create a list of tasks to render each frame in parallel
+            List<Task> tasks = new List<Task>();
+
+            for (int frame = 0; frame < numberOfFrames; frame++)
+            {
+                int currentFrame = frame; // Capture the current frame for the closure
+
+                // Start a new task for each frame, adjusting the camera angle and rendering the scene
+                var task = Task.Run(() =>
+                {
+                    // Adjust the camera's angle slightly for each frame to create the panorama
+                    Camera.Angle += (360 / numberOfFrames);
+
+                    // Render the scene and get the resulting bitmap
+                    Bitmap frameBitmap = RenderWithContainer();
+
+                    // Store the frame bitmap in the thread-safe dictionary
+                    frameBitmaps[currentFrame] = frameBitmap;
+                });
+
+                tasks.Add(task);
+            }
+
+            // Wait for all tasks to complete (with proper synchronization)
+            Task.WhenAll(tasks).Wait();
+
+            // Return the dictionary with frame indices and corresponding bitmaps
+            return frameBitmaps.ToDictionary(kv => kv.Key, kv => kv.Value);
+        }
+
         /// <summary>
         /// Creates a Bitmap using the data in the _raster container.
         /// </summary>
@@ -353,12 +358,12 @@ namespace Voxels
             switch (key)
             {
                 case Key.W: //Forward
-                    Camera.X -= (int) (10 * ExtendedMath.CalcSin(Camera.Angle));
-                    Camera.Y -= (int) (10 * ExtendedMath.CalcCos(Camera.Angle));
+                    Camera.X -= (int)(10 * ExtendedMath.CalcSin(Camera.Angle));
+                    Camera.Y -= (int)(10 * ExtendedMath.CalcCos(Camera.Angle));
                     break;
                 case Key.S: //Backward
-                    Camera.X += (int) (10 * ExtendedMath.CalcSin(Camera.Angle));
-                    Camera.Y += (int) (10 * ExtendedMath.CalcCos(Camera.Angle));
+                    Camera.X += (int)(10 * ExtendedMath.CalcSin(Camera.Angle));
+                    Camera.Y += (int)(10 * ExtendedMath.CalcCos(Camera.Angle));
                     break;
                 case Key.A: //Turn Left
                     Camera.Angle += 10;
@@ -422,12 +427,12 @@ namespace Voxels
 
             var dbm = DirectBitmap.GetInstance(bmp);
 
-            _heightMapCif= new Cif(bmp);
+            _heightMapCif = new Cif(bmp);
 
             _heightMap = new int[bmp.Width, bmp.Height];
             for (var i = 0; i < bmp.Width; i++)
-            for (var j = 0; j < bmp.Height; j++)
-                _heightMap[i, j] = dbm.GetPixel(i, j).R;
+                for (var j = 0; j < bmp.Height; j++)
+                    _heightMap[i, j] = dbm.GetPixel(i, j).R;
         }
 
         /// <summary>

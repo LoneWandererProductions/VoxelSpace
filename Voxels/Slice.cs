@@ -13,7 +13,7 @@ namespace Voxels
     /// <summary>
     /// Slice of the rendered Image
     /// </summary>
-    internal sealed class Slice
+    public sealed class Slice
     {
         /// <summary>
         /// Gets the shade.
@@ -21,7 +21,7 @@ namespace Voxels
         /// <value>
         /// The shade.
         /// </value>
-        internal Color Shade { get; init; }
+        public Color Shade { get; init; }
 
         /// <summary>
         /// Gets the x1.
@@ -29,7 +29,7 @@ namespace Voxels
         /// <value>
         /// The x1.
         /// </value>
-        internal int X1 { get; init; }
+        public int X1 { get; init; }
 
         /// <summary>
         /// Gets the y1.
@@ -37,7 +37,7 @@ namespace Voxels
         /// <value>
         /// The y1.
         /// </value>
-        internal int Y1 { get; init; }
+        public int Y1 { get; init; }
 
         /// <summary>
         /// Gets the y2.
@@ -45,6 +45,6 @@ namespace Voxels
         /// <value>
         /// The y2.
         /// </value>
-        internal float Y2 { get; init; }
+        public float Y2 { get; init; }
     }
 }
