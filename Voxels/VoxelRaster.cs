@@ -27,31 +27,9 @@ namespace Voxels
     /// </summary>
     public sealed class VoxelRaster
     {
-        private readonly object _lock = new();
-
         private readonly Dictionary<int, Bitmap> _panoramaCache = new();
 
         private readonly Dictionary<string, Bitmap> _lazyCache = new();
-
-        private bool _isCaching = false;
-
-        private CancellationTokenSource _idleTokenSource;
-
-        private void OnKeyInput()
-        {
-            // Reset idle detection
-            _idleTokenSource?.Cancel();
-            _idleTokenSource = new CancellationTokenSource();
-            var token = _idleTokenSource.Token;
-
-            // Start idle task
-            _ = Task.Delay(1000, token)
-                .ContinueWith(t => {
-                    if (!t.IsCanceled)
-                        GenerateLazyCache();
-                });
-        }
-
 
         /// <summary>
         ///     The color height
@@ -229,85 +207,6 @@ namespace Voxels
         }
 
         /// <summary>
-        ///     Renders the panoramic.
-        /// </summary>
-        /// <param name="numberOfFrames">The number of frames.</param>
-        /// <returns></returns>
-        public Bitmap RenderPanoramic(int numberOfFrames)
-        {
-            if (_heightMap == null) return null;
-
-            // Width of the final panoramic image
-            var panoramicWidth = Camera.ScreenWidth * numberOfFrames;
-            var panoramicBitmap = new Bitmap(panoramicWidth, Camera.ScreenHeight);
-
-            YBuffer = new float[Camera.ScreenWidth];
-
-            // Create a new graphics object to draw on the panoramicBitmap
-            using var g = Graphics.FromImage(panoramicBitmap);
-            // For each frame (view), adjust the camera angle and render the scene
-            for (var frame = 0; frame < numberOfFrames; frame++)
-            {
-                // Adjust the camera's angle slightly for each frame to create the panorama
-                Camera.Angle += 360 / numberOfFrames;
-
-                // Render the scene and get the resulting bitmap
-                var frameBitmap = RenderWithContainer(); // You can also use RenderWithContainer() if needed
-
-                // Draw the frame on the panoramic bitmap at the correct position
-                g.DrawImage(frameBitmap, new Point(frame * Camera.ScreenWidth, 0));
-
-                // Optionally, you can adjust the angle for the next frame
-                // for more flexibility you can adjust Camera.Angle dynamically or based on the field of view.
-            }
-
-            return panoramicBitmap;
-        }
-
-        /// <summary>
-        ///     Generates the panoramic view.
-        /// </summary>
-        /// <param name="angleStep">The angle step.</param>
-        /// <returns></returns>
-        public Dictionary<int, Bitmap> GeneratePanoramicView(int angleStep)
-        {
-            var panoramicViews = new Dictionary<int, Bitmap>();
-
-            // Generate views in parallel for performance
-            _ = Parallel.ForEach(Enumerable.Range(0, 360 / angleStep), step =>
-            {
-                var angle = step * angleStep;
-                var renderedBitmap = RenderAtAngle(angle);
-
-                lock (_lock)
-                {
-                    panoramicViews[angle] = renderedBitmap;
-                }
-            });
-
-            return panoramicViews;
-        }
-
-        public Bitmap GetViewAtAngle(int angle)
-        {
-            lock (_lock)
-            {
-                if (!_panoramaCache.ContainsKey(angle))
-                    // Render and cache if not already available
-                    _panoramaCache[angle] = RenderAtAngle(angle);
-
-                return _panoramaCache[angle];
-            }
-        }
-
-        private Bitmap RenderAtAngle(int angle)
-        {
-            var raster = new Raster();
-            return raster.CreateBitmapWithDepthBuffer(_colorMap, _heightMap, Camera, _topographyHeight,
-                _topographyWidth, _colorHeight, _colorWidth);
-        }
-
-        /// <summary>
         ///     Keys the input.
         /// </summary>
         /// <param name="key">The key.</param>
@@ -336,85 +235,6 @@ namespace Voxels
                     Camera.Horizon -= 10;
                     break;
             }
-            // Update the view
-            UpdateView(key);
-
-            // Trigger lazy cache update asynchronously
-            _ = Task.Run(() => GenerateLazyCache());
-
-        }
-
-        private void UpdateView(Key key)
-        {
-            var directionKey = GetDirectionKey(key);
-
-            if (_lazyCache.TryGetValue(directionKey, out var cachedBitmap))
-            {
-                // Display cached image
-                //DisplayBitmap(cachedBitmap);
-            }
-            else
-            {
-                var raster = new Raster();
-                // Generate and display new raster
-
-                var bitmap = raster.CreateBitmapWithDepthBuffer(_colorMap, _heightMap, Camera, _topographyHeight,
-                _topographyWidth, _colorHeight, _colorWidth);
-                //DisplayBitmap(bitmap);
-            }
-        }
-
-        private string GetDirectionKey(Key key)
-        {
-            if (key == Key.W) return "Forward";
-            if (key == Key.S) return "Backward";
-            if (key == Key.A) return "TurnLeft";
-            if (key == Key.D) return "TurnRight";
-            return "Default"; // For idle or untracked keys
-        }
-
-        private void GenerateLazyCache()
-        {
-            if (_isCaching) return;
-
-            _isCaching = true;
-
-            // Define potential movements
-            var potentialMoves = new List<(string key, Action<Camera> simulate)>
-            {
-                ("Forward", cam => {
-                    cam.X -= (int)(10 * ExtendedMath.CalcSin(cam.Angle));
-                    cam.Y -= (int)(10 * ExtendedMath.CalcCos(cam.Angle));
-                }),
-                ("Backward", cam => {
-                    cam.X += (int)(10 * ExtendedMath.CalcSin(cam.Angle));
-                    cam.Y += (int)(10 * ExtendedMath.CalcCos(cam.Angle));
-                }),
-                ("TurnLeft", cam => cam.Angle += 10),
-                ("TurnRight", cam => cam.Angle -= 10)
-            };
-
-            // Generate bitmaps for each potential move
-            foreach (var (key, simulate) in potentialMoves)
-            {
-                if (_lazyCache.ContainsKey(key)) continue;
-
-                // Create a copy of the camera for simulation
-                var simulatedCamera = Camera.Clone();
-
-                // Apply the movement simulation
-                simulate(simulatedCamera);
-
-                var raster = new Raster();
-                // Generate raster and bitmap using the simulated camera
-                var bitmap = raster.CreateBitmapWithDepthBuffer(_colorMap, _heightMap, Camera, _topographyHeight,
-                _topographyWidth, _colorHeight, _colorWidth);
-
-                // Cache the bitmap
-                _lazyCache[key] = bitmap;
-            }
-
-            _isCaching = false;
         }
 
         /// <summary>

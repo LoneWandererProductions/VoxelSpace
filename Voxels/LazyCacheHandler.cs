@@ -8,6 +8,9 @@ namespace Voxels
 {
     public class LazyCacheHandler
     {
+
+
+
         private readonly object _lock = new();
         private readonly Dictionary<string, Bitmap> _lazyCache = new();
         private CancellationTokenSource _idleTokenSource;

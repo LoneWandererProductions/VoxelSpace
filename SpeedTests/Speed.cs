@@ -68,51 +68,6 @@ namespace SpeedTests
         }
 
         /// <summary>
-        ///     Checks the speed panorama.
-        /// </summary>
-        [TestMethod]
-        public void CheckSpeedPanorama()
-        {
-            var stopwatch = new Stopwatch();
-            // Measure the performance of RenderPanoramic Parallel
-            stopwatch.Start();
-            var bmp = _voxel.RenderPanoramic(30);
-            stopwatch.Stop();
-            Trace.WriteLine($"Panoramic rendering time: {stopwatch.ElapsedMilliseconds} ms");
-
-            Assert.IsNotNull(bmp, "Panoramic produced a null Bitmap.");
-
-            stopwatch.Start();
-            //var raster = _voxel.RenderPanoramicParallel(30);
-            stopwatch.Stop();
-
-            Trace.WriteLine($"Panoramic trask rendering time: {stopwatch.ElapsedMilliseconds} ms");
-
-            //Assert.IsNotNull(raster, "Panoramic trask produced a null Bitmap.");
-        }
-
-        /// <summary>
-        ///     Tests the generate panoramic view.
-        /// </summary>
-        [TestMethod]
-        public void TestGeneratePanoramicView()
-        {
-            var angleStep = 30;
-            var stopwatch = new Stopwatch();
-            stopwatch.Start();
-            var panoramicViews = _voxel.GeneratePanoramicView(angleStep);
-            stopwatch.Stop();
-            Trace.WriteLine($"Panoramic rendering time: {stopwatch.ElapsedMilliseconds} ms");
-
-            Assert.AreEqual(360 / angleStep, panoramicViews.Count, "Panoramic views count mismatch.");
-
-            foreach (var kvp in panoramicViews) Assert.IsNotNull(kvp.Value, $"Bitmap for angle {kvp.Key} is null.");
-
-            Trace.WriteLine("Panoramic views generated successfully.");
-        }
-
-
-        /// <summary>
         ///     Compares two Bitmaps pixel by pixel.
         /// </summary>
         /// <param name="bmp1">The first Bitmap.</param>
