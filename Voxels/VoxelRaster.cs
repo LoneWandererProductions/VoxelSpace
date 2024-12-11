@@ -9,9 +9,12 @@
 
 // ReSharper disable PossibleLossOfFraction
 
+using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Imaging;
@@ -27,6 +30,28 @@ namespace Voxels
         private readonly object _lock = new();
 
         private readonly Dictionary<int, Bitmap> _panoramaCache = new();
+
+        private readonly Dictionary<string, Bitmap> _lazyCache = new();
+
+        private bool _isCaching = false;
+
+        private CancellationTokenSource _idleTokenSource;
+
+        private void OnKeyInput()
+        {
+            // Reset idle detection
+            _idleTokenSource?.Cancel();
+            _idleTokenSource = new CancellationTokenSource();
+            var token = _idleTokenSource.Token;
+
+            // Start idle task
+            _ = Task.Delay(1000, token)
+                .ContinueWith(t => {
+                    if (!t.IsCanceled)
+                        GenerateLazyCache();
+                });
+        }
+
 
         /// <summary>
         ///     The color height
@@ -311,6 +336,85 @@ namespace Voxels
                     Camera.Horizon -= 10;
                     break;
             }
+            // Update the view
+            UpdateView(key);
+
+            // Trigger lazy cache update asynchronously
+            _ = Task.Run(() => GenerateLazyCache());
+
+        }
+
+        private void UpdateView(Key key)
+        {
+            var directionKey = GetDirectionKey(key);
+
+            if (_lazyCache.TryGetValue(directionKey, out var cachedBitmap))
+            {
+                // Display cached image
+                //DisplayBitmap(cachedBitmap);
+            }
+            else
+            {
+                var raster = new Raster();
+                // Generate and display new raster
+
+                var bitmap = raster.CreateBitmapWithDepthBuffer(_colorMap, _heightMap, Camera, _topographyHeight,
+                _topographyWidth, _colorHeight, _colorWidth);
+                //DisplayBitmap(bitmap);
+            }
+        }
+
+        private string GetDirectionKey(Key key)
+        {
+            if (key == Key.W) return "Forward";
+            if (key == Key.S) return "Backward";
+            if (key == Key.A) return "TurnLeft";
+            if (key == Key.D) return "TurnRight";
+            return "Default"; // For idle or untracked keys
+        }
+
+        private void GenerateLazyCache()
+        {
+            if (_isCaching) return;
+
+            _isCaching = true;
+
+            // Define potential movements
+            var potentialMoves = new List<(string key, Action<Camera> simulate)>
+            {
+                ("Forward", cam => {
+                    cam.X -= (int)(10 * ExtendedMath.CalcSin(cam.Angle));
+                    cam.Y -= (int)(10 * ExtendedMath.CalcCos(cam.Angle));
+                }),
+                ("Backward", cam => {
+                    cam.X += (int)(10 * ExtendedMath.CalcSin(cam.Angle));
+                    cam.Y += (int)(10 * ExtendedMath.CalcCos(cam.Angle));
+                }),
+                ("TurnLeft", cam => cam.Angle += 10),
+                ("TurnRight", cam => cam.Angle -= 10)
+            };
+
+            // Generate bitmaps for each potential move
+            foreach (var (key, simulate) in potentialMoves)
+            {
+                if (_lazyCache.ContainsKey(key)) continue;
+
+                // Create a copy of the camera for simulation
+                var simulatedCamera = Camera.Clone();
+
+                // Apply the movement simulation
+                simulate(simulatedCamera);
+
+                var raster = new Raster();
+                // Generate raster and bitmap using the simulated camera
+                var bitmap = raster.CreateBitmapWithDepthBuffer(_colorMap, _heightMap, Camera, _topographyHeight,
+                _topographyWidth, _colorHeight, _colorWidth);
+
+                // Cache the bitmap
+                _lazyCache[key] = bitmap;
+            }
+
+            _isCaching = false;
         }
 
         /// <summary>

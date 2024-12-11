@@ -6,6 +6,7 @@
  * PROGRAMER:   Peter Geinitz (Wayfarer)
  */
 
+using System;
 using System.Drawing;
 
 namespace Voxels
@@ -99,5 +100,60 @@ namespace Voxels
         ///     The width of the screen.
         /// </value>
         public int ScreenWidth { get; set; } = 300;
+
+        /// <summary>
+        ///     Creates a deep copy of the current Camera instance.
+        /// </summary>
+        /// <returns>A new Camera instance with the same property values.</returns>
+        internal Camera Clone()
+        {
+            return new Camera
+            {
+                BackgroundColor = BackgroundColor,
+                X = X,
+                Y = Y,
+                Height = Height,
+                Horizon = Horizon,
+                ZFar = ZFar,
+                Angle = Angle,
+                Scale = Scale,
+                ScreenHeight = ScreenHeight,
+                ScreenWidth = ScreenWidth
+            };
+        }
+
+        /// <summary>
+        ///     Restores the current Camera instance with the values from another Camera.
+        /// </summary>
+        /// <param name="original">The Camera instance to copy values from.</param>
+        internal void Restore(Camera original)
+        {
+            if (original == null) throw new ArgumentNullException(nameof(original));
+
+            BackgroundColor = original.BackgroundColor;
+            X = original.X;
+            Y = original.Y;
+            Horizon = original.Horizon;
+            Angle = original.Angle;
+            ScreenHeight = original.ScreenHeight;
+            ScreenWidth = original.ScreenWidth;
+
+            // Immutable properties are skipped in restoration:
+            // this.Height = original.Height;
+            // this.ZFar = original.ZFar;
+            // this.Scale = original.Scale;
+        }
+
+        /// <summary>
+        /// Converts to string.
+        /// </summary>
+        /// <returns>
+        /// A <see cref="string" /> that represents this instance.
+        /// </returns>
+        public override string ToString()
+        {
+            return $"Camera [X={X}, Y={Y}, Angle={Angle}, Horizon={Horizon}, Height={Height}, ZFar={ZFar}]";
+        }
+
     }
 }
