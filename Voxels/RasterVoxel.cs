@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Threading;
@@ -101,25 +102,20 @@ namespace Voxels
         /// Gets the bitmap for key.
         /// </summary>
         /// <param name="key">The key.</param>
-        /// <returns></returns>
+        /// <returns>new Bitmap</returns>
         public Bitmap GetBitmapForKey(Key key)
         {
-            lock (_lock)
-            {
-                if (_lazyCache.TryGetValue(key, out var cachedBitmap)) return cachedBitmap;
-            }
+            //TODO not working yet
+            if (_lazyCache.TryGetValue(key, out var cachedBitmap)) return cachedBitmap;
 
             var simulatedCamera = Camera.Clone();
-            SimulateCameraMovement(simulatedCamera, key);
+            SimulateCameraMovement(key);
 
             var raster = new Raster();
             var bitmap = raster.CreateBitmapWithDepthBuffer(_colorMap, _heightMap, simulatedCamera,
                 _topographyHeight, _topographyWidth, _colorHeight, _colorWidth);
 
-            lock (_lock)
-            {
-                _lazyCache[key] = bitmap;
-            }
+            _lazyCache[key] = bitmap;
 
             return bitmap;
         }
@@ -133,6 +129,8 @@ namespace Voxels
             if (!_isCachePreloading) _cachePreloadThread.Start();
 
             if (Camera == null) return null;
+
+            UpdateDeltaTime();
 
             // Generate the start bitmap
             var raster = new Raster();
@@ -153,7 +151,7 @@ namespace Voxels
 
                 var simulatedCamera = Camera.Clone();
                 // Simulate camera movement for the requested direction
-                SimulateCameraMovement(simulatedCamera, key);
+                SimulateCameraMovement(key);
 
                 // Generate the bitmap
                 var raster = new Raster();
@@ -167,36 +165,46 @@ namespace Voxels
         /// <summary>
         /// Simulates the camera movement.
         /// </summary>
-        /// <param name="camera">The camera.</param>
         /// <param name="key">The key.</param>
-        private void SimulateCameraMovement(Camera camera, Key key)
+        private void SimulateCameraMovement(Key key)
         {
             UpdateDeltaTime(); // Update deltaTime based on frame time
 
+            //the key
+            Trace.WriteLine($"Key: {key}");
+
+            // Log the old camera state
+            Trace.WriteLine($"Before: X={Camera.X}, Y={Camera.Y}, Angle={Camera.Angle}, Horizon={Camera.Horizon}");
+
+            // Update the actual camera object directly
             switch (key)
             {
                 case Key.W:
-                    camera.X -= (int)(MovementSpeed * _elapsedTime * ExtendedMath.CalcSin(camera.Angle));
-                    camera.Y -= (int)(MovementSpeed * _elapsedTime * ExtendedMath.CalcCos(camera.Angle));
+                    Camera.X -= (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcSin(Camera.Angle));
+                    Camera.Y -= (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcCos(Camera.Angle));
                     break;
                 case Key.S:
-                    camera.X += (int)(MovementSpeed * _elapsedTime * ExtendedMath.CalcSin(camera.Angle));
-                    camera.Y += (int)(MovementSpeed * _elapsedTime * ExtendedMath.CalcCos(camera.Angle));
+                    Camera.X += (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcSin(Camera.Angle));
+                    Camera.Y += (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcCos(Camera.Angle));
                     break;
                 case Key.A:
-                    camera.Angle += (int)(RotationSpeed * _elapsedTime); // Turn left
+                    Camera.Angle += (int)(RotationSpeed * _elapsedTime); // Turn left
                     break;
                 case Key.D:
-                    camera.Angle -= (int)(RotationSpeed * _elapsedTime); // Turn right
+                    Camera.Angle -= (int)(RotationSpeed * _elapsedTime); // Turn right
                     break;
                 case Key.O:
-                    camera.Horizon += (int)(RotationSpeed * _elapsedTime); // Move up
+                    Camera.Horizon += (int)(RotationSpeed * _elapsedTime); // Move up
                     break;
                 case Key.P:
-                    camera.Horizon -= (int)(RotationSpeed * _elapsedTime); // Move down
+                    Camera.Horizon -= (int)(RotationSpeed * _elapsedTime); // Move down
                     break;
             }
+
+            // Log the new camera state
+            Trace.WriteLine($"After: X={Camera.X}, Y={Camera.Y}, Angle={Camera.Angle}, Horizon={Camera.Horizon}");
         }
+
 
         /// <summary>
         /// Update method to calculate deltaTime
@@ -205,6 +213,12 @@ namespace Voxels
         {
             var currentTime = DateTime.Now;
             _elapsedTime = (float)(currentTime - _lastUpdateTime).TotalSeconds;
+
+            // If no time has elapsed, use a default small value to avoid zero movement on startup
+            if (_elapsedTime == 0)
+            {
+                _elapsedTime = 0.016f; // Assuming ~60 FPS, 1 frame = ~0.016 seconds
+            }
 
             // Optional: Cap delta time to avoid large jumps
             _elapsedTime = Math.Min(_elapsedTime, 0.1f); // 0.1s cap to prevent large frame gaps
