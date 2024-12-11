@@ -23,7 +23,7 @@ namespace Main
     /// </summary>
     public sealed partial class MainWindow
     {
-        private VoxelRaster _voxel;
+        private RasterVoxel _voxel;
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="MainWindow" /> class.
@@ -44,9 +44,9 @@ namespace Main
             var heightMap =
                 new Bitmap(Image.FromFile(string.Concat(Directory.GetCurrentDirectory(), "\\Terrain\\D1.png")));
 
-            _voxel = new VoxelRaster(100, 100, 0, 100, 120, 120, 300, colorMap, heightMap);
+            _voxel = new RasterVoxel(100, 100, 0, 100, 120, 120, 300, colorMap, heightMap);
 
-            var bmp = _voxel.RenderDirect();
+            var bmp = _voxel.StartEngine();
             ImageView.Source = bmp.ToBitmapImage();
 
             TxtBox.Text = string.Concat(TxtBox.Text, " x: ", _voxel.Camera.X, " y: ", _voxel.Camera.Y,
@@ -60,12 +60,10 @@ namespace Main
         /// <param name="e">The <see cref="KeyEventArgs" /> instance containing the event data.</param>
         private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
         {
-            _voxel.KeyInput(e.Key);
-
             var timer = new Stopwatch();
 
             timer.Start();
-            var bmp = _voxel.RenderDirect();
+            var bmp = _voxel.GetBitmapForKey(e.Key);
             ImageView.Source = bmp.ToBitmapImage();
 
             timer.Stop();
