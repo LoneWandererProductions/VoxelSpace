@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Threading;
@@ -18,7 +19,7 @@ namespace Voxels
         private readonly Color[,] _colorMap;
         private readonly int _colorWidth;
         private readonly int[,] _heightMap;
-        private readonly Dictionary<Key, Bitmap> _lazyCache;
+        private readonly ConcurrentDictionary<Key, Bitmap> _lazyCache;
         private readonly object _lock = new();
 
         private readonly int _topographyHeight;
@@ -42,7 +43,7 @@ namespace Voxels
             _colorWidth = colorWidth;
             Camera = camera;
 
-            _lazyCache = new Dictionary<Key, Bitmap>();
+            _lazyCache = new ConcurrentDictionary<Key, Bitmap>();
 
             // Initialize cancellation token source for managing thread cancellation
             _cancellationTokenSource = new CancellationTokenSource();
@@ -134,11 +135,17 @@ namespace Voxels
             }
         }
 
-        // Update method to calculate deltaTime
+
+        /// <summary>
+        /// Update method to calculate deltaTime
+        /// </summary>
         private void UpdateDeltaTime()
         {
             var currentTime = DateTime.Now;
             _elapsedTime = (float)(currentTime - _lastUpdateTime).TotalSeconds;
+
+            // Optional: Cap delta time to avoid large jumps
+            _elapsedTime = Math.Min(_elapsedTime, 0.1f); // 0.1s cap to prevent large frame gaps
             _lastUpdateTime = currentTime;
         }
 
