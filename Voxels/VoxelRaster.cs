@@ -9,13 +9,8 @@
 
 // ReSharper disable PossibleLossOfFraction
 
-using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Drawing.Imaging;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Input;
 using Imaging;
 using Mathematics;
@@ -27,9 +22,8 @@ namespace Voxels
     /// </summary>
     public sealed class VoxelRaster
     {
-        private readonly Dictionary<int, Bitmap> _panoramaCache = new();
-
         private readonly Dictionary<string, Bitmap> _lazyCache = new();
+        private readonly Dictionary<int, Bitmap> _panoramaCache = new();
 
         /// <summary>
         ///     The color height
@@ -153,7 +147,8 @@ namespace Voxels
                     var heightX = (int)pLeft.X;
                     var heightY = (int)pLeft.Y;
 
-                    var heightOfHeightMap = _heightMap[heightX & (_topographyWidth - 1), heightY & (_topographyHeight - 1)];
+                    var heightOfHeightMap =
+                        _heightMap[heightX & (_topographyWidth - 1), heightY & (_topographyHeight - 1)];
 
                     var color = _colorMap[diffuseX & (_colorWidth - 1), diffuseY & (_colorHeight - 1)];
 

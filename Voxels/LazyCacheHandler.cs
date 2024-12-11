@@ -8,18 +8,17 @@ namespace Voxels
 {
     public class LazyCacheHandler
     {
-
+        private readonly Dictionary<string, Bitmap> _lazyCache = new();
 
 
         private readonly object _lock = new();
-        private readonly Dictionary<string, Bitmap> _lazyCache = new();
         private CancellationTokenSource _idleTokenSource;
         private bool _isCaching;
 
         public event Action CacheUpdated; // Optional: Notify when cache is updated
 
         /// <summary>
-        /// Gets a cached image or generates it if not already cached.
+        ///     Gets a cached image or generates it if not already cached.
         /// </summary>
         /// <param name="key">The cache key.</param>
         /// <param name="generateImage">The function to generate the image if not cached.</param>
@@ -39,7 +38,7 @@ namespace Voxels
         }
 
         /// <summary>
-        /// Triggers an idle-based cache generation task.
+        ///     Triggers an idle-based cache generation task.
         /// </summary>
         /// <param name="generateCache">The function to generate cache entries during idle.</param>
         public void StartIdleCacheGeneration(Action generateCache)
@@ -62,7 +61,7 @@ namespace Voxels
         }
 
         /// <summary>
-        /// Resets the idle detection timer.
+        ///     Resets the idle detection timer.
         /// </summary>
         public void ResetIdleDetection()
         {
