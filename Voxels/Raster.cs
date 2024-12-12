@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using Imaging;
 using Mathematics;
 
 namespace Voxels
 {
-    internal class Raster
+    internal class Raster : IDisposable
     {
         /// <summary>
         /// The y buffer
@@ -15,16 +16,15 @@ namespace Voxels
 
         // At the class level, define the Pen and SolidBrush (reuse them later).
 
-
         /// <summary>
         /// The line pen
         /// </summary>
-        private Pen _linePen;
+        private readonly Pen _linePen;
 
         /// <summary>
         /// The solid brush
         /// </summary>
-        private SolidBrush _solidBrush;
+        private readonly SolidBrush _solidBrush;
 
         private bool _disposed;
 
@@ -200,7 +200,7 @@ namespace Voxels
                 dz += 0.005f; // Increment dz for the next depth slice
             }
 
-            dbm =  ApplyLineSmoothing(dbm);
+            //dbm =  ApplyLineSmoothing(dbm);
 
             return dbm.Bitmap;
         }
@@ -208,51 +208,92 @@ namespace Voxels
         /// <summary>
         /// Creates the bitmap from container.
         /// </summary>
-        /// <param name="raster">The raster.</param>
-        /// <param name="screenWidth">Width of the screen.</param>
-        /// <param name="screenHeight">Height of the screen.</param>
-        /// <param name="backgroundColor">Color of the background.</param>
-        /// <returns>Generated Bitmap</returns>
-        internal Bitmap CreateBitmapFromContainer(List<Slice> raster, int screenWidth, int screenHeight,
-            Color backgroundColor)
+        /// <param name="colorMap">The color map.</param>
+        /// <param name="heightMap">The height map.</param>
+        /// <param name="camera">The camera.</param>
+        /// <param name="topographyHeight">Height of the topography.</param>
+        /// <param name="topographyWidth">Width of the topography.</param>
+        /// <param name="colorHeight">Height of the color.</param>
+        /// <param name="colorWidth">Width of the color.</param>
+        /// <returns>
+        /// Finished Bitmap
+        /// </returns>
+        internal Bitmap CreateBitmapFromContainer(Color[,] colorMap, int[,] heightMap, Camera camera, int topographyHeight,
+            int topographyWidth, int colorHeight, int colorWidth)
         {
+            // Use custom PixelKey struct to reduce hash computation overhead
+            var pixelMap = new Dictionary<PixelKey, Color>(camera.ScreenWidth * camera.ScreenHeight);
+
+            // Initialize the Y-buffer for each pixel (this represents the farthest visible pixel on the screen for each column)
+            _yBuffer = new float[camera.ScreenWidth];
+            for (var i = 0; i < _yBuffer.Length; i++)
+                _yBuffer[i] = camera.ScreenHeight;
+
+            var sinPhi = ExtendedMath.CalcSin(camera.Angle);
+            var cosPhi = ExtendedMath.CalcCos(camera.Angle);
+
+            float z = 1;
+            float dz = 1;
+
+            // Loop through depth slices
+            while (z < camera.ZFar)
             {
-                var bmp = new Bitmap(screenWidth, screenHeight);
+                // Precompute values that don't change per pixel
+                var pLeftX = (float)(-cosPhi * z - sinPhi * z) + camera.X;
+                var pLeftY = (float)(sinPhi * z - cosPhi * z) + camera.Y;
 
-                using var g = Graphics.FromImage(bmp);
+                var pRightX = (float)(cosPhi * z - sinPhi * z) + camera.X;
+                var pRightY = (float)(-sinPhi * z - cosPhi * z) + camera.Y;
 
-                //set background Color
-                var backGround = new SolidBrush(backgroundColor);
+                var dx = (pRightX - pLeftX) / camera.ScreenWidth;
+                var dy = (pRightY - pLeftY) / camera.ScreenWidth;
 
-                g.FillRectangle(backGround, 0, 0, screenWidth, screenHeight);
+                // Loop through screen width
+                for (var i = 0; i < camera.ScreenWidth; i++)
+                {
+                    var diffuseX = (int)pLeftX;
+                    var diffuseY = (int)pLeftY;
+                    var heightX = (int)pLeftX;
+                    var heightY = (int)pLeftY;
 
-                foreach (var slice in raster)
-                    DrawVerticalLine(slice.Shade, slice.X1, slice.Y1, slice.Y2, bmp);
+                    // Access height map and color map for each pixel
+                    var heightOfHeightMap = heightMap[heightX & (topographyWidth - 1), heightY & (topographyHeight - 1)];
+                    var color = colorMap[diffuseX & (colorWidth - 1), diffuseY & (colorHeight - 1)];
 
-                return bmp;
+                    // Calculate height on screen
+                    var heightOnScreen = (camera.Height - heightOfHeightMap) / z * camera.Scale + camera.Horizon;
+
+                    // Replace or add the pixel to the map (only if it passes the Y-buffer test)
+                    var y1 = (int)heightOnScreen;
+                    if (y1 < _yBuffer[i])
+                    {
+                        _yBuffer[i] = heightOnScreen;
+                        var pixelKey = new PixelKey(i, y1); // Use the optimized PixelKey
+                        pixelMap[pixelKey] = color; // Add or replace pixel color
+                    }
+
+                    // Update pLeft for the next pixel in the row
+                    pLeftX += dx;
+                    pLeftY += dy;
+                }
+
+                // Move to the next slice
+                z += dz;
+                dz += 0.005f; // Increment dz for the next depth slice
             }
+
+            // Create a DirectBitmap to store the final image
+            var dbm = new DirectBitmap(camera.ScreenWidth, camera.ScreenHeight);
+
+            // Set the pixels using SIMD (assuming SetPixelsSimd can handle this)
+            dbm.SetPixelsSimd(pixelMap.Select(kvp => (kvp.Key.X, kvp.Key.Y, kvp.Value)));
+
+            return dbm.Bitmap;
         }
 
-        /// <summary>
-        /// Draws the vertical line.
-        /// </summary>
-        /// <param name="col">The col.</param>
-        /// <param name="x">The x.</param>
-        /// <param name="heightOnScreen">The height on screen.</param>
-        /// <param name="buffer">The buffer.</param>
-        /// <param name="bmp">The BMP.</param>
-        private void DrawVerticalLine(Color col, int x, int heightOnScreen, float buffer, Bitmap bmp)
-        {
-            if (heightOnScreen > buffer) return;
 
-            // Calculate the rectangle's Y position and height
-            var rectHeight = (int)(buffer - heightOnScreen);
 
-            using var g = Graphics.FromImage(bmp);
-            using var brush = new SolidBrush(col); // Use a SolidBrush to fill the rectangle
 
-            g.FillRectangle(brush, x, heightOnScreen, 1, rectHeight); // 1 width, height from heightOnScreen to buffer
-        }
 
         //TODO still in the progress of refinement
         private DirectBitmap ApplyLineSmoothing(DirectBitmap btm)

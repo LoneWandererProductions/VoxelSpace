@@ -28,22 +28,18 @@ namespace Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double CalcCos(int degree)
         {
-            double cos;
+            // Use the absolute value of the degree for cosine lookup.
+            var lookupDegree = Math.Abs(degree);
 
-            if (Constants.CoSinus.ContainsKey(degree))
+            // Look up the cosine value in the dictionary for the positive angle.
+            if (Constants.CoSinus.ContainsKey(lookupDegree))
             {
-                cos = Constants.CoSinus[Math.Abs(degree)];
-
-                //catch negative degrees
-                if (degree < 0) cos *= -1;
-            }
-            else
-            {
-                const double rad = Math.PI / 180.0;
-                cos = Math.Cos(degree * rad);
+                return Constants.CoSinus[lookupDegree];
             }
 
-            return cos;
+            // If the value is not found, calculate it normally.
+            const double rad = Math.PI / 180.0;
+            return Math.Cos(degree * rad);
         }
 
         /// <summary>

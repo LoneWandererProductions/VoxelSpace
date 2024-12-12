@@ -69,7 +69,7 @@ namespace SpeedTests
             Assert.IsNotNull(depthBitmap, "Container rendering produced a null Bitmap.");
 
             // Compare the two images
-            //Assert.IsTrue(AreBitmapsEqual(directBitmap, containerBitmap), "The images rendered by the two methods are not identical. (depth, container)");
+            //Assert.IsTrue(AreBitmapsEqual(depthBitmap, containerBitmap), "The images rendered by the two methods are not identical. (depth, container)");
 
             // Compare the two images (depth, direct) is not possible since they are different
         }
