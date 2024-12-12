@@ -172,20 +172,6 @@ namespace Voxels
         }
 
         /// <summary>
-        ///     Renders the image by creating the data in a container, then creating the Bitmap.
-        /// </summary>
-        /// <returns>The finished Bitmap created via container data.</returns>
-        public Bitmap RenderWithBitmapDepthBuffer()
-        {
-            if (_heightMap == null) return null;
-
-            var raster = new Raster();
-
-            return raster.CreateBitmapWithDepthBuffer(_colorMap, _heightMap, Camera, _topographyHeight,
-                _topographyWidth, _colorHeight, _colorWidth);
-        }
-
-        /// <summary>
         ///     Renders the with container.
         /// </summary>
         /// <returns></returns>

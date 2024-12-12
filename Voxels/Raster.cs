@@ -6,8 +6,42 @@ namespace Voxels
 {
     internal class Raster
     {
+        /// <summary>
+        /// The y buffer
+        /// </summary>
         private float[] _yBuffer;
 
+        // At the class level, define the Pen and SolidBrush (reuse them later).
+
+
+        /// <summary>
+        /// The line pen
+        /// </summary>
+        private Pen _linePen;
+
+        /// <summary>
+        /// The solid brush
+        /// </summary>
+        private SolidBrush _solidBrush;
+
+        public Raster()
+        {
+            // Initialize the Pen and SolidBrush once.
+            _linePen = new Pen(Color.Black); // Adjust the color as needed
+            _solidBrush = new SolidBrush(Color.Black); // Adjust the color as needed
+        }
+
+        /// <summary>
+        /// Generates the raster.
+        /// </summary>
+        /// <param name="colorMap">The color map.</param>
+        /// <param name="heightMap">The height map.</param>
+        /// <param name="camera">The camera.</param>
+        /// <param name="topographyHeight">Height of the topography.</param>
+        /// <param name="topographyWidth">Width of the topography.</param>
+        /// <param name="colorHeight">Height of the color.</param>
+        /// <param name="colorWidth">Width of the color.</param>
+        /// <returns></returns>
         internal List<Slice> GenerateRaster(Color[,] colorMap, int[,] heightMap, Camera camera, int topographyHeight,
             int topographyWidth, int colorHeight, int colorWidth)
         {
@@ -87,7 +121,9 @@ namespace Voxels
         /// <param name="topographyWidth">Width of the topography.</param>
         /// <param name="colorHeight">Height of the color.</param>
         /// <param name="colorWidth">Width of the color.</param>
-        /// <returns>Finished Bitmap</returns>
+        /// <returns>
+        /// Finished Bitmap
+        /// </returns>
         internal Bitmap CreateBitmapWithDepthBuffer(Color[,] colorMap, int[,] heightMap, Camera camera,
             int topographyHeight, int topographyWidth, int colorHeight, int colorWidth)
         {
@@ -152,6 +188,14 @@ namespace Voxels
         }
 
 
+        /// <summary>
+        /// Creates the bitmap from container.
+        /// </summary>
+        /// <param name="raster">The raster.</param>
+        /// <param name="screenWidth">Width of the screen.</param>
+        /// <param name="screenHeight">Height of the screen.</param>
+        /// <param name="backgroundColor">Color of the background.</param>
+        /// <returns>Generated Bitmap</returns>
         internal Bitmap CreateBitmapFromContainer(List<Slice> raster, int screenWidth, int screenHeight,
             Color backgroundColor)
         {
@@ -172,12 +216,31 @@ namespace Voxels
             }
         }
 
+        /// <summary>
+        /// Draws the vertical line.
+        /// </summary>
+        /// <param name="col">The col.</param>
+        /// <param name="x">The x.</param>
+        /// <param name="heightOnScreen">The height on screen.</param>
+        /// <param name="buffer">The buffer.</param>
+        /// <param name="bmp">The BMP.</param>
         private void DrawVerticalLine(Color col, int x, int heightOnScreen, float buffer, Bitmap bmp)
         {
             if (heightOnScreen > buffer) return;
 
+            // Calculate the rectangle's Y position and height
+            var rectHeight = (int)(buffer - heightOnScreen);
+
             using var g = Graphics.FromImage(bmp);
-            g.DrawLine(new Pen(new SolidBrush(col)), x, heightOnScreen, x, buffer);
+            using var brush = new SolidBrush(col); // Use a SolidBrush to fill the rectangle
+            g.FillRectangle(brush, x, heightOnScreen, 1, rectHeight); // 1 width, height from heightOnScreen to buffer
+        }
+
+        // When done, make sure to dispose of the Pen and SolidBrush.
+        public void Dispose()
+        {
+            _linePen.Dispose();
+            _solidBrush.Dispose();
         }
     }
 }

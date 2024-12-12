@@ -2,7 +2,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Drawing;
-using System.Linq;
+using System.Drawing.Imaging;
 using System.Threading;
 using System.Windows.Input;
 using Imaging;
@@ -16,14 +16,32 @@ namespace Voxels
         private const float RotationSpeed = 10f; // Rotation speed (degrees per second)
 
         /// <summary>
+        ///     The color height
+        /// </summary>
+        private int _colorHeight;
+
+        /// <summary>
+        ///     The color map
+        ///     Buffer/array to hold color values (1024*1024)
+        /// </summary>
+        private Color[,] _colorMap;
+
+        /// <summary>
+        ///     The color width
+        /// </summary>
+        private int _colorWidth;
+
+        /// <summary>
+        ///     The height map
+        ///     Buffer/array to hold height values (1024*1024)
+        /// </summary>
+        private int[,] _heightMap;
+
+        /// <summary>
         /// The cache preload thread
         /// </summary>
         private readonly Thread _cachePreloadThread;
-        private int _colorHeight;
 
-        private Color[,] _colorMap;
-        private int _colorWidth;
-        private int[,] _heightMap;
         private readonly ConcurrentDictionary<Key, Bitmap> _lazyCache;
         private readonly object _lock = new();
 
@@ -35,8 +53,12 @@ namespace Voxels
         /// </summary>
         private readonly CancellationTokenSource _cancellationTokenSource;
 
-        private float _elapsedTime; // Time elapsed since the last frame
+        /// <summary>
+        /// Time elapsed since the last frame
+        /// </summary>
+        private float _elapsedTime; 
 
+        private PixelData[,] _rasterData;
 
         /// <summary>
         /// The is cache preloading
@@ -105,18 +127,23 @@ namespace Voxels
         /// <returns>new Bitmap</returns>
         public Bitmap GetBitmapForKey(Key key)
         {
-            //TODO not working yet
-            if (_lazyCache.TryGetValue(key, out var cachedBitmap)) return cachedBitmap;
-
+            // Always update the camera position first.
             Camera = SimulateCameraMovement(key, Camera);
 
+            // Check if the bitmap is already cached.
+            if (_lazyCache.TryGetValue(key, out var cachedBitmap))
+            {
+                // After returning the cached bitmap, rebuild the cache.
+                RebuildCache();
+                return cachedBitmap; // Return the cached bitmap if it exists.
+            }
+
+            // After each movement, rebuild the cache
+            RebuildCache();
+
+            // If not cached, generate the bitmap.
             var raster = new Raster();
-            var bitmap = raster.CreateBitmapWithDepthBuffer(_colorMap, _heightMap, Camera,
-                _topographyHeight, _topographyWidth, _colorHeight, _colorWidth);
-
-            _lazyCache[key] = bitmap;
-
-            return bitmap;
+            return raster.CreateBitmapWithDepthBuffer(_colorMap, _heightMap, Camera, _topographyHeight, _topographyWidth, _colorHeight, _colorWidth);
         }
 
         /// <summary>
@@ -133,8 +160,29 @@ namespace Voxels
 
             // Generate the start bitmap
             var raster = new Raster();
-            return raster.CreateBitmapWithDepthBuffer(_colorMap, _heightMap, Camera,
-                _topographyHeight, _topographyWidth, _colorHeight, _colorWidth);
+            return raster.CreateBitmapWithDepthBuffer(_colorMap, _heightMap, Camera, _topographyHeight, _topographyWidth, _colorHeight, _colorWidth);
+        }
+
+
+        public Bitmap Raster()
+        {
+            // Generate the start bitmap
+            var raster = new Raster();
+            return raster.CreateBitmapWithDepthBuffer(_colorMap, _heightMap, Camera, _topographyHeight, _topographyWidth, _colorHeight, _colorWidth);
+        }
+
+        /// <summary>
+        /// Rebuilds the cache.
+        /// </summary>
+        private void RebuildCache()
+        {
+            lock (_lock)
+            {
+                _lazyCache.Clear();  // Clear the old cache
+
+                // Preload new cache based on the new position
+                PreloadCache(_cancellationTokenSource.Token);
+            }
         }
 
         /// <summary>
@@ -226,14 +274,16 @@ namespace Voxels
             _lastUpdateTime = currentTime;
         }
 
+        // Cache preloading thread method to calculate images for all possible directions
         private void PreloadCache(CancellationToken cancellationToken)
         {
-            // Start cache preloading in a background thread
             _isCachePreloading = true;
 
-            // Simulate preloading for all possible directions
-            foreach (var directionKey in new[] { Key.W, Key.S, Key.A, Key.D, Key.O, Key.P }.TakeWhile(_ => !cancellationToken.IsCancellationRequested))
+            // Preload all possible directions
+            foreach (var directionKey in new[] { Key.W, Key.S, Key.A, Key.D, Key.O, Key.P })
             {
+                if (cancellationToken.IsCancellationRequested) break;
+
                 GenerateAndCacheBitmapForKey(directionKey);
             }
 
@@ -256,8 +306,8 @@ namespace Voxels
 
             _heightMap = new int[bmp.Width, bmp.Height];
             for (var i = 0; i < bmp.Width; i++)
-            for (var j = 0; j < bmp.Height; j++)
-                _heightMap[i, j] = dbm.GetPixel(i, j).R;
+                for (var j = 0; j < bmp.Height; j++)
+                    _heightMap[i, j] = dbm.GetPixel(i, j).R;
         }
 
         /// <summary>
@@ -275,8 +325,8 @@ namespace Voxels
 
             _colorMap = new Color[bmp.Width, bmp.Height];
             for (var i = 0; i < bmp.Width; i++)
-            for (var j = 0; j < bmp.Height; j++)
-                _colorMap[i, j] = dbm.GetPixel(i, j);
+                for (var j = 0; j < bmp.Height; j++)
+                    _colorMap[i, j] = dbm.GetPixel(i, j);
         }
     }
 }
