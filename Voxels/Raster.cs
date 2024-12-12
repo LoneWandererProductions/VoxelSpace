@@ -77,6 +77,17 @@ namespace Voxels
             return raster;
         }
 
+        /// <summary>
+        /// Creates the bitmap with depth buffer.
+        /// </summary>
+        /// <param name="colorMap">The color map.</param>
+        /// <param name="heightMap">The height map.</param>
+        /// <param name="camera">The camera.</param>
+        /// <param name="topographyHeight">Height of the topography.</param>
+        /// <param name="topographyWidth">Width of the topography.</param>
+        /// <param name="colorHeight">Height of the color.</param>
+        /// <param name="colorWidth">Width of the color.</param>
+        /// <returns>Finished Bitmap</returns>
         internal Bitmap CreateBitmapWithDepthBuffer(Color[,] colorMap, int[,] heightMap, Camera camera,
             int topographyHeight, int topographyWidth, int colorHeight, int colorWidth)
         {

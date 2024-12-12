@@ -96,7 +96,7 @@ namespace Voxels
         /// <value>
         /// The camera.
         /// </value>
-        public Camera Camera { get; }
+        public Camera Camera { get; set;  }
 
         /// <summary>
         /// Gets the bitmap for key.
@@ -108,11 +108,10 @@ namespace Voxels
             //TODO not working yet
             if (_lazyCache.TryGetValue(key, out var cachedBitmap)) return cachedBitmap;
 
-            var simulatedCamera = Camera.Clone();
-            SimulateCameraMovement(key);
+            Camera = SimulateCameraMovement(key, Camera);
 
             var raster = new Raster();
-            var bitmap = raster.CreateBitmapWithDepthBuffer(_colorMap, _heightMap, simulatedCamera,
+            var bitmap = raster.CreateBitmapWithDepthBuffer(_colorMap, _heightMap, Camera,
                 _topographyHeight, _topographyWidth, _colorHeight, _colorWidth);
 
             _lazyCache[key] = bitmap;
@@ -151,7 +150,7 @@ namespace Voxels
 
                 var simulatedCamera = Camera.Clone();
                 // Simulate camera movement for the requested direction
-                SimulateCameraMovement(key);
+                simulatedCamera = SimulateCameraMovement(key, simulatedCamera);
 
                 // Generate the bitmap
                 var raster = new Raster();
@@ -166,7 +165,7 @@ namespace Voxels
         /// Simulates the camera movement.
         /// </summary>
         /// <param name="key">The key.</param>
-        private void SimulateCameraMovement(Key key)
+        private Camera SimulateCameraMovement(Key key, Camera camera)
         {
             UpdateDeltaTime(); // Update deltaTime based on frame time
 
@@ -174,35 +173,37 @@ namespace Voxels
             Trace.WriteLine($"Key: {key}");
 
             // Log the old camera state
-            Trace.WriteLine($"Before: X={Camera.X}, Y={Camera.Y}, Angle={Camera.Angle}, Horizon={Camera.Horizon}");
+            Trace.WriteLine($"Before: {Camera.ToString()}");
 
             // Update the actual camera object directly
             switch (key)
             {
                 case Key.W:
-                    Camera.X -= (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcSin(Camera.Angle));
-                    Camera.Y -= (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcCos(Camera.Angle));
+                    camera.X -= (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcSin(Camera.Angle));
+                    camera.Y -= (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcCos(Camera.Angle));
                     break;
                 case Key.S:
-                    Camera.X += (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcSin(Camera.Angle));
-                    Camera.Y += (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcCos(Camera.Angle));
+                    camera.X += (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcSin(Camera.Angle));
+                    camera.Y += (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcCos(Camera.Angle));
                     break;
                 case Key.A:
-                    Camera.Angle += (int)(RotationSpeed * _elapsedTime); // Turn left
+                    camera.Angle += (int)(RotationSpeed * _elapsedTime); // Turn left
                     break;
                 case Key.D:
-                    Camera.Angle -= (int)(RotationSpeed * _elapsedTime); // Turn right
+                    camera.Angle -= (int)(RotationSpeed * _elapsedTime); // Turn right
                     break;
                 case Key.O:
-                    Camera.Horizon += (int)(RotationSpeed * _elapsedTime); // Move up
+                    camera.Horizon += (int)(RotationSpeed * _elapsedTime); // Move up
                     break;
                 case Key.P:
-                    Camera.Horizon -= (int)(RotationSpeed * _elapsedTime); // Move down
+                    camera.Horizon -= (int)(RotationSpeed * _elapsedTime); // Move down
                     break;
             }
 
             // Log the new camera state
-            Trace.WriteLine($"After: X={Camera.X}, Y={Camera.Y}, Angle={Camera.Angle}, Horizon={Camera.Horizon}");
+            Trace.WriteLine($"After: {Camera.ToString()}");
+
+            return camera;
         }
 
 
