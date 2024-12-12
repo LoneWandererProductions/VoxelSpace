@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
+using Imaging;
 using Mathematics;
 
 namespace Voxels
@@ -23,6 +25,8 @@ namespace Voxels
         /// The solid brush
         /// </summary>
         private SolidBrush _solidBrush;
+
+        private bool _disposed;
 
         public Raster()
         {
@@ -128,6 +132,18 @@ namespace Voxels
             int topographyHeight, int topographyWidth, int colorHeight, int colorWidth)
         {
             var bmp = new Bitmap(camera.ScreenWidth, camera.ScreenHeight);
+
+            //set background Color
+            using var g = Graphics.FromImage(bmp);
+            var backGround = new SolidBrush(camera.BackgroundColor);
+
+            g.FillRectangle(backGround, 0, 0, camera.ScreenWidth, camera.ScreenHeight);
+
+            var dbm = new DirectBitmap(bmp);
+
+            //do the work
+            //before dbm: 8 ms, after: 4ms
+
             var depthBuffer = new float[camera.ScreenWidth, camera.ScreenHeight];
 
             // Initialize depth buffer with "infinity" (or a very large value)
@@ -135,8 +151,8 @@ namespace Voxels
             for (var y = 0; y < camera.ScreenHeight; y++)
                 depthBuffer[x, y] = float.MaxValue;
 
-            using var g = Graphics.FromImage(bmp);
-            g.Clear(Color.Black); // Background color
+            using var graphics = Graphics.FromImage(bmp);
+            graphics.Clear(Color.Black); // Background color
 
             var sinPhi = ExtendedMath.CalcSin(camera.Angle);
             var cosPhi = ExtendedMath.CalcCos(camera.Angle);
@@ -171,7 +187,7 @@ namespace Voxels
                     {
                         // Update depth buffer and set pixel color
                         depthBuffer[x, screenY] = z;
-                        bmp.SetPixel(x, screenY, color);
+                        dbm.SetPixel(x, screenY, color);
                     }
 
                     // Update for next pixel
@@ -184,9 +200,10 @@ namespace Voxels
                 dz += 0.005f; // Increment dz for the next depth slice
             }
 
-            return bmp;
-        }
+            dbm = ApplyLineSmoothing(dbm);
 
+            return dbm.Bitmap;
+        }
 
         /// <summary>
         /// Creates the bitmap from container.
@@ -233,14 +250,82 @@ namespace Voxels
 
             using var g = Graphics.FromImage(bmp);
             using var brush = new SolidBrush(col); // Use a SolidBrush to fill the rectangle
+
             g.FillRectangle(brush, x, heightOnScreen, 1, rectHeight); // 1 width, height from heightOnScreen to buffer
         }
 
-        // When done, make sure to dispose of the Pen and SolidBrush.
+        //TODO still in the progress of refinement
+        private DirectBitmap ApplyLineSmoothing(DirectBitmap btm)
+        {
+            var width = btm.Width;
+            var height = btm.Height;
+
+            // You can apply a custom smoothing technique here for the lines
+            // For simplicity, let's assume you are blending horizontally across lines
+            for (int y = 0; y < height; y++)
+            {
+                Color previousPixel = btm.GetPixel(0, y);
+                for (int x = 1; x < width; x++)
+                {
+                    Color currentPixel = btm.GetPixel(x, y);
+
+                    // If a gap is detected, blend the current pixel with the previous one
+                    if (currentPixel.A == 0) // Assume transparency for gaps
+                    {
+                        var blendedColor = BlendColors(previousPixel, currentPixel);
+                        btm.SetPixel(x, y, blendedColor);
+                    }
+                    else
+                    {
+                        previousPixel = currentPixel;
+                    }
+
+                }
+            }
+            return btm;
+        }
+
+        // Simple color blending function
+        private Color BlendColors(Color color1, Color color2)
+        {
+            // Here we blend based on alpha, you could apply different strategies
+            const float alpha = 0.5f;
+            var r = (int)((color1.R * (1 - alpha)) + (color2.R * alpha));
+            var g = (int)((color1.G * (1 - alpha)) + (color2.G * alpha));
+            var b = (int)((color1.B * (1 - alpha)) + (color2.B * alpha));
+
+            return Color.FromArgb(r, g, b);
+        }
+
         public void Dispose()
         {
-            _linePen.Dispose();
-            _solidBrush.Dispose();
+            // Call the Dispose method with true to release resources.
+            Dispose(true);
+            // Suppress finalization to avoid it being called twice.
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            if (_disposed)
+                return;
+
+            if (disposing)
+            {
+                // Dispose of managed resources.
+                _linePen?.Dispose();
+                _solidBrush?.Dispose();
+            }
+
+            // Dispose of unmanaged resources if needed.
+
+            _disposed = true;
+        }
+
+        ~Raster()
+        {
+            // Finalizer calls Dispose(false).
+            Dispose(false);
         }
     }
 }

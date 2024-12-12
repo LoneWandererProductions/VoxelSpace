@@ -84,7 +84,7 @@ namespace Mathematics
             { 105, MinusSixPlusTwo },
             { 120, -0.5 },
             { 135, -1 / Two },
-            { 150, -Three / 2 },
+            //{ 150, -Three / 2 }, TODO error here
             { 165, MinusSixMinusTwo },
             { 180, -1 },
             { 195, MinusSixMinusTwo },
