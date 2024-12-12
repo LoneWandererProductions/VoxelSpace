@@ -68,7 +68,7 @@ namespace Main
 
             timer.Stop();
             TxtBox.Text = string.Concat(TxtBox.Text, " Time Diff:", timer.Elapsed, Environment.NewLine);
-            TxtBox.Text = string.Concat(TxtBox.Text, " x: ", _voxel.Camera.X, " y: ", _voxel.Camera.Y,
+            TxtBox.Text = string.Concat(TxtBox.Text, _voxel.Camera.ToString(),
                 Environment.NewLine);
         }
     }

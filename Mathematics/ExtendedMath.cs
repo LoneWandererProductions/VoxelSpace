@@ -30,7 +30,7 @@ namespace Mathematics
         {
             double cos;
 
-            if (Constants.CoSinus.ContainsKey(Math.Abs(degree)))
+            if (Constants.CoSinus.ContainsKey(degree))
             {
                 cos = Constants.CoSinus[Math.Abs(degree)];
 
@@ -57,7 +57,7 @@ namespace Mathematics
         {
             double sin;
 
-            if (Constants.Sinus.ContainsKey(Math.Abs(degree)))
+            if (Constants.Sinus.ContainsKey(degree))
             {
                 sin = Constants.Sinus[Math.Abs(degree)];
 

@@ -37,7 +37,7 @@ namespace Mathematics
         public static Dictionary<int, double> Sinus { get; } = new()
         {
             { 0, 0 },
-            { 15, SixMinusTwo },
+            //{ 15, SixMinusTwo },
             { 30, 0.5 },
             { 45, 1 / Two },
             { 60, Three },
@@ -75,8 +75,8 @@ namespace Mathematics
         public static Dictionary<int, double> CoSinus { get; } = new()
         {
             { 0, 1 },
-            { 15, SixPlusTwo },
-            { 30, Three },
+            //{ 15, SixPlusTwo },
+            //{ 30, Three },
             { 45, 1 / Two },
             { 60, 0.5 },
             { 75, SixMinusTwo },

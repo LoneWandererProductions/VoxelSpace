@@ -200,7 +200,7 @@ namespace Voxels
                 dz += 0.005f; // Increment dz for the next depth slice
             }
 
-            dbm = ApplyLineSmoothing(dbm);
+            dbm =  ApplyLineSmoothing(dbm);
 
             return dbm.Bitmap;
         }
