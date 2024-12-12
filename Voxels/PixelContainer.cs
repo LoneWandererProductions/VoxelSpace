@@ -1,8 +1,10 @@
-﻿namespace Voxels
+﻿using System;
+using System.Collections.Generic;
+using System.Drawing;
+
+namespace Voxels
 {
-    using System;
-    using System.Collections.Generic;
-    using System.Drawing; // Assuming this is used for Color.
+    // Assuming this is used for Color.
 
     public class PixelContainer
     {
@@ -21,7 +23,7 @@
 
         public Color? GetPixel(int x, int y)
         {
-            return _pixels.TryGetValue((x, y), out var color) ? color : (Color?)null;
+            return _pixels.TryGetValue((x, y), out var color) ? color : null;
         }
 
         public Dictionary<ValueTuple<int, int>, Color> GetAllPixels()
@@ -29,5 +31,4 @@
             return _pixels;
         }
     }
-
 }

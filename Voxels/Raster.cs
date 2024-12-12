@@ -7,26 +7,26 @@ using Mathematics;
 
 namespace Voxels
 {
-    internal class Raster : IDisposable
+    internal sealed class Raster : IDisposable
     {
-        /// <summary>
-        /// The y buffer
-        /// </summary>
-        private float[] _yBuffer;
-
         // At the class level, define the Pen and SolidBrush (reuse them later).
 
         /// <summary>
-        /// The line pen
+        ///     The line pen
         /// </summary>
         private readonly Pen _linePen;
 
         /// <summary>
-        /// The solid brush
+        ///     The solid brush
         /// </summary>
         private readonly SolidBrush _solidBrush;
 
         private bool _disposed;
+
+        /// <summary>
+        ///     The y buffer
+        /// </summary>
+        private float[] _yBuffer;
 
         public Raster()
         {
@@ -35,8 +35,16 @@ namespace Voxels
             _solidBrush = new SolidBrush(Color.Black); // Adjust the color as needed
         }
 
+        public void Dispose()
+        {
+            // Call the Dispose method with true to release resources.
+            Dispose(true);
+            // Suppress finalization to avoid it being called twice.
+            GC.SuppressFinalize(this);
+        }
+
         /// <summary>
-        /// Generates the raster.
+        ///     Generates the raster.
         /// </summary>
         /// <param name="colorMap">The color map.</param>
         /// <param name="heightMap">The height map.</param>
@@ -116,7 +124,7 @@ namespace Voxels
         }
 
         /// <summary>
-        /// Creates the bitmap with depth buffer.
+        ///     Creates the bitmap with depth buffer.
         /// </summary>
         /// <param name="colorMap">The color map.</param>
         /// <param name="heightMap">The height map.</param>
@@ -126,7 +134,7 @@ namespace Voxels
         /// <param name="colorHeight">Height of the color.</param>
         /// <param name="colorWidth">Width of the color.</param>
         /// <returns>
-        /// Finished Bitmap
+        ///     Finished Bitmap
         /// </returns>
         internal Bitmap CreateBitmapWithDepthBuffer(Color[,] colorMap, int[,] heightMap, Camera camera,
             int topographyHeight, int topographyWidth, int colorHeight, int colorWidth)
@@ -206,7 +214,7 @@ namespace Voxels
         }
 
         /// <summary>
-        /// Creates the bitmap from container.
+        ///     Creates the bitmap from container.
         /// </summary>
         /// <param name="colorMap">The color map.</param>
         /// <param name="heightMap">The height map.</param>
@@ -216,9 +224,10 @@ namespace Voxels
         /// <param name="colorHeight">Height of the color.</param>
         /// <param name="colorWidth">Width of the color.</param>
         /// <returns>
-        /// Finished Bitmap
+        ///     Finished Bitmap
         /// </returns>
-        internal Bitmap CreateBitmapFromContainer(Color[,] colorMap, int[,] heightMap, Camera camera, int topographyHeight,
+        internal Bitmap CreateBitmapFromContainer(Color[,] colorMap, int[,] heightMap, Camera camera,
+            int topographyHeight,
             int topographyWidth, int colorHeight, int colorWidth)
         {
             // Use custom PixelKey struct to reduce hash computation overhead
@@ -257,7 +266,8 @@ namespace Voxels
                     var heightY = (int)pLeftY;
 
                     // Access height map and color map for each pixel
-                    var heightOfHeightMap = heightMap[heightX & (topographyWidth - 1), heightY & (topographyHeight - 1)];
+                    var heightOfHeightMap =
+                        heightMap[heightX & (topographyWidth - 1), heightY & (topographyHeight - 1)];
                     var color = colorMap[diffuseX & (colorWidth - 1), diffuseY & (colorHeight - 1)];
 
                     // Calculate height on screen
@@ -292,9 +302,6 @@ namespace Voxels
         }
 
 
-
-
-
         //TODO still in the progress of refinement
         private DirectBitmap ApplyLineSmoothing(DirectBitmap btm)
         {
@@ -303,13 +310,13 @@ namespace Voxels
 
             // You can apply a custom smoothing technique here for the lines
             // For simplicity, let's assume you are blending horizontally across lines
-            for (int y = 0; y < height; y++)
+            for (var y = 0; y < height; y++)
             {
-                Color previousPixel = btm.GetPixel(0, y);
+                var previousPixel = btm.GetPixel(0, y);
 
-                for (int x = 1; x < width; x++)
+                for (var x = 1; x < width; x++)
                 {
-                    Color currentPixel = btm.GetPixel(x, y);
+                    var currentPixel = btm.GetPixel(x, y);
 
                     // If a gap is detected, blend the current pixel with the previous one
                     if (currentPixel.A == 0) // Assume transparency for gaps
@@ -321,9 +328,9 @@ namespace Voxels
                     {
                         previousPixel = currentPixel;
                     }
-
                 }
             }
+
             return btm;
         }
 
@@ -332,22 +339,14 @@ namespace Voxels
         {
             // Here we blend based on alpha, you could apply different strategies
             const float alpha = 0.5f;
-            var r = (int)((color1.R * (1 - alpha)) + (color2.R * alpha));
-            var g = (int)((color1.G * (1 - alpha)) + (color2.G * alpha));
-            var b = (int)((color1.B * (1 - alpha)) + (color2.B * alpha));
+            var r = (int)(color1.R * (1 - alpha) + color2.R * alpha);
+            var g = (int)(color1.G * (1 - alpha) + color2.G * alpha);
+            var b = (int)(color1.B * (1 - alpha) + color2.B * alpha);
 
             return Color.FromArgb(r, g, b);
         }
 
-        public void Dispose()
-        {
-            // Call the Dispose method with true to release resources.
-            Dispose(true);
-            // Suppress finalization to avoid it being called twice.
-            GC.SuppressFinalize(this);
-        }
-
-        protected virtual void Dispose(bool disposing)
+        private void Dispose(bool disposing)
         {
             if (_disposed)
                 return;

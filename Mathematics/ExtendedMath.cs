@@ -32,10 +32,7 @@ namespace Mathematics
             var lookupDegree = Math.Abs(degree);
 
             // Look up the cosine value in the dictionary for the positive angle.
-            if (Constants.CoSinus.ContainsKey(lookupDegree))
-            {
-                return Constants.CoSinus[lookupDegree];
-            }
+            if (Constants.CoSinus.ContainsKey(lookupDegree)) return Constants.CoSinus[lookupDegree];
 
             // If the value is not found, calculate it normally.
             const double rad = Math.PI / 180.0;

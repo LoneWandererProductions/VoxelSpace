@@ -22,9 +22,6 @@ namespace Voxels
     /// </summary>
     public sealed class VoxelRaster
     {
-        private readonly Dictionary<string, Bitmap> _lazyCache = new();
-        private readonly Dictionary<int, Bitmap> _panoramaCache = new();
-
         /// <summary>
         ///     The color height
         /// </summary>

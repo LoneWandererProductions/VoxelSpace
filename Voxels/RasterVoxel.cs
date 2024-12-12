@@ -2,7 +2,6 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Drawing;
-using System.Drawing.Imaging;
 using System.Threading;
 using System.Windows.Input;
 using Imaging;
@@ -14,6 +13,19 @@ namespace Voxels
     {
         private const float MovementSpeed = 10f; // Movement speed (units per second)
         private const float RotationSpeed = 10f; // Rotation speed (degrees per second)
+
+        /// <summary>
+        ///     The cache preload thread
+        /// </summary>
+        private readonly Thread _cachePreloadThread;
+
+        /// <summary>
+        ///     The cancellation token source
+        /// </summary>
+        private readonly CancellationTokenSource _cancellationTokenSource;
+
+        private readonly ConcurrentDictionary<Key, Bitmap> _lazyCache;
+        private readonly object _lock = new();
 
         /// <summary>
         ///     The color height
@@ -32,46 +44,33 @@ namespace Voxels
         private int _colorWidth;
 
         /// <summary>
+        ///     Time elapsed since the last frame
+        /// </summary>
+        private float _elapsedTime;
+
+        /// <summary>
         ///     The height map
         ///     Buffer/array to hold height values (1024*1024)
         /// </summary>
         private int[,] _heightMap;
 
         /// <summary>
-        /// The cache preload thread
+        ///     The is cache preloading
         /// </summary>
-        private readonly Thread _cachePreloadThread;
+        private bool _isCachePreloading;
 
-        private readonly ConcurrentDictionary<Key, Bitmap> _lazyCache;
-        private readonly object _lock = new();
+        /// <summary>
+        ///     The last update time
+        /// </summary>
+        private DateTime _lastUpdateTime;
+
+        private PixelData[,] _rasterData;
 
         private int _topographyHeight;
         private int _topographyWidth;
 
         /// <summary>
-        /// The cancellation token source
-        /// </summary>
-        private readonly CancellationTokenSource _cancellationTokenSource;
-
-        /// <summary>
-        /// Time elapsed since the last frame
-        /// </summary>
-        private float _elapsedTime; 
-
-        private PixelData[,] _rasterData;
-
-        /// <summary>
-        /// The is cache preloading
-        /// </summary>
-        private bool _isCachePreloading;
-
-        /// <summary>
-        /// The last update time
-        /// </summary>
-        private DateTime _lastUpdateTime;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="RasterVoxel"/> class.
+        ///     Initializes a new instance of the <see cref="RasterVoxel" /> class.
         /// </summary>
         /// <param name="x">The x.</param>
         /// <param name="y">The y.</param>
@@ -113,15 +112,15 @@ namespace Voxels
         }
 
         /// <summary>
-        /// Gets the camera.
+        ///     Gets the camera.
         /// </summary>
         /// <value>
-        /// The camera.
+        ///     The camera.
         /// </value>
-        public Camera Camera { get; set;  }
+        public Camera Camera { get; set; }
 
         /// <summary>
-        /// Gets the bitmap for key.
+        ///     Gets the bitmap for key.
         /// </summary>
         /// <param name="key">The key.</param>
         /// <returns>new Bitmap</returns>
@@ -143,11 +142,12 @@ namespace Voxels
 
             // If not cached, generate the bitmap.
             var raster = new Raster();
-            return raster.CreateBitmapWithDepthBuffer(_colorMap, _heightMap, Camera, _topographyHeight, _topographyWidth, _colorHeight, _colorWidth);
+            return raster.CreateBitmapWithDepthBuffer(_colorMap, _heightMap, Camera, _topographyHeight,
+                _topographyWidth, _colorHeight, _colorWidth);
         }
 
         /// <summary>
-        /// Starts the engine.
+        ///     Starts the engine.
         /// </summary>
         /// <returns>Starter Image</returns>
         public Bitmap StartEngine()
@@ -160,7 +160,8 @@ namespace Voxels
 
             // Generate the start bitmap
             var raster = new Raster();
-            return raster.CreateBitmapWithDepthBuffer(_colorMap, _heightMap, Camera, _topographyHeight, _topographyWidth, _colorHeight, _colorWidth);
+            return raster.CreateBitmapWithDepthBuffer(_colorMap, _heightMap, Camera, _topographyHeight,
+                _topographyWidth, _colorHeight, _colorWidth);
         }
 
 
@@ -168,17 +169,18 @@ namespace Voxels
         {
             // Generate the start bitmap
             var raster = new Raster();
-            return raster.CreateBitmapWithDepthBuffer(_colorMap, _heightMap, Camera, _topographyHeight, _topographyWidth, _colorHeight, _colorWidth);
+            return raster.CreateBitmapWithDepthBuffer(_colorMap, _heightMap, Camera, _topographyHeight,
+                _topographyWidth, _colorHeight, _colorWidth);
         }
 
         /// <summary>
-        /// Rebuilds the cache.
+        ///     Rebuilds the cache.
         /// </summary>
         private void RebuildCache()
         {
             lock (_lock)
             {
-                _lazyCache.Clear();  // Clear the old cache
+                _lazyCache.Clear(); // Clear the old cache
 
                 // Preload new cache based on the new position
                 PreloadCache(_cancellationTokenSource.Token);
@@ -186,7 +188,7 @@ namespace Voxels
         }
 
         /// <summary>
-        /// Generates the and cache bitmap for key.
+        ///     Generates the and cache bitmap for key.
         /// </summary>
         /// <param name="key">The key.</param>
         private void GenerateAndCacheBitmapForKey(Key key)
@@ -213,6 +215,8 @@ namespace Voxels
         /// Simulates the camera movement.
         /// </summary>
         /// <param name="key">The key.</param>
+        /// <param name="camera">The camera.</param>
+        /// <returns></returns>
         private Camera SimulateCameraMovement(Key key, Camera camera)
         {
             UpdateDeltaTime(); // Update deltaTime based on frame time
@@ -221,7 +225,7 @@ namespace Voxels
             Trace.WriteLine($"Key: {key}");
 
             // Log the old camera state
-            Trace.WriteLine($"Before: {Camera.ToString()}");
+            Trace.WriteLine($"Before: {Camera}");
 
             // Update the actual camera object directly
             switch (key)
@@ -249,14 +253,14 @@ namespace Voxels
             }
 
             // Log the new camera state
-            Trace.WriteLine($"After: {Camera.ToString()}");
+            Trace.WriteLine($"After: {Camera}");
 
             return camera;
         }
 
 
         /// <summary>
-        /// Update method to calculate deltaTime
+        ///     Update method to calculate deltaTime
         /// </summary>
         private void UpdateDeltaTime()
         {
@@ -264,10 +268,7 @@ namespace Voxels
             _elapsedTime = (float)(currentTime - _lastUpdateTime).TotalSeconds;
 
             // If no time has elapsed, use a default small value to avoid zero movement on startup
-            if (_elapsedTime == 0)
-            {
-                _elapsedTime = 0.016f; // Assuming ~60 FPS, 1 frame = ~0.016 seconds
-            }
+            if (_elapsedTime == 0) _elapsedTime = 0.016f; // Assuming ~60 FPS, 1 frame = ~0.016 seconds
 
             // Optional: Cap delta time to avoid large jumps
             _elapsedTime = Math.Min(_elapsedTime, 0.1f); // 0.1s cap to prevent large frame gaps
@@ -306,8 +307,8 @@ namespace Voxels
 
             _heightMap = new int[bmp.Width, bmp.Height];
             for (var i = 0; i < bmp.Width; i++)
-                for (var j = 0; j < bmp.Height; j++)
-                    _heightMap[i, j] = dbm.GetPixel(i, j).R;
+            for (var j = 0; j < bmp.Height; j++)
+                _heightMap[i, j] = dbm.GetPixel(i, j).R;
         }
 
         /// <summary>
@@ -325,8 +326,8 @@ namespace Voxels
 
             _colorMap = new Color[bmp.Width, bmp.Height];
             for (var i = 0; i < bmp.Width; i++)
-                for (var j = 0; j < bmp.Height; j++)
-                    _colorMap[i, j] = dbm.GetPixel(i, j);
+            for (var j = 0; j < bmp.Height; j++)
+                _colorMap[i, j] = dbm.GetPixel(i, j);
         }
     }
 }

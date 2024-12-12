@@ -4,16 +4,17 @@ using System.IO;
 using Imaging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Voxels;
+using PixelData = Voxels.PixelData;
 
 namespace SpeedTests
 {
     [TestClass]
     public class Speed
     {
-        private VoxelRaster _voxel;
         private RasterVoxel _raster;
 
-        private Voxels.PixelData[,] _rasterData;
+        private PixelData[,] _rasterData;
+        private VoxelRaster _voxel;
 
         /// <summary>
         ///     Initializes this instance.
@@ -30,7 +31,7 @@ namespace SpeedTests
             var colorMap = new Bitmap(Image.FromFile(colorMapPath));
             var heightMap = new Bitmap(Image.FromFile(heightMapPath));
 
-            ProcessMaps(heightMap,colorMap);
+            ProcessMaps(heightMap, colorMap);
 
             _voxel = new VoxelRaster(100, 100, 0, 100, 120, 120, 300, colorMap, heightMap);
 
@@ -100,32 +101,31 @@ namespace SpeedTests
         /// <param name="bmpColor">The BMP for the color map.</param>
         private void ProcessMaps(Bitmap bmpHeight, Bitmap bmpColor)
         {
-            if (bmpHeight == null || bmpColor == null || bmpHeight.Width != bmpColor.Width || bmpHeight.Height != bmpColor.Height)
+            if (bmpHeight == null || bmpColor == null || bmpHeight.Width != bmpColor.Width ||
+                bmpHeight.Height != bmpColor.Height)
                 return;
 
 
             var dbmHeight = DirectBitmap.GetInstance(bmpHeight);
             var dbmColor = DirectBitmap.GetInstance(bmpColor);
 
-            _rasterData = new Voxels.PixelData[bmpHeight.Width, bmpHeight.Height];
+            _rasterData = new PixelData[bmpHeight.Width, bmpHeight.Height];
 
             for (var i = 0; i < bmpHeight.Width; i++)
+            for (var j = 0; j < bmpHeight.Height; j++)
             {
-                for (var j = 0; j < bmpHeight.Height; j++)
+                // Get height from height map (assuming it uses the red channel)
+                int height = dbmHeight.GetPixel(i, j).R;
+
+                // Get color from color map
+                var color = dbmColor.GetPixel(i, j);
+
+                // Store both color and height in the same location
+                _rasterData[i, j] = new PixelData
                 {
-                    // Get height from height map (assuming it uses the red channel)
-                    int height = dbmHeight.GetPixel(i, j).R;
-
-                    // Get color from color map
-                    Color color = dbmColor.GetPixel(i, j);
-
-                    // Store both color and height in the same location
-                    _rasterData[i, j] = new Voxels.PixelData
-                    {
-                        Color = color,
-                        Height = height
-                    };
-                }
+                    Color = color,
+                    Height = height
+                };
             }
         }
     }
