@@ -134,10 +134,10 @@ namespace Voxels
             var bmp = new Bitmap(camera.ScreenWidth, camera.ScreenHeight);
 
             //set background Color
-            using var g = Graphics.FromImage(bmp);
-            var backGround = new SolidBrush(camera.BackgroundColor);
+            //using var g = Graphics.FromImage(bmp);
+            //var backGround = new SolidBrush(camera.BackgroundColor);
 
-            g.FillRectangle(backGround, 0, 0, camera.ScreenWidth, camera.ScreenHeight);
+            //g.FillRectangle(backGround, 0, 0, camera.ScreenWidth, camera.ScreenHeight);
 
             var dbm = new DirectBitmap(bmp);
 
@@ -265,6 +265,7 @@ namespace Voxels
             for (int y = 0; y < height; y++)
             {
                 Color previousPixel = btm.GetPixel(0, y);
+
                 for (int x = 1; x < width; x++)
                 {
                     Color currentPixel = btm.GetPixel(x, y);
