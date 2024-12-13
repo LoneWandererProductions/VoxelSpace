@@ -45,11 +45,6 @@ namespace Voxels
         private int[,] _heightMap;
 
         /// <summary>
-        ///     The Slices of the Image
-        /// </summary>
-        private List<Slice> _raster;
-
-        /// <summary>
         ///     The topography height
         /// </summary>
         private int _topographyHeight;
@@ -112,60 +107,10 @@ namespace Voxels
         {
             if (_heightMap == null) return null;
 
-            var bmp = ClearFrame();
-            YBuffer = new float[Camera.ScreenWidth];
+            var raster = new Raster();
 
-            for (var i = 0; i < YBuffer.Length; i++)
-                YBuffer[i] = Camera.ScreenHeight;
-
-            var sinPhi = ExtendedMath.CalcSin(Camera.Angle);
-            var cosPhi = ExtendedMath.CalcCos(Camera.Angle);
-
-            float z = 1;
-            float dz = 1;
-
-            while (z < Camera.ZFar)
-            {
-                var pLeft = new PointF(
-                    (float)(-cosPhi * z - sinPhi * z) + Camera.X,
-                    (float)(sinPhi * z - cosPhi * z) + Camera.Y);
-
-                var pRight = new PointF(
-                    (float)(cosPhi * z - sinPhi * z) + Camera.X,
-                    (float)(-sinPhi * z - cosPhi * z) + Camera.Y);
-
-                var dx = (pRight.X - pLeft.X) / Camera.ScreenWidth;
-                var dy = (pRight.Y - pLeft.Y) / Camera.ScreenWidth;
-
-                for (var i = 0; i < Camera.ScreenWidth; i++)
-                {
-                    var diffuseX = (int)pLeft.X;
-                    var diffuseY = (int)pLeft.Y;
-                    var heightX = (int)pLeft.X;
-                    var heightY = (int)pLeft.Y;
-
-                    var heightOfHeightMap =
-                        _heightMap[heightX & (_topographyWidth - 1), heightY & (_topographyHeight - 1)];
-
-                    var color = _colorMap[diffuseX & (_colorWidth - 1), diffuseY & (_colorHeight - 1)];
-
-
-                    var heightOnScreen = (Camera.Height - heightOfHeightMap) / z * Camera.Scale + Camera.Horizon;
-
-                    DrawVerticalLine(color, i, (int)heightOnScreen, (int)YBuffer[i], bmp);
-
-                    if (heightOnScreen < YBuffer[i])
-                        YBuffer[i] = heightOnScreen;
-
-                    pLeft.X += dx;
-                    pLeft.Y += dy;
-                }
-
-                z += dz;
-                dz += 0.005f;
-            }
-
-            return bmp;
+            return raster.RenderImmediate(_colorMap, _heightMap, Camera, _topographyHeight, _topographyWidth,
+                _colorHeight, _colorWidth);
         }
 
         /// <summary>
@@ -211,40 +156,6 @@ namespace Voxels
                     Camera.Horizon -= 10;
                     break;
             }
-        }
-
-        /// <summary>
-        ///     Draws the vertical line.
-        /// </summary>
-        /// <param name="col">The col.</param>
-        /// <param name="x">The x.</param>
-        /// <param name="heightOnScreen">The height on screen.</param>
-        /// <param name="buffer">The buffer.</param>
-        /// <param name="bmp">The bitmap we draw on</param>
-        private static void DrawVerticalLine(Color col, int x, int heightOnScreen, float buffer, Bitmap bmp)
-        {
-            if (heightOnScreen > buffer) return;
-
-            using var g = Graphics.FromImage(bmp);
-            g.DrawLine(new Pen(new SolidBrush(col)), x, heightOnScreen, x, buffer);
-        }
-
-        /// <summary>
-        ///     Clears the frame.
-        /// </summary>
-        /// <returns>A new frame to draw on</returns>
-        private Bitmap ClearFrame()
-        {
-            var bmp = new Bitmap(Camera.ScreenWidth, Camera.ScreenHeight);
-
-            using var g = Graphics.FromImage(bmp);
-
-            //set background Color
-            var backGround = new SolidBrush(Camera.BackgroundColor);
-
-            g.FillRectangle(backGround, 0, 0, Camera.ScreenWidth, Camera.ScreenHeight);
-
-            return bmp;
         }
 
         /// <summary>
