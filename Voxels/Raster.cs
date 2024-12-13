@@ -141,23 +141,14 @@ namespace Voxels
         {
             var bmp = new Bitmap(camera.ScreenWidth, camera.ScreenHeight);
 
-            //set background Color
-            //using var g = Graphics.FromImage(bmp);
-            //var backGround = new SolidBrush(camera.BackgroundColor);
-
-            //g.FillRectangle(backGround, 0, 0, camera.ScreenWidth, camera.ScreenHeight);
-
             var dbm = new DirectBitmap(bmp);
 
-            //do the work
-            //before dbm: 8 ms, after: 4ms
+            // Create a 1D depth buffer using Span<T>
+            var depthBuffer = new float[camera.ScreenWidth * camera.ScreenHeight];
+            Span<float> depthBufferSpan = depthBuffer.AsSpan();
 
-            var depthBuffer = new float[camera.ScreenWidth, camera.ScreenHeight];
-
-            // Initialize depth buffer with "infinity" (or a very large value)
-            for (var x = 0; x < camera.ScreenWidth; x++)
-            for (var y = 0; y < camera.ScreenHeight; y++)
-                depthBuffer[x, y] = float.MaxValue;
+            // Initialize depth buffer with "infinity"
+            depthBufferSpan.Fill(float.MaxValue);
 
             using var graphics = Graphics.FromImage(bmp);
             graphics.Clear(Color.Black); // Background color
@@ -191,11 +182,16 @@ namespace Voxels
 
                     // Check depth buffer for visibility
                     var screenY = (int)heightOnScreen;
-                    if (screenY >= 0 && screenY < camera.ScreenHeight && z < depthBuffer[x, screenY])
+                    if (screenY >= 0 && screenY < camera.ScreenHeight)
                     {
-                        // Update depth buffer and set pixel color
-                        depthBuffer[x, screenY] = z;
-                        dbm.SetPixel(x, screenY, color);
+                        int index = screenY * camera.ScreenWidth + x;
+
+                        if (z < depthBufferSpan[index])
+                        {
+                            // Update depth buffer and set pixel color
+                            depthBufferSpan[index] = z;
+                            dbm.SetPixel(x, screenY, color);
+                        }
                     }
 
                     // Update for next pixel
@@ -207,8 +203,6 @@ namespace Voxels
                 z += dz;
                 dz += 0.005f; // Increment dz for the next depth slice
             }
-
-            //dbm =  ApplyLineSmoothing(dbm);
 
             return dbm.Bitmap;
         }
@@ -226,17 +220,17 @@ namespace Voxels
         /// <returns>
         ///     Finished Bitmap
         /// </returns>
-        internal Bitmap CreateBitmapFromContainer(Color[,] colorMap, int[,] heightMap, Camera camera,
-            int topographyHeight,
-            int topographyWidth, int colorHeight, int colorWidth)
+        internal Bitmap CreateBitmapFromContainer(
+            Color[,] colorMap, int[,] heightMap, Camera camera,
+            int topographyHeight, int topographyWidth, int colorHeight, int colorWidth)
         {
-            // Use custom PixelKey struct to reduce hash computation overhead
-            var pixelMap = new Dictionary<PixelKey, Color>(camera.ScreenWidth * camera.ScreenHeight);
-
-            // Initialize the Y-buffer for each pixel (this represents the farthest visible pixel on the screen for each column)
+            // Preallocate flat array for colors and initialize the Y-buffer
+            var pixelColors = new Color[camera.ScreenWidth * camera.ScreenHeight];
             _yBuffer = new float[camera.ScreenWidth];
             for (var i = 0; i < _yBuffer.Length; i++)
                 _yBuffer[i] = camera.ScreenHeight;
+
+            var pixelTuples = new List<(int x, int y, Color color)>(camera.ScreenWidth * camera.ScreenHeight);
 
             var sinPhi = ExtendedMath.CalcSin(camera.Angle);
             var cosPhi = ExtendedMath.CalcCos(camera.Angle);
@@ -244,10 +238,9 @@ namespace Voxels
             float z = 1;
             float dz = 1;
 
-            // Loop through depth slices
+            // Process depth slices
             while (z < camera.ZFar)
             {
-                // Precompute values that don't change per pixel
                 var pLeftX = (float)(-cosPhi * z - sinPhi * z) + camera.X;
                 var pLeftY = (float)(sinPhi * z - cosPhi * z) + camera.Y;
 
@@ -257,7 +250,6 @@ namespace Voxels
                 var dx = (pRightX - pLeftX) / camera.ScreenWidth;
                 var dy = (pRightY - pLeftY) / camera.ScreenWidth;
 
-                // Loop through screen width
                 for (var i = 0; i < camera.ScreenWidth; i++)
                 {
                     var diffuseX = (int)pLeftX;
@@ -265,42 +257,44 @@ namespace Voxels
                     var heightX = (int)pLeftX;
                     var heightY = (int)pLeftY;
 
-                    // Access height map and color map for each pixel
                     var heightOfHeightMap =
                         heightMap[heightX & (topographyWidth - 1), heightY & (topographyHeight - 1)];
                     var color = colorMap[diffuseX & (colorWidth - 1), diffuseY & (colorHeight - 1)];
 
-                    // Calculate height on screen
                     var heightOnScreen = (camera.Height - heightOfHeightMap) / z * camera.Scale + camera.Horizon;
-
-                    // Replace or add the pixel to the map (only if it passes the Y-buffer test)
                     var y1 = (int)heightOnScreen;
+
                     if (y1 < _yBuffer[i])
                     {
                         _yBuffer[i] = heightOnScreen;
-                        var pixelKey = new PixelKey(i, y1); // Use the optimized PixelKey
-                        pixelMap[pixelKey] = color; // Add or replace pixel color
+
+                        // Calculate flat array index and set the color
+                        int index = y1 * camera.ScreenWidth + i;
+                        if (index >= 0 && index < pixelColors.Length) // Bounds check
+                        {
+                            pixelColors[index] = color;
+
+                            // Add to the list for DirectBitmap
+                            pixelTuples.Add((i, y1, color));
+                        }
                     }
 
-                    // Update pLeft for the next pixel in the row
                     pLeftX += dx;
                     pLeftY += dy;
                 }
 
-                // Move to the next slice
                 z += dz;
-                dz += 0.005f; // Increment dz for the next depth slice
+                dz += 0.005f;
             }
 
-            // Create a DirectBitmap to store the final image
+            // Create the final bitmap
             var dbm = new DirectBitmap(camera.ScreenWidth, camera.ScreenHeight);
 
-            // Set the pixels using SIMD (assuming SetPixelsSimd can handle this)
-            dbm.SetPixelsSimd(pixelMap.Select(kvp => (kvp.Key.X, kvp.Key.Y, kvp.Value)));
+            // Use SetPixelsSimd with the prepared tuples
+            dbm.SetPixelsSimd(pixelTuples);
 
             return dbm.Bitmap;
         }
-
 
         //TODO still in the progress of refinement
         private DirectBitmap ApplyLineSmoothing(DirectBitmap btm)
