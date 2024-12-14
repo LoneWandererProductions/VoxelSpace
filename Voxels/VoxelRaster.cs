@@ -206,7 +206,7 @@ namespace Voxels
         /// </summary>
         /// <param name="key">The key.</param>
         /// <param name="camera">The camera.</param>
-        /// <returns></returns>
+        /// <returns>New Camera Values</returns>
         private Camera SimulateCameraMovement(Key key, Camera camera)
         {
             UpdateDeltaTime(); // Update deltaTime based on frame time
@@ -253,7 +253,6 @@ namespace Voxels
 
             return camera;
         }
-
 
         /// <summary>
         ///     Update method to calculate deltaTime

@@ -1,35 +1,41 @@
 ﻿using System;
 using System.Drawing;
+using Mathematics;
 
 namespace Voxels
 {
     public class RasterRaycast
     {
-        private Camera _camera;
+        internal Camera Camera { get; set; }
+
         private int[,] _map;
 
         public RasterRaycast(Camera camera, int[,] map)
         {
-            _camera = camera;
+            Camera = camera;
             _map = map;
         }
 
         public Bitmap Render()
         {
-            var bmp = new Bitmap(_camera.ScreenWidth, _camera.ScreenHeight);
-            float rayAngle = _camera.Angle - (float)Math.PI / 4; // Starting angle of the first ray (viewing angle)
-            var angleIncrement = (float)Math.PI / 180; // The angle between rays (1 degree)
+            var bmp = new Bitmap(Camera.ScreenWidth, Camera.ScreenHeight);
 
-            for (var x = 0; x < _camera.ScreenWidth; x++)
+            // Starting the raycasting at the player's camera angle
+            var rayAngle = Camera.Angle - 45; // Horizontal angle of the first ray (adjust for camera field of view)
+            var pitchAngle = Camera.Pitch; // Vertical angle (pitch)
+            var angleIncrement = 1; // 1 degree per step for horizontal angles
+
+            // Loop over every vertical pixel on the screen (each column of pixels)
+            for (var x = 0; x < Camera.ScreenWidth; x++)
             {
-                // Calculate direction of ray for each column of the screen
-                var rayDirX = (float)Math.Cos(rayAngle);
-                var rayDirY = (float)Math.Sin(rayAngle);
+                // Ray direction based on the camera angle and pitch
+                var rayDirX = ExtendedMath.CalcCos(rayAngle) * ExtendedMath.CalcCos(pitchAngle);
+                var rayDirY = ExtendedMath.CalcSin(rayAngle) * ExtendedMath.CalcCos(pitchAngle);
 
-                float rayPosX = _camera.X;
-                float rayPosY = _camera.Y;
+                float rayPosX = Camera.X;
+                float rayPosY = Camera.Y;
 
-                // Step sizes for horizontal and vertical ray movement
+                // Step size for ray movement
                 var deltaDistX = Math.Abs(1 / rayDirX);
                 var deltaDistY = Math.Abs(1 / rayDirY);
 
@@ -45,20 +51,20 @@ namespace Voxels
                 var hitWall = false;
                 var side = 0;
 
-                // Raycasting loop
+                // Raycasting loop: cast rays until they hit a wall
                 while (!hitWall)
                 {
                     if (sideDistX < sideDistY)
                     {
                         sideDistX += deltaDistX;
                         mapX += stepX;
-                        side = 0;
+                        side = 0; // x-axis collision
                     }
                     else
                     {
                         sideDistY += deltaDistY;
                         mapY += stepY;
-                        side = 1;
+                        side = 1; // y-axis collision
                     }
 
                     // Check if the ray has hit a wall
@@ -69,28 +75,29 @@ namespace Voxels
                 // Calculate the perpendicular distance to the wall
                 var perpWallDist = (side == 0) ? (sideDistX - deltaDistX) : (sideDistY - deltaDistY);
 
-                // Calculate the height of the wall based on the distance
-                var lineHeight = (int)(Math.Abs(_camera.ScreenHeight / perpWallDist));
+                // Calculate the height of the wall (how tall it appears on the screen)
+                var lineHeight = (int)(Math.Abs(Camera.ScreenHeight / perpWallDist));
 
-                // Calculate the vertical position on the screen where the wall should be drawn
-                var drawStart = Math.Max(0, (_camera.ScreenHeight / 2) - (lineHeight / 2));
-                var drawEnd = Math.Min(_camera.ScreenHeight - 1, (_camera.ScreenHeight / 2) + (lineHeight / 2));
+                // Calculate the vertical position on the screen for drawing the wall
+                var drawStart = Math.Max(0, (Camera.ScreenHeight / 2) - (lineHeight / 2));
+                var drawEnd = Math.Min(Camera.ScreenHeight - 1, (Camera.ScreenHeight / 2) + (lineHeight / 2));
 
-                // Choose wall color based on the side it was hit for shading effect
+                // Choose wall color based on the side it was hit for shading
                 var wallColor = (side == 0) ? Color.Red : Color.Blue;
 
-                // Draw the vertical line for the wall in the bitmap
+                // Draw the wall strip for the column x
                 for (var y = drawStart; y < drawEnd; y++)
                 {
                     bmp.SetPixel(x, y, wallColor);
                 }
 
-                // Update the ray angle for the next column (moving the camera's view angle)
+                // Move to the next angle for the next ray (column of pixels)
                 rayAngle += angleIncrement;
-                if (rayAngle >= 2 * Math.PI) rayAngle -= (float)(2 * Math.PI); // Ensure rayAngle is within 0 to 2*Pi
+                if (rayAngle >= 360) rayAngle -= 360; // Keep the angle within 0-360 degrees
             }
 
             return bmp;
         }
     }
+
 }

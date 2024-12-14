@@ -49,22 +49,25 @@ namespace Main
             timer.Start();
 
             Bitmap bmp;
+            Camera camera;
 
             switch (_active)
             {
-                case "Raycaster":
+                case "Raycast":
                     // Add logic for Raycaster
-                    _active = "Raycaster";
+                    _active = "Raycast";
                     if (_raycaster == null) return;
 
-                    bmp = _raycaster.Render();
+                    bmp = _raycaster.Render(e.Key);
                     ImageView.Source = bmp.ToBitmapImage();
+                    camera = _raycaster.Camera;
                     break;
                 case "Voxel":
                     if (_voxel == null) return;
 
                     bmp = _voxel.GetBitmapForKey(e.Key);
                     ImageView.Source = bmp.ToBitmapImage();
+                    camera = _voxel.Camera;
                     break;
                 default:
                     // Handle unexpected cases if needed
@@ -75,7 +78,7 @@ namespace Main
 
 
             TxtBox.Text = string.Concat(TxtBox.Text, " Time Diff:", timer.Elapsed, Environment.NewLine);
-            TxtBox.Text = string.Concat(TxtBox.Text, _voxel.Camera.ToString(),
+            TxtBox.Text = string.Concat(TxtBox.Text, camera.ToString(),
                 Environment.NewLine);
         }
 
