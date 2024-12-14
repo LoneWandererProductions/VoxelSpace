@@ -65,5 +65,26 @@ namespace Mathematics
 
             return sin;
         }
+
+        /// <summary>
+        ///     Calculate tangent.
+        ///     https://de.wikipedia.org/wiki/Radiant_(Einheit)
+        /// </summary>
+        /// <param name="degree">Degree we want to compute the tangent for</param>
+        /// <returns>The <see cref="double" />.</returns>
+        /// <exception cref="DivideByZeroException">Thrown when attempting to calculate tangent for angles where cosine is zero.</exception>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double CalcTan(int degree)
+        {
+            // Check for cases where tangent is undefined due to division by zero (90° + k * 180°)
+            if (degree % 180 == 90)
+                throw new DivideByZeroException($"Tangent is undefined for {degree} degrees.");
+
+            // Calculate tangent using sine and cosine
+            var sin = CalcSin(degree);
+            var cos = CalcCos(degree);
+
+            return sin / cos;
+        }
     }
 }

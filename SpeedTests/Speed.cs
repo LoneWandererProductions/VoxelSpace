@@ -11,10 +11,10 @@ namespace SpeedTests
     [TestClass]
     public class Speed
     {
-        private RasterVoxel _raster;
+        private VoxelRaster _raster;
 
         private PixelData[,] _rasterData;
-        private VoxelRaster _voxel;
+        private VoxelRasterTest _voxel;
 
         /// <summary>
         ///     Initializes this instance.
@@ -33,9 +33,9 @@ namespace SpeedTests
 
             ProcessMaps(heightMap, colorMap);
 
-            _voxel = new VoxelRaster(100, 100, 0, 100, 120, 120, 300, colorMap, heightMap);
+            _voxel = new VoxelRasterTest(100, 100, 0, 100, 120, 120, 300, colorMap, heightMap);
 
-            _raster = new RasterVoxel(100, 100, 0, 100, 120, 120, 300, colorMap, heightMap);
+            _raster = new VoxelRaster(100, 100, 0, 100, 120, 120, 300, colorMap, heightMap);
         }
 
         /// <summary>
@@ -63,7 +63,7 @@ namespace SpeedTests
             Assert.IsNotNull(containerBitmap, "Container rendering produced a null Bitmap.");
 
             stopwatch.Restart();
-            var depthBitmap = _raster.Raster();
+            var depthBitmap = _voxel.RenderDepth();
             stopwatch.Stop();
             Trace.WriteLine($"Depth rendering time: {stopwatch.ElapsedMilliseconds} ms");
 

@@ -1,27 +1,32 @@
-﻿/*
- * COPYRIGHT:   See COPYING in the top level directory
- * PROJECT:     Voxels
- * FILE:        Voxels/VoxelRaster.cs
- * PURPOSE:     Main Renderer
- * PROGRAMER:   Peter Geinitz (Wayfarer)
- * Source:      https://github.com/s-macke/VoxelSpace
- */
-
-// ReSharper disable PossibleLossOfFraction
-
-using System.Collections.Generic;
+﻿using System;
+using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Drawing;
+using System.Threading;
 using System.Windows.Input;
 using Imaging;
 using Mathematics;
 
 namespace Voxels
 {
-    /// <summary>
-    ///     https://www.youtube.com/watch?v=bQBY9BM9g_Y
-    /// </summary>
     public sealed class VoxelRaster
     {
+        private const float MovementSpeed = 10f; // Movement speed (units per second)
+        private const float RotationSpeed = 10f; // Rotation speed (degrees per second)
+
+        /// <summary>
+        ///     The cache preload thread
+        /// </summary>
+        private readonly Thread _cachePreloadThread;
+
+        /// <summary>
+        ///     The cancellation token source
+        /// </summary>
+        private readonly CancellationTokenSource _cancellationTokenSource;
+
+        private readonly ConcurrentDictionary<Key, Bitmap> _lazyCache;
+        private readonly object _lock = new();
+
         /// <summary>
         ///     The color height
         /// </summary>
@@ -39,19 +44,29 @@ namespace Voxels
         private int _colorWidth;
 
         /// <summary>
+        ///     Time elapsed since the last frame
+        /// </summary>
+        private float _elapsedTime;
+
+        /// <summary>
         ///     The height map
         ///     Buffer/array to hold height values (1024*1024)
         /// </summary>
         private int[,] _heightMap;
 
         /// <summary>
-        ///     The topography height
+        ///     The is cache preloading
         /// </summary>
-        private int _topographyHeight;
+        private bool _isCachePreloading;
 
         /// <summary>
-        ///     The topography width
+        ///     The last update time
         /// </summary>
+        private DateTime _lastUpdateTime;
+
+        private PixelData[,] _rasterData;
+
+        private int _topographyHeight;
         private int _topographyWidth;
 
         /// <summary>
@@ -83,16 +98,21 @@ namespace Voxels
             ProcessColorMap(colorMap);
 
             ProcessHeightMap(heightMap);
+
+            _lazyCache = new ConcurrentDictionary<Key, Bitmap>();
+
+            // Initialize cancellation token source for managing thread cancellation
+            _cancellationTokenSource = new CancellationTokenSource();
+
+            // Initialize the cache preload thread
+            _cachePreloadThread = new Thread(() => PreloadCache(_cancellationTokenSource.Token));
+
+            // Initialize last update time
+            _lastUpdateTime = DateTime.Now;
         }
 
         /// <summary>
-        ///     The y buffer
-        /// </summary>
-        private float[] YBuffer { get; set; }
-
-        /// <summary>
-        ///     Gets or sets the camera.
-        ///     Only here just in case if KeyInput is not available
+        ///     Gets the camera.
         /// </summary>
         /// <value>
         ///     The camera.
@@ -100,63 +120,177 @@ namespace Voxels
         public Camera Camera { get; set; }
 
         /// <summary>
-        ///     Renders the image directly onto the Bitmap.
-        /// </summary>
-        /// <returns>The finished Bitmap created directly.</returns>
-        public Bitmap RenderDirect()
-        {
-            if (_heightMap == null) return null;
-
-            var raster = new Raster();
-
-            return raster.RenderImmediate(_colorMap, _heightMap, Camera, _topographyHeight, _topographyWidth,
-                _colorHeight, _colorWidth);
-        }
-
-        /// <summary>
-        ///     Renders the with container.
-        /// </summary>
-        /// <returns></returns>
-        public Bitmap RenderWithContainer()
-        {
-            if (_heightMap == null) return null;
-
-            var raster = new Raster();
-
-            return raster.CreateBitmapFromContainer(_colorMap, _heightMap, Camera, _topographyHeight, _topographyWidth,
-                _colorHeight, _colorWidth);
-        }
-
-        /// <summary>
-        ///     Keys the input.
+        ///     Gets the bitmap for key.
         /// </summary>
         /// <param name="key">The key.</param>
-        public void KeyInput(Key key)
+        /// <returns>new Bitmap</returns>
+        public Bitmap GetBitmapForKey(Key key)
         {
-            switch (key)
+            // Always update the camera position first.
+            Camera = SimulateCameraMovement(key, Camera);
+
+            // Check if the bitmap is already cached.
+            if (_lazyCache.TryGetValue(key, out var cachedBitmap))
             {
-                case Key.W: //Forward
-                    Camera.X -= (int)(10 * ExtendedMath.CalcSin(Camera.Angle));
-                    Camera.Y -= (int)(10 * ExtendedMath.CalcCos(Camera.Angle));
-                    break;
-                case Key.S: //Backward
-                    Camera.X += (int)(10 * ExtendedMath.CalcSin(Camera.Angle));
-                    Camera.Y += (int)(10 * ExtendedMath.CalcCos(Camera.Angle));
-                    break;
-                case Key.A: //Turn Left
-                    Camera.Angle += 10;
-                    break;
-                case Key.D: //Turn Right
-                    Camera.Angle -= 10;
-                    break;
-                case Key.O: //Look up
-                    Camera.Horizon += 10;
-                    break;
-                case Key.P: //Look down
-                    Camera.Horizon -= 10;
-                    break;
+                // After returning the cached bitmap, rebuild the cache.
+                RebuildCache();
+                return cachedBitmap; // Return the cached bitmap if it exists.
+            }
+
+            // After each movement, rebuild the cache
+            RebuildCache();
+
+            // If not cached, generate the bitmap.
+            var raster = new Raster();
+            return raster.RenderWithDepthBuffer(_colorMap, _heightMap, Camera, _topographyHeight,
+                _topographyWidth, _colorHeight, _colorWidth);
+        }
+
+        /// <summary>
+        ///     Starts the engine.
+        /// </summary>
+        /// <returns>Starter Image</returns>
+        public Bitmap StartEngine()
+        {
+            if (!_isCachePreloading) _cachePreloadThread.Start();
+
+            if (Camera == null) return null;
+
+            UpdateDeltaTime();
+
+            // Generate the start bitmap
+            var raster = new Raster();
+            return raster.RenderWithDepthBuffer(_colorMap, _heightMap, Camera, _topographyHeight,
+                _topographyWidth, _colorHeight, _colorWidth);
+        }
+
+
+        public Bitmap Raster()
+        {
+            // Generate the start bitmap
+            var raster = new Raster();
+            return raster.RenderWithDepthBuffer(_colorMap, _heightMap, Camera, _topographyHeight,
+                _topographyWidth, _colorHeight, _colorWidth);
+        }
+
+        /// <summary>
+        ///     Rebuilds the cache.
+        /// </summary>
+        private void RebuildCache()
+        {
+            lock (_lock)
+            {
+                _lazyCache.Clear(); // Clear the old cache
+
+                // Preload new cache based on the new position
+                PreloadCache(_cancellationTokenSource.Token);
             }
         }
+
+        /// <summary>
+        ///     Generates the and cache bitmap for key.
+        /// </summary>
+        /// <param name="key">The key.</param>
+        private void GenerateAndCacheBitmapForKey(Key key)
+        {
+            lock (_lock)
+            {
+                // Check if the bitmap is already being generated in another thread
+                if (_lazyCache.ContainsKey(key)) return;
+
+                var simulatedCamera = Camera.Clone();
+                // Simulate camera movement for the requested direction
+                simulatedCamera = SimulateCameraMovement(key, simulatedCamera);
+
+                // Generate the bitmap
+                var raster = new Raster();
+
+                // Cache the bitmap
+                _lazyCache[key] = raster.RenderWithDepthBuffer(_colorMap, _heightMap, simulatedCamera,
+                    _topographyHeight, _topographyWidth, _colorHeight, _colorWidth);
+            }
+        }
+
+        /// <summary>
+        /// Simulates the camera movement.
+        /// </summary>
+        /// <param name="key">The key.</param>
+        /// <param name="camera">The camera.</param>
+        /// <returns></returns>
+        private Camera SimulateCameraMovement(Key key, Camera camera)
+        {
+            UpdateDeltaTime(); // Update deltaTime based on frame time
+
+            //the key
+            Trace.WriteLine($"Key: {key}");
+
+            // Log the old camera state
+            Trace.WriteLine($"Before: {Camera}");
+
+            // Update the actual camera object directly
+            switch (key)
+            {
+                case Key.W:
+                    camera.X -= (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcSin(Camera.Angle));
+                    camera.Y -= (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcCos(Camera.Angle));
+                    break;
+                case Key.S:
+                    camera.X += (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcSin(Camera.Angle));
+                    camera.Y += (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcCos(Camera.Angle));
+                    break;
+                case Key.A:
+                    camera.Angle += (int)(RotationSpeed * _elapsedTime); // Turn left
+                    break;
+                case Key.D:
+                    camera.Angle -= (int)(RotationSpeed * _elapsedTime); // Turn right
+                    break;
+                case Key.O:
+                    camera.Horizon += (int)(RotationSpeed * _elapsedTime); // Move up
+                    break;
+                case Key.P:
+                    camera.Horizon -= (int)(RotationSpeed * _elapsedTime); // Move down
+                    break;
+            }
+
+            // Log the new camera state
+            Trace.WriteLine($"After: {Camera}");
+
+            return camera;
+        }
+
+
+        /// <summary>
+        ///     Update method to calculate deltaTime
+        /// </summary>
+        private void UpdateDeltaTime()
+        {
+            var currentTime = DateTime.Now;
+            _elapsedTime = (float)(currentTime - _lastUpdateTime).TotalSeconds;
+
+            // If no time has elapsed, use a default small value to avoid zero movement on startup
+            if (_elapsedTime == 0) _elapsedTime = 0.016f; // Assuming ~60 FPS, 1 frame = ~0.016 seconds
+
+            // Optional: Cap delta time to avoid large jumps
+            _elapsedTime = Math.Min(_elapsedTime, 0.1f); // 0.1s cap to prevent large frame gaps
+            _lastUpdateTime = currentTime;
+        }
+
+        // Cache preloading thread method to calculate images for all possible directions
+        private void PreloadCache(CancellationToken cancellationToken)
+        {
+            _isCachePreloading = true;
+
+            // Preload all possible directions
+            foreach (var directionKey in new[] { Key.W, Key.S, Key.A, Key.D, Key.O, Key.P })
+            {
+                if (cancellationToken.IsCancellationRequested) break;
+
+                GenerateAndCacheBitmapForKey(directionKey);
+            }
+
+            _isCachePreloading = false;
+        }
+
 
         /// <summary>
         ///     Processes the height map.

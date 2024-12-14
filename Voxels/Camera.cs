@@ -76,6 +76,15 @@ namespace Voxels
         public int Angle { get; set; }
 
         /// <summary>
+        ///     Gets or sets the pitch.
+        ///     Camera pitch (vertical angle, radians, looking up-down)
+        /// </summary>
+        /// <value>
+        ///     The pitch.
+        /// </value>
+        public int Pitch { get; set; }
+
+        /// <summary>
         ///     Gets the scale.
         /// </summary>
         /// <value>
@@ -116,6 +125,7 @@ namespace Voxels
                 Horizon = Horizon,
                 ZFar = ZFar,
                 Angle = Angle,
+                Pitch = Pitch,
                 Scale = Scale,
                 ScreenHeight = ScreenHeight,
                 ScreenWidth = ScreenWidth
@@ -137,6 +147,7 @@ namespace Voxels
             Angle = original.Angle;
             ScreenHeight = original.ScreenHeight;
             ScreenWidth = original.ScreenWidth;
+            Pitch = Pitch;
 
             // Immutable properties are skipped in restoration:
             // this.Height = original.Height;
@@ -152,7 +163,7 @@ namespace Voxels
         /// </returns>
         public override string ToString()
         {
-            return $"Camera [X={X}, Y={Y}, Angle={Angle}, Horizon={Horizon}, Height={Height}, ZFar={ZFar}]";
+            return $"Camera [X={X}, Y={Y}, Angle={Angle}, Horizon={Horizon}, Height={Height}, ZFar={ZFar}], Pitch= {Pitch}";
         }
     }
 }
