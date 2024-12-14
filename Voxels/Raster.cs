@@ -68,31 +68,35 @@ namespace Voxels
 
             _yBuffer = new float[camera.ScreenWidth];
 
+            // Initialize the y-buffer to the screen height
             for (var i = 0; i < _yBuffer.Length; i++)
                 _yBuffer[i] = camera.ScreenHeight;
 
-            var sinPhi = ExtendedMath.CalcSin(camera.Angle); // Yaw (left-right)
-            var cosPhi = ExtendedMath.CalcCos(camera.Angle); // Yaw (left-right)
+            // Precompute yaw (left-right rotation)
+            var sinPhi = ExtendedMath.CalcSin(camera.Angle);
+            var cosPhi = ExtendedMath.CalcCos(camera.Angle);
 
-            var sinTheta = ExtendedMath.CalcSin(camera.Pitch); // Pitch (up-down)
-            var cosTheta = ExtendedMath.CalcCos(camera.Pitch); // Pitch (up-down)
+            // Precompute pitch (up-down rotation)
+            var sinTheta = ExtendedMath.CalcSin(camera.Pitch);
+            var cosTheta = ExtendedMath.CalcCos(camera.Pitch);
 
             float z = 1;
             float dz = 1;
 
             while (z < camera.ZFar)
             {
-                // Adjust the camera's position based on the pitch angle
+                // Horizontal line start (left and right positions) based on yaw
                 var pLeft = new PointF(
                     (float)(-cosPhi * z - sinPhi * z) + camera.X,
-                    (float)(sinPhi * cosTheta * z - cosPhi * cosTheta * z) + camera.Y // Apply pitch (vertical)
+                    (float)(-sinPhi * z + cosPhi * z) + camera.Y
                 );
 
                 var pRight = new PointF(
                     (float)(cosPhi * z - sinPhi * z) + camera.X,
-                    (float)(-sinPhi * cosTheta * z - cosPhi * cosTheta * z) + camera.Y // Apply pitch (vertical)
+                    (float)(sinPhi * z + cosPhi * z) + camera.Y
                 );
 
+                // Step size for each pixel column
                 var dx = (pRight.X - pLeft.X) / camera.ScreenWidth;
                 var dy = (pRight.Y - pLeft.Y) / camera.ScreenWidth;
 
@@ -103,23 +107,27 @@ namespace Voxels
                     var heightX = (int)pLeft.X;
                     var heightY = (int)pLeft.Y;
 
-                    var heightOfHeightMap =
-                        heightMap[heightX & (topographyWidth - 1), heightY & (topographyHeight - 1)];
-
+                    // Wrap around height and color map indices
+                    var heightOfHeightMap = heightMap[heightX & (topographyWidth - 1), heightY & (topographyHeight - 1)];
                     var color = colorMap[diffuseX & (colorWidth - 1), diffuseY & (colorHeight - 1)];
 
-                    // Adjust the height on screen based on the pitch and camera's Z position
-                    var heightOnScreen = (camera.Height - heightOfHeightMap) / z * camera.Scale + camera.Horizon;
+                    // Adjust the height on screen based on pitch
+                    var heightOnScreen = (float)((camera.Height - heightOfHeightMap) * cosTheta - z * sinTheta) / z
+                                         * camera.Scale + camera.Horizon;
 
+                    // Draw the vertical column
                     DrawVerticalLine(color, i, (int)heightOnScreen, (int)_yBuffer[i], bmp);
 
+                    // Update the y-buffer
                     if (heightOnScreen < _yBuffer[i])
                         _yBuffer[i] = heightOnScreen;
 
+                    // Move to the next pixel column
                     pLeft.X += dx;
                     pLeft.Y += dy;
                 }
 
+                // Increase z (depth) and dz (step increment)
                 z += dz;
                 dz += 0.005f;
             }

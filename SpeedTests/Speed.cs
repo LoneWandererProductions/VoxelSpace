@@ -76,6 +76,47 @@ namespace SpeedTests
         }
 
         /// <summary>
+        /// Speeds the and result comparison raycast tests.
+        /// </summary>
+        [TestMethod]
+        public void SpeedAndResultComparisonRaycastTests()
+        {
+            var stopwatch = new Stopwatch();
+
+            // Measure the performance of RenderDirect
+            stopwatch.Start();
+            var map = new int[10, 10]
+            {
+                {1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+                {1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+                {1, 0, 1, 1, 1, 1, 1, 1, 0, 1},
+                {1, 0, 1, 0, 0, 0, 0, 1, 0, 1},
+                {1, 0, 1, 0, 1, 1, 1, 1, 0, 1},
+                {1, 0, 1, 0, 1, 0, 0, 1, 0, 1},
+                {1, 0, 1, 1, 1, 1, 0, 1, 0, 1},
+                {1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+                {1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+                {1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
+            };
+
+            // Initialize camera at position (3, 3) looking right (Angle 0 radians)
+            var camera = new Camera { X = 3, Y = 3, Angle = 0, Height = 2, ScreenWidth = 300, ScreenHeight = 200, ZFar = 20 };
+
+            // Create the raycaster and render the map
+            var raycaster = new RasterRaycast(camera, map);
+            var bmp = raycaster.Render();
+
+            // Display or save the bitmap
+            bmp.Save("output.png");
+            stopwatch.Stop();
+
+            Trace.WriteLine($"Raycaster rendering time: {stopwatch.ElapsedMilliseconds} ms");
+
+            Assert.IsNotNull(bmp, "Direct rendering produced a null Bitmap.");
+        }
+
+
+        /// <summary>
         ///     Compares two Bitmaps pixel by pixel.
         /// </summary>
         /// <param name="bmp1">The first Bitmap.</param>

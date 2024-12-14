@@ -11,9 +11,11 @@ using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Input;
 using Imaging;
 using Voxels;
+using Image = System.Drawing.Image;
 
 namespace Main
 {
@@ -24,6 +26,8 @@ namespace Main
     public sealed partial class MainWindow
     {
         private VoxelRaster _voxel;
+        private string _active;
+        private Raycaster _raycaster;
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="MainWindow" /> class.
@@ -31,26 +35,6 @@ namespace Main
         public MainWindow()
         {
             InitializeComponent();
-            Initiate();
-        }
-
-        /// <summary>
-        ///     Initiates this instance.
-        /// </summary>
-        private void Initiate()
-        {
-            var colorMap =
-                new Bitmap(Image.FromFile(string.Concat(Directory.GetCurrentDirectory(), "\\Terrain\\C1W.png")));
-            var heightMap =
-                new Bitmap(Image.FromFile(string.Concat(Directory.GetCurrentDirectory(), "\\Terrain\\D1.png")));
-
-            _voxel = new VoxelRaster(100, 100, 0, 100, 120, 120, 300, colorMap, heightMap);
-
-            var bmp = _voxel.StartEngine();
-            ImageView.Source = bmp.ToBitmapImage();
-
-            TxtBox.Text = string.Concat(TxtBox.Text, " x: ", _voxel.Camera.X, " y: ", _voxel.Camera.Y,
-                Environment.NewLine);
         }
 
         /// <summary>
@@ -63,12 +47,105 @@ namespace Main
             var timer = new Stopwatch();
 
             timer.Start();
-            var bmp = _voxel.GetBitmapForKey(e.Key);
-            ImageView.Source = bmp.ToBitmapImage();
+
+            Bitmap bmp;
+
+            switch (_active)
+            {
+                case "Raycaster":
+                    // Add logic for Raycaster
+                    _active = "Raycaster";
+                    if (_raycaster == null) return;
+
+                    bmp = _raycaster.Render();
+                    ImageView.Source = bmp.ToBitmapImage();
+                    break;
+                case "Voxel":
+                    if (_voxel == null) return;
+
+                    bmp = _voxel.GetBitmapForKey(e.Key);
+                    ImageView.Source = bmp.ToBitmapImage();
+                    break;
+                default:
+                    // Handle unexpected cases if needed
+                    return;
+            }
 
             timer.Stop();
+
+
             TxtBox.Text = string.Concat(TxtBox.Text, " Time Diff:", timer.Elapsed, Environment.NewLine);
             TxtBox.Text = string.Concat(TxtBox.Text, _voxel.Camera.ToString(),
+                Environment.NewLine);
+        }
+
+        /// <summary>
+        /// Handles the SelectionChanged event of the comboBoxRender control.
+        /// </summary>
+        /// <param name="sender">The source of the event.</param>
+        /// <param name="e">The <see cref="SelectionChangedEventArgs"/> instance containing the event data.</param>
+        private void comboBoxRender_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (comboBoxRender.SelectedItem is ComboBoxItem selectedItem)
+            {
+                switch (selectedItem.Content.ToString())
+                {
+                    case "Raycast":
+                        // Add logic for Raycaster
+                        _active = "Raycast";
+                        InitiateVRaycaster();
+                        break;
+                    case "Voxel":
+                        // Add logic for Voxel
+                        _active = "Voxel";
+                        InitiateVoxel();
+                        break;
+                }
+            }
+        }
+
+        private void InitiateVRaycaster()
+        {
+            // Simple map where 1 is a wall and 0 is empty space
+            int[,] map = new int[10, 10]
+            {
+                {1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+                {1, 0, 0, 0, 1, 0, 0, 0, 0, 1},
+                {1, 0, 1, 0, 1, 0, 1, 0, 0, 1},
+                {1, 0, 1, 0, 1, 0, 1, 0, 0, 1},
+                {1, 0, 0, 0, 1, 0, 1, 0, 1, 1},
+                {1, 0, 1, 0, 0, 0, 1, 1, 1, 1},
+                {1, 0, 1, 1, 1, 1, 0, 0, 0, 1},
+                {1, 0, 0, 0, 1, 0, 1, 0, 1, 1},
+                {1, 1, 1, 1, 1, 0, 1, 0, 0, 1},
+                {1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
+            };
+
+            // Set up a camera
+            var camera = new Camera(2, 2, 90, 800, 600); // Position and angle of the camera
+
+            // Create Raycaster and render
+            _raycaster = new Raycaster(camera, map);
+            var bmp = _raycaster.Render();
+            ImageView.Source = bmp.ToBitmapImage();
+        }
+
+        /// <summary>
+        ///     Initiates this instance.
+        /// </summary>
+        private void InitiateVoxel()
+        {
+            var colorMap =
+                new Bitmap(Image.FromFile(string.Concat(Directory.GetCurrentDirectory(), "\\Terrain\\C1W.png")));
+            var heightMap =
+                new Bitmap(Image.FromFile(string.Concat(Directory.GetCurrentDirectory(), "\\Terrain\\D1.png")));
+
+            _voxel = new VoxelRaster(100, 100, 0, 100, 120, 120, 300, colorMap, heightMap);
+
+            var bmp = _voxel.StartEngine();
+            ImageView.Source = bmp.ToBitmapImage();
+
+            TxtBox.Text = string.Concat(TxtBox.Text, " x: ", _voxel.Camera.X, " y: ", _voxel.Camera.Y,
                 Environment.NewLine);
         }
     }

@@ -2,6 +2,7 @@
 using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Drawing;
+using System.Linq;
 using System.Threading;
 using System.Windows.Input;
 using Imaging;
@@ -9,10 +10,12 @@ using Mathematics;
 
 namespace Voxels
 {
-    public sealed class VoxelRaster
+    public sealed class VoxelRaster : IDisposable
     {
         private const float MovementSpeed = 10f; // Movement speed (units per second)
         private const float RotationSpeed = 10f; // Rotation speed (degrees per second)
+
+        private bool _disposed;
 
         /// <summary>
         ///     The cache preload thread
@@ -63,8 +66,6 @@ namespace Voxels
         ///     The last update time
         /// </summary>
         private DateTime _lastUpdateTime;
-
-        private PixelData[,] _rasterData;
 
         private int _topographyHeight;
         private int _topographyWidth;
@@ -142,7 +143,7 @@ namespace Voxels
 
             // If not cached, generate the bitmap.
             var raster = new Raster();
-            return raster.RenderWithDepthBuffer(_colorMap, _heightMap, Camera, _topographyHeight,
+            return raster.RenderImmediate(_colorMap, _heightMap, Camera, _topographyHeight,
                 _topographyWidth, _colorHeight, _colorWidth);
         }
 
@@ -165,26 +166,15 @@ namespace Voxels
         }
 
 
-        public Bitmap Raster()
-        {
-            // Generate the start bitmap
-            var raster = new Raster();
-            return raster.RenderWithDepthBuffer(_colorMap, _heightMap, Camera, _topographyHeight,
-                _topographyWidth, _colorHeight, _colorWidth);
-        }
-
         /// <summary>
         ///     Rebuilds the cache.
         /// </summary>
         private void RebuildCache()
         {
-            lock (_lock)
-            {
-                _lazyCache.Clear(); // Clear the old cache
+            _lazyCache.Clear(); // Clear the old cache
 
-                // Preload new cache based on the new position
-                PreloadCache(_cancellationTokenSource.Token);
-            }
+            // Preload new cache based on the new position
+            PreloadCache(_cancellationTokenSource.Token);
         }
 
         /// <summary>
@@ -250,6 +240,12 @@ namespace Voxels
                 case Key.P:
                     camera.Horizon -= (int)(RotationSpeed * _elapsedTime); // Move down
                     break;
+                case Key.X:
+                    camera.Pitch = Math.Max(camera.Pitch - (int)(RotationSpeed * _elapsedTime), -90); // Look down
+                    break;
+                case Key.Y:
+                    camera.Pitch = Math.Min(camera.Pitch + (int)(RotationSpeed * _elapsedTime), 90); // Look up
+                    break;
             }
 
             // Log the new camera state
@@ -281,10 +277,8 @@ namespace Voxels
             _isCachePreloading = true;
 
             // Preload all possible directions
-            foreach (var directionKey in new[] { Key.W, Key.S, Key.A, Key.D, Key.O, Key.P })
+            foreach (var directionKey in new[] { Key.W, Key.S, Key.A, Key.D, Key.O, Key.P, Key.X, Key.Y }.TakeWhile(_ => !cancellationToken.IsCancellationRequested))
             {
-                if (cancellationToken.IsCancellationRequested) break;
-
                 GenerateAndCacheBitmapForKey(directionKey);
             }
 
@@ -328,6 +322,53 @@ namespace Voxels
             for (var i = 0; i < bmp.Width; i++)
             for (var j = 0; j < bmp.Height; j++)
                 _colorMap[i, j] = dbm.GetPixel(i, j);
+        }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        private void Dispose(bool disposing)
+        {
+            if (_disposed) return;
+
+            if (disposing)
+            {
+                // Dispose managed resources
+                _cancellationTokenSource?.Cancel();
+                _cancellationTokenSource?.Dispose();
+
+                if (_cachePreloadThread != null && _cachePreloadThread.IsAlive)
+                {
+                    try
+                    {
+                        _cachePreloadThread.Join(100); // Wait briefly for the thread to finish
+                    }
+                    catch (ThreadStateException)
+                    {
+                        // Handle if thread is already in a stopping/invalid state
+                    }
+                }
+
+                // Dispose of any cached Bitmaps
+                foreach (var bitmap in _lazyCache.Values)
+                {
+                    bitmap?.Dispose();
+                }
+
+                _lazyCache.Clear();
+            }
+
+            // Free unmanaged resources here, if any
+
+            _disposed = true;
+        }
+
+        ~VoxelRaster()
+        {
+            Dispose(false);
         }
     }
 }
