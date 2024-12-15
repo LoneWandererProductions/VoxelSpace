@@ -8,8 +8,8 @@ namespace Voxels
 {
     public sealed class Raycaster
     {
-        private const float MovementSpeed = 10f; // Movement speed (units per second)
-        private const float RotationSpeed = 10f; // Rotation speed (degrees per second)
+        private const int MovementSpeed = 10; // Movement speed (units per second)
+        private const int RotationSpeed = 50; // Rotation speed (degrees per second)
 
         /// <summary>
         ///     The last update time
@@ -62,45 +62,55 @@ namespace Voxels
         {
             UpdateDeltaTime(); // Update deltaTime based on frame time
 
-            //the key
+            // Log the key pressed
             Trace.WriteLine($"Key: {key}");
 
             // Log the old camera state
-            Trace.WriteLine($"Before: {Camera}");
+            Trace.WriteLine($"Before: {camera}");
 
-            // Update the actual camera object directly
+            // Update the actual camera object directly based on key presses
             switch (key)
             {
                 case Key.W:
-                    camera.X -= (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcSin(Camera.Angle));
-                    camera.Y -= (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcCos(Camera.Angle));
+                    // Moving forward: adjust X and Y based on the camera's angle
+                    camera.X += (int)Math.Round(MovementSpeed * _elapsedTime * Math.Cos(camera.Angle * Math.PI / 180));  // Convert angle to radians and cast to int
+                    camera.Y += (int)Math.Round(MovementSpeed * _elapsedTime * Math.Sin(camera.Angle * Math.PI / 180));  // Convert angle to radians and cast to int
                     break;
                 case Key.S:
-                    camera.X += (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcSin(Camera.Angle));
-                    camera.Y += (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcCos(Camera.Angle));
+                    // Moving backward: adjust X and Y based on the camera's angle
+                    camera.X -= (int)Math.Round(MovementSpeed * _elapsedTime * Math.Cos(camera.Angle * Math.PI / 180));  // Convert angle to radians and cast to int
+                    camera.Y -= (int)Math.Round(MovementSpeed * _elapsedTime * Math.Sin(camera.Angle * Math.PI / 180));  // Convert angle to radians and cast to int
                     break;
                 case Key.A:
-                    camera.Angle += (int)(RotationSpeed * _elapsedTime); // Turn left
+                    // Turn left: rotate the camera's angle counter-clockwise (increase angle)
+                    camera.Angle += (int)(RotationSpeed * _elapsedTime); // Angle stays in degrees, cast to int
+                    if (camera.Angle >= 360) camera.Angle -= 360;  // Keep angle within 0-360 degrees
                     break;
                 case Key.D:
-                    camera.Angle -= (int)(RotationSpeed * _elapsedTime); // Turn right
+                    // Turn right: rotate the camera's angle clockwise (decrease angle)
+                    camera.Angle -= (int)(RotationSpeed * _elapsedTime); // Angle stays in degrees, cast to int
+                    if (camera.Angle < 0) camera.Angle += 360; // Keep angle within 0-360 degrees
                     break;
                 case Key.O:
-                    camera.Horizon += (int)(RotationSpeed * _elapsedTime); // Move up
+                    // Move up (horizon change)
+                    camera.Horizon += (int)(RotationSpeed * _elapsedTime); // This can change the horizon or vertical view
                     break;
                 case Key.P:
-                    camera.Horizon -= (int)(RotationSpeed * _elapsedTime); // Move down
+                    // Move down (horizon change)
+                    camera.Horizon -= (int)(RotationSpeed * _elapsedTime);
                     break;
                 case Key.X:
-                    camera.Pitch = Math.Max(camera.Pitch - (int)(RotationSpeed * _elapsedTime), -90); // Look down
+                    // Look down (pitch control)
+                    camera.Pitch = Math.Max(camera.Pitch - (int)(RotationSpeed * _elapsedTime), -90); // Cap between -90 and 90 degrees
                     break;
                 case Key.Y:
-                    camera.Pitch = Math.Min(camera.Pitch + (int)(RotationSpeed * _elapsedTime), 90); // Look up
+                    // Look up (pitch control)
+                    camera.Pitch = Math.Min(camera.Pitch + (int)(RotationSpeed * _elapsedTime), 90); // Cap between -90 and 90 degrees
                     break;
             }
 
             // Log the new camera state
-            Trace.WriteLine($"After: {Camera}");
+            Trace.WriteLine($"After: {camera}");
 
             return camera;
         }
