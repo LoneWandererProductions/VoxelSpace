@@ -93,54 +93,71 @@ namespace SpeedTests
         {
             var stopwatch = new Stopwatch();
 
-            // Measure the performance of RenderDirect
-            stopwatch.Start();
+            // Define the map
             var map = new int[10, 10]
             {
-                {1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-                {1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-                {1, 0, 1, 1, 1, 1, 1, 1, 0, 1},
-                {1, 0, 1, 0, 0, 0, 0, 1, 0, 1},
-                {1, 0, 1, 0, 1, 1, 1, 1, 0, 1},
-                {1, 0, 1, 0, 1, 0, 0, 1, 0, 1},
-                {1, 0, 1, 1, 1, 1, 0, 1, 0, 1},
-                {1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-                {1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-                {1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
+        {1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+        {1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+        {1, 0, 1, 1, 1, 1, 1, 1, 0, 1},
+        {1, 0, 1, 0, 0, 0, 0, 1, 0, 1},
+        {1, 0, 1, 0, 1, 1, 1, 1, 0, 1},
+        {1, 0, 1, 0, 1, 0, 0, 1, 0, 1},
+        {1, 0, 1, 1, 1, 1, 0, 1, 0, 1},
+        {1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+        {1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+        {1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
             };
 
-            // Initialize camera at position (3, 3) looking right (Angle 0 radians)
-            var camera = new Camera { X = 3, Y = 3, Angle = 0, Height = 2, ScreenWidth = 300, ScreenHeight = 200, ZFar = 20 };
-
-            // Create the raycaster and render the map
-            var raycaster = new RasterRaycast(camera, map);
-            var bmp = raycaster.Render();
-
-            // Display or save the bitmap
-            bmp.Save("output.png");
+            // Initialize and test Raycaster
+            stopwatch.Start();
+            var camera1 = new Camera { X = 3, Y = 3, Angle = 0, Height = 2, ScreenWidth = 300, ScreenHeight = 200, ZFar = 20 };
+            var raycaster1 = new RasterRaycast(camera1, map);
+            var bmp1 = raycaster1.Render();
+            bmp1.Save("raycaster_output.png");
             stopwatch.Stop();
-
             Trace.WriteLine($"Raycaster rendering time: {stopwatch.ElapsedMilliseconds} ms");
 
-            Assert.IsNotNull(bmp, "Direct rendering produced a null Bitmap.");
+            Assert.IsNotNull(bmp1, "Raycaster produced a null Bitmap.");
 
-
-            stopwatch.Start();
+            // Initialize and test Raycaster2
+            stopwatch.Restart();
             var camera2 = new Camera2(3.5, 3.5, 0);
-            var raycaster2 = new Raycaster2(Map);
-            Bitmap bitmap = raycaster2.RenderBitmap(camera2);
-            bitmap.Save("raycaster_output.bmp");
-            Trace.WriteLine("Bitmap saved as raycaster_output.bmp");
-
+            var raycaster2 = new Raycaster2(map);
+            var bmp2 = raycaster2.RenderBitmap(camera2);
+            bmp2.Save("raycaster2_output.png");
             stopwatch.Stop();
-
-            Assert.IsNotNull(bmp, "Direct rendering produced a null Bitmap.");
-
             Trace.WriteLine($"Raycaster2 rendering time: {stopwatch.ElapsedMilliseconds} ms");
+
+            Assert.IsNotNull(bmp2, "Raycaster2 produced a null Bitmap.");
+
+            // Initialize and test Raycaster3
+            stopwatch.Restart();
+            var camera3 = new Camera3(2.0, 2.0, 1.0, 0.0, 0.66, 0.0);
+            var raycaster3 = new Raycaster3(map);
+            var bmp3 = raycaster3.Render(camera3);
+            bmp3.Save("raycaster3_output.png");
+            stopwatch.Stop();
+            Trace.WriteLine($"Raycaster3 rendering time: {stopwatch.ElapsedMilliseconds} ms");
+
+            Assert.IsNotNull(bmp3, "Raycaster3 produced a null Bitmap.");
+
+            // Initialize and test Raycaster4
+            stopwatch.Restart();
+            var camera4 = new Camera4(2.5, 2.5, 45); // Example position and angle
+            var raycaster4 = new Raycaster4(map);
+            var bmp4 = raycaster4.Render(camera4);
+            bmp4.Save("raycaster4_output.png");
+            stopwatch.Stop();
+            Trace.WriteLine($"Raycaster4 rendering time: {stopwatch.ElapsedMilliseconds} ms");
+
+            Assert.IsNotNull(bmp4, "Raycaster4 produced a null Bitmap.");
+
+            // Compare results
+            Assert.IsTrue(AreBitmapsEqual(bmp3, bmp4), "Raycaster and Raycaster4 produced different outputs.");
         }
 
         /// <summary>
-        ///     Compares two Bitmaps pixel by pixel.
+        /// Compares two Bitmaps pixel by pixel.
         /// </summary>
         /// <param name="bmp1">The first Bitmap.</param>
         /// <param name="bmp2">The second Bitmap.</param>
@@ -151,9 +168,9 @@ namespace SpeedTests
                 return false;
 
             for (var x = 0; x < bmp1.Width; x++)
-                for (var y = 0; y < bmp1.Height; y++)
-                    if (bmp1.GetPixel(x, y) != bmp2.GetPixel(x, y))
-                        return false;
+            for (var y = 0; y < bmp1.Height; y++)
+                if (bmp1.GetPixel(x, y) != bmp2.GetPixel(x, y))
+                    return false;
 
             return true;
         }

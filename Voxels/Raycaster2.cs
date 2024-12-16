@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Drawing;
 
 public class Camera2
@@ -78,13 +79,17 @@ public class Raycaster2
             int mapX = (int)rayX;
             int mapY = (int)rayY;
 
+            Trace.WriteLine($"Ray Position: ({rayX:F2}, {rayY:F2}) -> Map Cell: ({mapX}, {mapY}), Distance: {distance:F2}");
+
             if (mapX < 0 || mapY < 0 || mapX >= Map.GetLength(0) || mapY >= Map.GetLength(1))
             {
-                break; // Out of bounds
+                Console.WriteLine("Ray went out of bounds.");
+                break;
             }
 
             if (Map[mapX, mapY] > 0)
             {
+                Console.WriteLine($"Wall hit at ({mapX}, {mapY})!");
                 hitWall = true;
                 break;
             }
@@ -93,12 +98,13 @@ public class Raycaster2
         return distance;
     }
 
+
     private void DrawWall(Graphics g, int screenColumn, double distance)
     {
-        int wallHeight = (int)(ScreenHeight / distance);
+        int wallHeight = Math.Min(ScreenHeight, (int)(ScreenHeight / Math.Max(1, distance)));
         int wallTop = (ScreenHeight - wallHeight) / 2;
         int wallBottom = wallTop + wallHeight;
 
-        g.DrawLine(Pens.White, screenColumn, wallTop, screenColumn, wallBottom);
+        g.DrawLine(Pens.Green, screenColumn, wallTop, screenColumn, wallBottom);
     }
 }
