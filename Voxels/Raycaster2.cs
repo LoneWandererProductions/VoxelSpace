@@ -1,115 +1,104 @@
 ﻿using System;
 using System.Drawing;
-using Mathematics;
 
-namespace Voxels
+public class Camera2
 {
-    public class Camera2
-    {
-        public double X { get; set; }  // Camera's X position
-        public double Y { get; set; }  // Camera's Y position
-        public double Angle { get; set; }  // Camera's viewing angle in radians
+    public int CellSize { get; set; } = 64;
+    public double WorldX { get; private set; }
+    public double WorldY { get; private set; }
+    public double Angle { get; set; }
+    public double FieldOfView { get; set; } = Math.PI / 2;
+    public double MovementSpeed { get; set; } = 0.1;
 
-        public Camera2(double x, double y, double angle)
-        {
-            X = x;
-            Y = y;
-            Angle = angle;
-        }
+    public Camera2(double worldX, double worldY, double angle)
+    {
+        WorldX = worldX;
+        WorldY = worldY;
+        Angle = angle;
     }
 
-    public class Raycaster2
+    public void Move(double deltaX, double deltaY)
     {
-        // Parameters
-        private const int ScreenWidth = 800;      // Screen width
-        private const int ScreenHeight = 600;     // Screen height
-        private const int CellSize = 64;          // Cell size in the map
-        private const double Fov = Math.PI / 2;   // Field of view (90° in radians)
-        private const int MaxViewDistance = 3;    // Maximum raycast range in cells
-        private const int RayCount = ScreenWidth; // Number of rays (1 per screen column)
+        WorldX += deltaX;
+        WorldY += deltaY;
+    }
+}
 
-        // Map (1 = wall, 0 = empty space)
-        private readonly int[,] Map = new int[10, 10]
+public class Raycaster2
+{
+    private readonly int[,] Map;
+    private const int ScreenWidth = 800;
+    private const int ScreenHeight = 600;
+    private const double MaxViewDistance = 64 * 4; // Max render distance in world units
+    private const int RayCount = ScreenWidth;
+
+    public Raycaster2(int[,] map)
+    {
+        Map = map;
+    }
+
+    public Bitmap RenderBitmap(Camera2 camera)
+    {
+        Bitmap bitmap = new Bitmap(ScreenWidth, ScreenHeight);
+        using Graphics g = Graphics.FromImage(bitmap);
+        g.Clear(Color.Black);
+
+        double rayStep = camera.FieldOfView / RayCount;
+
+        for (int i = 0; i < RayCount; i++)
         {
-            { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
-            { 1, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-            { 1, 0, 1, 0, 0, 0, 1, 0, 0, 1 },
-            { 1, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-            { 1, 0, 0, 0, 1, 0, 0, 0, 0, 1 },
-            { 1, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-            { 1, 0, 0, 0, 0, 0, 1, 0, 0, 1 },
-            { 1, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-            { 1, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
-            { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }
-        };
+            double rayAngle = camera.Angle - camera.FieldOfView / 2 + rayStep * i;
+            double distance = CastRay(camera.WorldX, camera.WorldY, rayAngle, out bool hitWall);
 
-        public Bitmap RenderFrame(Camera2 camera)
-        {
-            var bmp = new Bitmap(ScreenWidth, ScreenHeight);
-
-            using var g = Graphics.FromImage(bmp);
-            g.Clear(Color.Black);
-
-            for (var i = 0; i < RayCount; i++)
+            if (hitWall)
             {
-                // Calculate the angle for the current ray
-                var rayAngle = camera.Angle - Fov / 2 + (Fov / RayCount) * i;
-
-                CastRay(g, i, rayAngle, camera);
-            }
-
-            return bmp;
-        }
-
-        private void CastRay(Graphics g, int screenColumn, double rayAngle, Camera2 camera)
-        {
-            // Raycasting variables
-            var rayX = camera.X;
-            var rayY = camera.Y;
-            var rayDirX = (float)Math.Cos(rayAngle);
-            var rayDirY = (float)Math.Sin(rayAngle);
-            double distance = 0;
-
-            // Step through the map
-            while (distance < MaxViewDistance)
-            {
-                rayX += rayDirX * 0.1f; // Small increments for precision
-                rayY += rayDirY * 0.1f;
-                distance += 0.1;
-
-                // Check if ray hits a wall
-                var mapX = (int)rayX;
-                var mapY = (int)rayY;
-
-                if (mapX < 0 || mapX >= Map.GetLength(0) || mapY < 0 || mapY >= Map.GetLength(1) ||
-                    Map[mapX, mapY] != 1) continue;
-
-                // Calculate wall height based on distance
-                var wallHeight = (int)(ScreenHeight / (distance * CellSize / 64));
-                var wallTop = ScreenHeight / 2 - wallHeight / 2;
-                var wallBottom = wallTop + wallHeight;
-
-                // Choose a flat color based on the wall type (map value)
-                var wallColor = Color.FromArgb(255, 200, 0); // Example color
-
-                // Draw the vertical stripe for this ray
-                using var pen = new Pen(wallColor);
-                g.DrawLine(pen, screenColumn, wallTop, screenColumn, wallBottom);
-
-                break; // Stop tracing this ray once it hits a wall
+                DrawWall(g, i, distance);
             }
         }
 
-        public void MovePlayer(double deltaX, double deltaY, Camera2 camera)
+        return bitmap;
+    }
+
+    private double CastRay(double startX, double startY, double angle, out bool hitWall)
+    {
+        hitWall = false;
+        double rayX = startX;
+        double rayY = startY;
+        double rayDirX = Math.Cos(angle);
+        double rayDirY = Math.Sin(angle);
+        double distance = 0;
+        double stepSize = 0.1;
+
+        while (distance < MaxViewDistance)
         {
-            camera.X += deltaX;
-            camera.Y += deltaY;
+            rayX += rayDirX * stepSize;
+            rayY += rayDirY * stepSize;
+            distance += stepSize;
+
+            int mapX = (int)rayX;
+            int mapY = (int)rayY;
+
+            if (mapX < 0 || mapY < 0 || mapX >= Map.GetLength(0) || mapY >= Map.GetLength(1))
+            {
+                break; // Out of bounds
+            }
+
+            if (Map[mapX, mapY] > 0)
+            {
+                hitWall = true;
+                break;
+            }
         }
 
-        public void RotatePlayer(double deltaAngle, Camera2 camera)
-        {
-            camera.Angle += deltaAngle;
-            camera.Angle %= 2 * Math.PI; // Keep angle in the range [0, 2π]
-        }
+        return distance;
+    }
+
+    private void DrawWall(Graphics g, int screenColumn, double distance)
+    {
+        int wallHeight = (int)(ScreenHeight / distance);
+        int wallTop = (ScreenHeight - wallHeight) / 2;
+        int wallBottom = wallTop + wallHeight;
+
+        g.DrawLine(Pens.White, screenColumn, wallTop, screenColumn, wallBottom);
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
@@ -15,6 +16,15 @@ namespace SpeedTests
 
         private PixelData[,] _rasterData;
         private VoxelRasterTest _voxel;
+
+        private static readonly int[,] Map =
+        {
+                { 1, 1, 1, 1, 1, 1, 1 },
+                { 1, 0, 0, 0, 0, 0, 1 },
+                { 1, 0, 1, 0, 1, 0, 1 },
+                { 1, 0, 0, 0, 0, 0, 1 },
+                { 1, 1, 1, 1, 1, 1, 1 }
+        };
 
         /// <summary>
         ///     Initializes this instance.
@@ -113,8 +123,21 @@ namespace SpeedTests
             Trace.WriteLine($"Raycaster rendering time: {stopwatch.ElapsedMilliseconds} ms");
 
             Assert.IsNotNull(bmp, "Direct rendering produced a null Bitmap.");
-        }
 
+
+            stopwatch.Start();
+            var camera2 = new Camera2(3.5, 3.5, 0);
+            var raycaster2 = new Raycaster2(Map);
+            Bitmap bitmap = raycaster2.RenderBitmap(camera2);
+            bitmap.Save("raycaster_output.bmp");
+            Trace.WriteLine("Bitmap saved as raycaster_output.bmp");
+
+            stopwatch.Stop();
+
+            Assert.IsNotNull(bmp, "Direct rendering produced a null Bitmap.");
+
+            Trace.WriteLine($"Raycaster2 rendering time: {stopwatch.ElapsedMilliseconds} ms");
+        }
 
         /// <summary>
         ///     Compares two Bitmaps pixel by pixel.
@@ -128,9 +151,9 @@ namespace SpeedTests
                 return false;
 
             for (var x = 0; x < bmp1.Width; x++)
-            for (var y = 0; y < bmp1.Height; y++)
-                if (bmp1.GetPixel(x, y) != bmp2.GetPixel(x, y))
-                    return false;
+                for (var y = 0; y < bmp1.Height; y++)
+                    if (bmp1.GetPixel(x, y) != bmp2.GetPixel(x, y))
+                        return false;
 
             return true;
         }
@@ -153,21 +176,21 @@ namespace SpeedTests
             _rasterData = new PixelData[bmpHeight.Width, bmpHeight.Height];
 
             for (var i = 0; i < bmpHeight.Width; i++)
-            for (var j = 0; j < bmpHeight.Height; j++)
-            {
-                // Get height from height map (assuming it uses the red channel)
-                int height = dbmHeight.GetPixel(i, j).R;
-
-                // Get color from color map
-                var color = dbmColor.GetPixel(i, j);
-
-                // Store both color and height in the same location
-                _rasterData[i, j] = new PixelData
+                for (var j = 0; j < bmpHeight.Height; j++)
                 {
-                    Color = color,
-                    Height = height
-                };
-            }
+                    // Get height from height map (assuming it uses the red channel)
+                    int height = dbmHeight.GetPixel(i, j).R;
+
+                    // Get color from color map
+                    var color = dbmColor.GetPixel(i, j);
+
+                    // Store both color and height in the same location
+                    _rasterData[i, j] = new PixelData
+                    {
+                        Color = color,
+                        Height = height
+                    };
+                }
         }
     }
 }
