@@ -59,8 +59,8 @@ namespace Voxels
             // Calculate direction and FOV plane vectors
             double dirX = Math.Cos(dirAngleRad);
             double dirY = Math.Sin(dirAngleRad);
-            double planeX = -dirY * Math.Tan(fovRad / 2);
-            double planeY = dirX * Math.Tan(fovRad / 2);
+            double planeX = -dirY * Math.Sin(fovRad / 2);
+            double planeY = dirX * Math.Sin(fovRad / 2);
 
             for (int x = 0; x < ScreenWidth; x++)
             {
