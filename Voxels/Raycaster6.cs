@@ -47,7 +47,7 @@ namespace Voxels
             return bitmap;
         }
 
-        private double CastRay(double startX, double startY, double rayDirX, double rayDirY)
+        public double CastRay(double startX, double startY, double rayDirX, double rayDirY)
         {
             double x = startX;
             double y = startY;
