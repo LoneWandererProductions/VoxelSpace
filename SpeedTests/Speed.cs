@@ -193,18 +193,17 @@ namespace SpeedTests
             //Assert.IsTrue(AreBitmapsEqual(bmp3, bmp4), "Raycaster and Raycaster4 produced different outputs.");
         }
 
-
         [TestMethod]
         public void ValidateRaycaster()
         {
-             var map = new int[,]
-             {
-                    { 1, 1, 1, 1, 1 },
-                    { 1, 0, 0, 0, 1 },
-                    { 1, 0, 1, 0, 1 },
-                    { 1, 0, 0, 0, 1 },
-                    { 1, 1, 1, 1, 1 }
-             };
+            var map = new int[,]
+            {
+                { 1, 1, 1, 1, 1 },
+                { 1, 0, 0, 0, 1 },
+                { 1, 0, 1, 0, 1 },
+                { 1, 0, 0, 0, 1 },
+                { 1, 1, 1, 1, 1 }
+            };
 
             int cellSize = 64;
 
@@ -216,13 +215,22 @@ namespace SpeedTests
 
             foreach (var angle in testAngles)
             {
-                double expected = Maths.CalculateExpectedDistance(startX, startY, angle, cellSize, 5, 5, map);
-                double actual = raycaster.CastRay(startX, startY, Math.Cos(angle * Math.PI / 180.0), Math.Sin(angle * Math.PI / 180.0));
+                // Calculate the expected distance in "grid units"
+                double expectedWorldDistance = Maths.CalculateExpectedDistance(
+                    startX, startY, angle, cellSize, 5, 5, map);
+                double expected = expectedWorldDistance / cellSize; // Normalize by cellSize.
+
+                // Calculate the actual distance
+                double actual = raycaster.CastRay(
+                    startX, startY,
+                    Math.Cos(angle * Math.PI / 180.0),
+                    Math.Sin(angle * Math.PI / 180.0));
 
                 Console.WriteLine($"Angle: {angle}° | Expected: {expected:F2} | Actual: {actual:F2}");
                 Debug.Assert(Math.Abs(expected - actual) < 0.1, $"Mismatch at angle {angle}°");
             }
         }
+
 
         [TestMethod]
         public void Resultsets()
