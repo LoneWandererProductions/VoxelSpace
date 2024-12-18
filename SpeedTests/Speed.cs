@@ -169,6 +169,26 @@ namespace SpeedTests
 
             Assert.IsNotNull(bmp5, "Raycaster5 produced a null Bitmap.");
 
+            // Initialize and test Raycaster5
+            stopwatch.Restart();
+            map = new int[,]
+            {
+                { 1, 1, 1, 1, 1 },
+                { 1, 0, 0, 0, 1 },
+                { 1, 0, 1, 0, 1 },
+                { 1, 0, 0, 0, 1 },
+                { 1, 1, 1, 1, 1 }
+            };
+
+            int cellSize = 64;
+            Raycaster6 raycaster = new(map, cellSize);
+
+            Camera6 camera = new(96, 96, 60, 0); // Initial position and direction.
+
+            Bitmap rendered = raycaster.Render(camera, 800, 600);
+            rendered.Save("raycaster6_output.png");
+            stopwatch.Stop();
+
             // Compare results
             //Assert.IsTrue(AreBitmapsEqual(bmp3, bmp4), "Raycaster and Raycaster4 produced different outputs.");
         }
