@@ -1,27 +1,31 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Drawing;
+using Voxels;
 
-public class Camera5
+namespace Voxels
 {
-    public int CellSize { get; set; } = 64; // Default cell size
-    public double WorldX { get; private set; }
-    public double WorldY { get; private set; }
-    public double Angle { get; set; }
-    public double FieldOfView { get; set; } = Math.PI / 2;
-    public double MovementSpeed { get; set; } = 0.1;
-
-    public Camera5(double worldX, double worldY, double angle)
+    public class Camera5
     {
-        WorldX = worldX;
-        WorldY = worldY;
-        Angle = angle;
-    }
+        public int CellSize { get; set; } = 64; // Default cell size
+        public double WorldX { get; private set; }
+        public double WorldY { get; private set; }
+        public double Angle { get; set; }
+        public double FieldOfView { get; set; } = Math.PI / 2;
+        public double MovementSpeed { get; set; } = 0.1;
 
-    public void Move(double deltaX, double deltaY)
-    {
-        WorldX += deltaX;
-        WorldY += deltaY;
+        public Camera5(double worldX, double worldY, double angle)
+        {
+            WorldX = worldX;
+            WorldY = worldY;
+            Angle = angle;
+        }
+
+        public void Move(double deltaX, double deltaY)
+        {
+            WorldX += deltaX;
+            WorldY += deltaY;
+        }
     }
 }
 
@@ -39,7 +43,7 @@ public class Raycaster5
         MaxViewDistance = 4 * cellSize; // Adjust max view distance dynamically
     }
 
-    public Bitmap RenderBitmap(Camera2 camera)
+    public Bitmap RenderBitmap(Camera5 camera)
     {
         Bitmap bitmap = new Bitmap(ScreenWidth, ScreenHeight);
         using Graphics g = Graphics.FromImage(bitmap);

@@ -96,16 +96,16 @@ namespace SpeedTests
             // Define the map
             var map = new int[10, 10]
             {
-        {1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-        {1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-        {1, 0, 1, 1, 1, 1, 1, 1, 0, 1},
-        {1, 0, 1, 0, 0, 0, 0, 1, 0, 1},
-        {1, 0, 1, 0, 1, 1, 1, 1, 0, 1},
-        {1, 0, 1, 0, 1, 0, 0, 1, 0, 1},
-        {1, 0, 1, 1, 1, 1, 0, 1, 0, 1},
-        {1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-        {1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-        {1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
+                {1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+                {1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+                {1, 0, 1, 1, 1, 1, 1, 1, 0, 1},
+                {1, 0, 1, 0, 0, 0, 0, 1, 0, 1},
+                {1, 0, 1, 0, 1, 1, 1, 1, 0, 1},
+                {1, 0, 1, 0, 1, 0, 0, 1, 0, 1},
+                {1, 0, 1, 1, 1, 1, 0, 1, 0, 1},
+                {1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+                {1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+                {1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
             };
 
             // Initialize and test Raycaster
@@ -154,17 +154,100 @@ namespace SpeedTests
 
             // Initialize and test Raycaster5
             stopwatch.Restart();
-            var camera5 = new Camera5(2.5, 2.5, 45); // Example position and angle
-            var raycaster5 = new Raycaster5(map, 64);
-            var bmp5 = raycaster4.Render(camera4);
+            var camera5 = new Camera5(3.5, 3.5, 0) // Match position and angle with Camera2
+            {
+                FieldOfView = Math.PI / 2, // Match Camera2's field of view
+                CellSize = 64 // Match Raycaster2's default cell size
+            };
+
+            var raycaster5 = new Raycaster5(map, camera5.CellSize);
+            var bmp5 = raycaster5.RenderBitmap(camera5);
             bmp5.Save("raycaster5_output.png");
             stopwatch.Stop();
             Trace.WriteLine($"Raycaster5 rendering time: {stopwatch.ElapsedMilliseconds} ms");
+
 
             Assert.IsNotNull(bmp5, "Raycaster5 produced a null Bitmap.");
 
             // Compare results
             //Assert.IsTrue(AreBitmapsEqual(bmp3, bmp4), "Raycaster and Raycaster4 produced different outputs.");
+        }
+
+        [TestMethod]
+        public void Resultsets()
+        {
+            var stopwatch = new Stopwatch();
+
+            // Define the map
+            var map = new int[10, 10]
+            {
+                {1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+                {1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+                {1, 0, 1, 1, 1, 1, 1, 1, 0, 1},
+                {1, 0, 1, 0, 0, 0, 0, 1, 0, 1},
+                {1, 0, 1, 0, 1, 1, 1, 1, 0, 1},
+                {1, 0, 1, 0, 1, 0, 0, 1, 0, 1},
+                {1, 0, 1, 1, 1, 1, 0, 1, 0, 1},
+                {1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
+                {1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+                {1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
+            };
+
+            //1 Initialize and test Raycaster5
+            stopwatch.Restart();
+            var camera2 = new Camera2(5, 5, 0) // Match position and angle with Camera2
+            {
+                FieldOfView = Math.PI / 2, // Match Camera2's field of view
+                CellSize = 64 // Match Raycaster2's default cell size
+            };
+
+            var raycaster2 = new Raycaster2(map);
+            var bmp5 = raycaster2.RenderBitmap(camera2);
+            bmp5.Save("raycaster5_1_output.png");
+            stopwatch.Stop();
+            Trace.WriteLine($"Raycaster5 rendering time: {stopwatch.ElapsedMilliseconds} ms");
+
+            //2 Initialize and test Raycaster5
+            stopwatch.Restart();
+            camera2 = new Camera2(6, 6, 0) // Match position and angle with Camera2
+            {
+                FieldOfView = Math.PI / 2, // Match Camera2's field of view
+                CellSize = 64 // Match Raycaster2's default cell size
+            };
+
+            raycaster2 = new Raycaster2(map);
+            bmp5 = raycaster2.RenderBitmap(camera2);
+            bmp5.Save("raycaster5_2_output.png");
+            stopwatch.Stop();
+            Trace.WriteLine($"Raycaster5 rendering time: {stopwatch.ElapsedMilliseconds} ms");
+
+            //3 Initialize and test Raycaster5
+            stopwatch.Restart();
+            camera2 = new Camera2(7, 7, 0) // Match position and angle with Camera2
+            {
+                FieldOfView = Math.PI / 2, // Match Camera2's field of view
+                CellSize = 64 // Match Raycaster2's default cell size
+            };
+
+            raycaster2 = new Raycaster2(map);
+            bmp5 = raycaster2.RenderBitmap(camera2);
+            bmp5.Save("raycaster5_3_output.png");
+            stopwatch.Stop();
+            Trace.WriteLine($"Raycaster5 rendering time: {stopwatch.ElapsedMilliseconds} ms");
+
+            //4 Initialize and test Raycaster5
+            stopwatch.Restart();
+            camera2 = new Camera2(8, 8, 0) // Match position and angle with Camera2
+            {
+                FieldOfView = Math.PI / 2, // Match Camera2's field of view
+                CellSize = 64 // Match Raycaster2's default cell size
+            };
+
+            raycaster2 = new Raycaster2(map);
+            bmp5 = raycaster2.RenderBitmap(camera2);
+            bmp5.Save("raycaster5_4_output.png");
+            stopwatch.Stop();
+            Trace.WriteLine($"Raycaster5 rendering time: {stopwatch.ElapsedMilliseconds} ms");
         }
 
         /// <summary>
