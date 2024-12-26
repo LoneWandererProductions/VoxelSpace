@@ -27,7 +27,7 @@ namespace Main
     {
         private VoxelRaster _voxel;
         private string _active;
-        private Raycaster _raycaster;
+        private RasterRaycast _raycaster;
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="MainWindow" /> class.
@@ -58,9 +58,9 @@ namespace Main
                     _active = "Raycast";
                     if (_raycaster == null) return;
 
-                    bmp = _raycaster.Render(e.Key);
+                    bmp = RasterRaycast.Render(e.Key);
                     ImageView.Source = bmp.ToBitmapImage();
-                    camera = _raycaster.Camera;
+                    camera = RasterRaycast.Camera;
                     break;
                 case "Voxel":
                     if (_voxel == null) return;
@@ -125,10 +125,10 @@ namespace Main
             };
 
             // Set up a camera
-            var camera = new Camera(2, 2, 90, 800, 600); // Position and angle of the camera
+            var camera = new Camera6(96, 96, 60, 0);  // Position and angle of the camera
 
             // Create Raycaster and render
-            _raycaster = new Raycaster(camera, map);
+            _raycaster = new RasterRaycast(map,64, camera, 800, 600);
             var bmp = _raycaster.Render();
             ImageView.Source = bmp.ToBitmapImage();
         }

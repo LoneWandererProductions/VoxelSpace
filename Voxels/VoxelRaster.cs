@@ -28,6 +28,7 @@ namespace Voxels
         private readonly CancellationTokenSource _cancellationTokenSource;
 
         private readonly ConcurrentDictionary<Key, Bitmap> _lazyCache;
+
         private readonly object _lock = new();
 
         /// <summary>

@@ -1,170 +1,118 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Drawing;
+using System.Windows.Input;
+using Mathematics;
 
 namespace Voxels
 {
-    public sealed class RasterRaycast
+    public class RasterRaycast
     {
-        internal Camera Camera { get; set; }
-
         private int[,] _map;
+        private int _cell;
+        private Camera6 _camera = null;
+        private readonly Raycaster _ray;
+        private readonly int _screenheight;
+        private readonly int _screenwidth;
 
-        internal RasterRaycast(Camera camera, int[,] map)
+        public float RotationSpeed { get; set; } = 10f;
+
+        public float MovementSpeed { get; set; } =  10f;
+
+        /// <summary>
+        ///     The last update time
+        /// </summary>
+        private DateTime _lastUpdateTime;
+
+        /// <summary>
+        ///     Time elapsed since the last frame
+        /// </summary>
+        private float _elapsedTime;
+
+        public RasterRaycast(int[,] map, int cell, Camera6 camera, int screenheight, int screenwidth)
         {
-            Camera = camera;
             _map = map;
+            _cell = cell;
+            _screenheight = screenheight;
+            _screenwidth = screenwidth;
+            _camera = camera;
+
+            _ray = new Raycaster(map, cell, screenheight, screenwidth);
         }
-        public Bitmap Render(bool drawOutlines = true)
+
+        public static Camera Camera { get; set; }
+
+        public Bitmap Render(Key eKey)
         {
-            var width = 800; // Screen width
-            var height = 600; // Screen height
-            var bitmap = new Bitmap(width, height);
-
-            using var g = Graphics.FromImage(bitmap);
-            g.Clear(Color.Black); // Clear the screen to black
-
-            var fov = Math.PI / 4; // Field of view (45 degrees)
-            var halfFov = fov / 2;
-            var step = fov / width;
-
-            for (var x = 0; x < width; x++)
-            {
-                var rayAngle = (Camera.Angle - halfFov + x * step) * Math.PI / 180;
-
-                // Calculate ray direction
-                var rayDirX = Math.Cos(rayAngle);
-                var rayDirY = Math.Sin(rayAngle);
-
-                // Starting position of the ray
-                double posX = Camera.X;
-                double posY = Camera.Y;
-
-                // Delta distances
-                var deltaDistX = Math.Abs(1 / rayDirX);
-                var deltaDistY = Math.Abs(1 / rayDirY);
-
-                var mapX = (int)posX;
-                var mapY = (int)posY;
-
-                double sideDistX;
-                double sideDistY;
-
-                // Step direction
-                int stepX;
-                int stepY;
-
-                if (rayDirX < 0)
-                {
-                    stepX = -1;
-                    sideDistX = (posX - mapX) * deltaDistX;
-                }
-                else
-                {
-                    stepX = 1;
-                    sideDistX = (mapX + 1.0 - posX) * deltaDistX;
-                }
-
-                if (rayDirY < 0)
-                {
-                    stepY = -1;
-                    sideDistY = (posY - mapY) * deltaDistY;
-                }
-                else
-                {
-                    stepY = 1;
-                    sideDistY = (mapY + 1.0 - posY) * deltaDistY;
-                }
-
-                // Perform DDA
-                var hit = false;
-                var side = 0;
-                while (!hit)
-                {
-                    if (sideDistX < sideDistY)
-                    {
-                        sideDistX += deltaDistX;
-                        mapX += stepX;
-                        side = 0;
-                    }
-                    else
-                    {
-                        sideDistY += deltaDistY;
-                        mapY += stepY;
-                        side = 1;
-                    }
-
-                    if (_map[mapX, mapY] == 1) hit = true;
-                }
-
-                // Calculate distance to wall
-                double perpWallDist;
-                if (side == 0)
-                    perpWallDist = (mapX - posX + (1 - stepX) / 2) / rayDirX;
-                else
-                    perpWallDist = (mapY - posY + (1 - stepY) / 2) / rayDirY;
-
-                // Log for debugging
-                if (perpWallDist <= 0)
-                {
-                    Console.WriteLine($"Warning: Invalid perpWallDist at x={x}, perpWallDist={perpWallDist}");
-                    perpWallDist = 0.01; // Avoid division by zero or negative distances
-                }
-
-                // Calculate line height and check for extreme values
-                var lineHeight = (int)(height / perpWallDist);
-                if (lineHeight > height)
-                    lineHeight = height;
-
-                var drawStart = -lineHeight / 2 + height / 2;
-                var drawEnd = lineHeight / 2 + height / 2;
-
-                // Clamp drawStart and drawEnd within screen bounds
-                drawStart = Math.Max(0, drawStart);
-                drawEnd = Math.Min(height - 1, drawEnd);
-
-                // Log values for debugging
-                Console.WriteLine($"x={x}, perpWallDist={perpWallDist}, lineHeight={lineHeight}, drawStart={drawStart}, drawEnd={drawEnd}");
-
-                // Use a solid color to test drawing
-                Color color = Color.Gray;
-
-                // Draw the wall itself
-                for (var y = drawStart; y <= drawEnd; y++)
-                {
-                    bitmap.SetPixel(x, y, color); // Fill the wall with color
-                }
-
-                if (drawOutlines)
-                {
-                    // Draw only the top and bottom pixels of the wall (outline)
-                    bitmap.SetPixel(x, drawStart, Color.White); // Top of the wall
-                    bitmap.SetPixel(x, drawEnd, Color.White);   // Bottom of the wall
-
-                    // Draw vertical separators only between adjacent walls
-                    if (x > 0) // Draw left separator if not the first column
-                    {
-                        for (var y = drawStart; y <= drawEnd; y++)
-                        {
-                            bitmap.SetPixel(x - 1, y, Color.White); // Left separator
-                        }
-                    }
-                    if (x < width - 1) // Draw right separator if not the last column
-                    {
-                        for (var y = drawStart; y <= drawEnd; y++)
-                        {
-                            bitmap.SetPixel(x + 1, y, Color.White); // Right separator
-                        }
-                    }
-                }
-            }
-
-            return bitmap;
+            _camera = SimulateCameraMovement(eKey, _camera);
+            return _ray.Render(_camera);
         }
 
+        public Bitmap Render()
+        {
+            return _ray.Render(_camera);
+        }
 
+        private Camera6 SimulateCameraMovement(Key key, Camera6 camera)
+        {
+            UpdateDeltaTime(); // Update deltaTime based on frame time
 
+            //the key
+            Trace.WriteLine($"Key: {key}");
 
+            // Log the old camera state
+            Trace.WriteLine($"Before: {Camera}");
 
+            // Update the actual camera object directly
+            switch (key)
+            {
+                case Key.W:
+                    camera.X -= (int) Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcSin(Camera.Angle));
+                    camera.Y -= (int) Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcCos(Camera.Angle));
+                    break;
+                case Key.S:
+                    camera.X += (int) Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcSin(Camera.Angle));
+                    camera.Y += (int) Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcCos(Camera.Angle));
+                    break;
+                case Key.A:
+                    camera.Direction += (int) (RotationSpeed * _elapsedTime); // Turn left
+                    break;
+                case Key.D:
+                    camera.Direction -= (int) (RotationSpeed * _elapsedTime); // Turn right
+                    break;
+                case Key.O:
+                    camera.Direction += (int) (RotationSpeed * _elapsedTime); // Move up
+                    break;
+                case Key.P:
+                    camera.Direction -= (int) (RotationSpeed * _elapsedTime); // Move down
+                    break;
+                case Key.X:
+                    //camera.Pitch = Math.Max(camera.Pitch - (int) (RotationSpeed * _elapsedTime), -90); // Look down
+                    break;
+                case Key.Y:
+                    //camera.Pitch = Math.Min(camera.Pitch + (int) (RotationSpeed * _elapsedTime), 90); // Look up
+                    break;
+            }
+            // Log the new camera state
+            Trace.WriteLine($"After: {Camera}");
 
+            return camera;
+        }
+
+        /// <summary>
+        ///     Update method to calculate deltaTime
+        /// </summary>
+        private void UpdateDeltaTime()
+        {
+            var currentTime = DateTime.Now;
+            _elapsedTime = (float) (currentTime - _lastUpdateTime).TotalSeconds;
+
+            // If no time has elapsed, use a default small value to avoid zero movement on startup
+            if (_elapsedTime == 0) _elapsedTime = 0.016f; // Assuming ~60 FPS, 1 frame = ~0.016 seconds
+
+            // Optional: Cap delta time to avoid large jumps
+            _elapsedTime = Math.Min(_elapsedTime, 0.1f); // 0.1s cap to prevent large frame gaps
+            _lastUpdateTime = currentTime;
+        }
     }
 }

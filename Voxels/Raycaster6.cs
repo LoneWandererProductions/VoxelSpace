@@ -48,6 +48,7 @@ namespace Voxels
             return bitmap;
         }
 
+        //for testing public
         public double CastRay(double startX, double startY, double rayDirX, double rayDirY)
         {
             double x = startX;
@@ -79,21 +80,5 @@ namespace Voxels
         }
 
         private static double DegreeToRadian(double degree) => degree * Math.PI / 180.0;
-    }
-}
-
-public class Camera6
-{
-    public double X { get; set; }
-    public double Y { get; set; }
-    public double Fov { get; set; }
-    public double Direction { get; set; }
-
-    public Camera6(double x, double y, double fov, double direction)
-    {
-        X = x;
-        Y = y;
-        Fov = fov;
-        Direction = direction;
     }
 }
