@@ -13,6 +13,20 @@ namespace Voxels
 {
     public sealed class Camera
     {
+        public Camera(int x, int y, double fov, int direction)
+        {
+            X = x;
+            Y = y;
+            Fov = fov;
+            Angle = direction;
+        }
+
+        public Camera()
+        {
+        }
+
+        public double Fov { get; set; }
+
         /// <summary>
         ///     Gets or sets the color of the background.
         /// </summary>
@@ -127,6 +141,7 @@ namespace Voxels
                 Angle = Angle,
                 Pitch = Pitch,
                 Scale = Scale,
+                Fov = Fov,
                 ScreenHeight = ScreenHeight,
                 ScreenWidth = ScreenWidth
             };
@@ -148,6 +163,7 @@ namespace Voxels
             ScreenHeight = original.ScreenHeight;
             ScreenWidth = original.ScreenWidth;
             Pitch = Pitch;
+            Fov = Fov;
 
             // Immutable properties are skipped in restoration:
             // this.Height = original.Height;

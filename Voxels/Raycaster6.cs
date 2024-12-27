@@ -18,7 +18,7 @@ namespace Voxels
             _mapHeight = map.GetLength(0);
         }
 
-        public Bitmap Render(Camera6 camera, int screenWidth, int screenHeight)
+        public Bitmap Render(Camera camera, int screenWidth, int screenHeight)
         {
             Bitmap bitmap = new(screenWidth, screenHeight);
             using var g = Graphics.FromImage(bitmap);

@@ -18,7 +18,7 @@ namespace Voxels
             _context = context;
         }
 
-        public Bitmap Render(Camera6 camera)
+        public Bitmap Render(Camera camera)
         {
             Bitmap bitmap = new(_context.ScreenWidth, _context.ScreenHeight);
             using var g = Graphics.FromImage(bitmap);

@@ -113,7 +113,7 @@ namespace SpeedTests
             var cellSize = 64;
             Raycaster6 raycaster = new(map, cellSize);
 
-            var camera = new Camera6(96, 96, 60, 0); // Initial position and direction.
+            var camera = new Camera(96, 96, 60, 0); // Initial position and direction.
 
             var rendered = raycaster.Render(camera, 800, 600);
             rendered.Save("raycaster6_output.png");
