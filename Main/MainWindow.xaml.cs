@@ -129,7 +129,7 @@ namespace Main
             };
 
             // Set up a camera
-            var camera = new Camera(96, 96, 60, 90);  // Position and angle of the camera
+            var camera = new Camera(96, 96, 60, 0);  // Position and angle of the camera
             //setup the context
             CameraContext context =new (64, 800, 600);
 

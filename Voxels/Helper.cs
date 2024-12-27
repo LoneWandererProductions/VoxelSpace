@@ -7,9 +7,9 @@ namespace Voxels
 {
     public static class Helper
     {
-        public static float RotationSpeed { get; set; } = 10f;
+        public static float RotationSpeed { get; set; } = 30f;
 
-        public static float MovementSpeed { get; set; } = 10f;
+        public static float MovementSpeed { get; set; } = 30f;
 
         /// <summary>
         ///     The last update time
@@ -27,7 +27,7 @@ namespace Voxels
         /// <param name="key">The key.</param>
         /// <param name="cam">The camera.</param>
         /// <returns>New Camera Values</returns>
-        public static Camera SimulateCameraMovement(Key key, Camera cam)
+        public static Camera SimulateCameraMovementVoxel(Key key, Camera cam)
         {
             UpdateDeltaTime(); // Update deltaTime based on frame time
 
@@ -80,7 +80,7 @@ namespace Voxels
         /// <param name="key">The key.</param>
         /// <param name="cam">The camera.</param>
         /// <returns>New Camera Values</returns>
-        public static Camera SimulateCameraMovementNew(Key key, Camera cam)
+        public static Camera SimulateCameraMovementRay(Key key, Camera cam)
         {
             UpdateDeltaTime(); // Update deltaTime based on frame time
 
@@ -94,18 +94,20 @@ namespace Voxels
             switch (key)
             {
                 case Key.W:
-                    cam.X -= (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcSin(cam.Angle));
-                    cam.Y -= (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcCos(cam.Angle));
+                    // Move forward along the camera's angle direction
+                    cam.X += (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcCos(cam.Angle));
+                    cam.Y += (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcSin(cam.Angle));
                     break;
                 case Key.S:
-                    cam.X += (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcSin(cam.Angle));
-                    cam.Y += (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcCos(cam.Angle));
+                    // Move backward opposite to the camera's angle direction
+                    cam.X -= (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcCos(cam.Angle));
+                    cam.Y -= (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcSin(cam.Angle));
                     break;
                 case Key.A:
-                    cam.Angle += (int)(RotationSpeed * _elapsedTime); // Turn left
+                    cam.Angle -= (int)(RotationSpeed * _elapsedTime); // Turn left
                     break;
                 case Key.D:
-                    cam.Angle -= (int)(RotationSpeed * _elapsedTime); // Turn right
+                    cam.Angle += (int)(RotationSpeed * _elapsedTime); // Turn right
                     break;
                 case Key.O:
                     cam.Horizon += (int)(RotationSpeed * _elapsedTime); // Move up

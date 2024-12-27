@@ -73,8 +73,6 @@ namespace Voxels
 
         private Color GetWallColor(double distance)
         {
-            return Color.Blue;
-
             var intensity = Math.Max(0, 255 - (int)(distance * 10));
             return Color.FromArgb(intensity, intensity, intensity);
         }

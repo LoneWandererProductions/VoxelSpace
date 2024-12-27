@@ -155,7 +155,6 @@ namespace Voxels
             g.FillRectangle(_solidBrush, rect);
         }
 
-
         /// <summary>
         ///     Creates the bitmap with depth buffer.
         /// </summary>

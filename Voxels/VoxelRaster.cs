@@ -121,7 +121,7 @@ namespace Voxels
             if (!_directionKey.Contains(key)) return _currentImage;
 
             // Always update the camera position first.
-            Camera = Helper.SimulateCameraMovement(key, Camera);
+            Camera = Helper.SimulateCameraMovementVoxel(key, Camera);
 
             // Check if the bitmap is already cached.
             if (_lazyCache.TryGetValue(key, out var cachedBitmap))
@@ -190,7 +190,7 @@ namespace Voxels
 
                 var simulatedCamera = Camera.Clone();
                 // Simulate camera movement for the requested direction
-                simulatedCamera = Helper.SimulateCameraMovement(key, simulatedCamera);
+                simulatedCamera = Helper.SimulateCameraMovementVoxel(key, simulatedCamera);
 
                 // Generate the bitmap
                 var raster = new Raster();
