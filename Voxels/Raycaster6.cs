@@ -29,7 +29,7 @@ namespace Voxels
 
             for (var x = 0; x < screenWidth; x++)
             {
-                var rayAngle = (camera.Direction - halfFov) + x * angleStep;
+                var rayAngle = (camera.Angle - halfFov) + x * angleStep;
                 var rayX = Math.Cos(DegreeToRadian(rayAngle));
                 var rayY = Math.Sin(DegreeToRadian(rayAngle));
 

@@ -71,6 +71,9 @@ namespace Voxels
         private int _topographyHeight;
         private int _topographyWidth;
 
+        private readonly Key[] _directionKey;
+        private Bitmap _currentImage;
+
         /// <summary>
         ///     Initializes a new instance of the <see cref="VoxelRaster" /> class.
         /// </summary>
@@ -86,6 +89,8 @@ namespace Voxels
         public VoxelRaster(int x, int y, int degree, int height, int horizon, int scale, int distance, Bitmap colorMap,
             Bitmap heightMap)
         {
+            _directionKey = new[] {Key.W, Key.S, Key.A, Key.D, Key.O, Key.P, Key.X, Key.Y};
+
             Camera = new Camera
             {
                 X = x,
@@ -128,6 +133,8 @@ namespace Voxels
         /// <returns>new Bitmap</returns>
         public Bitmap GetBitmapForKey(Key key)
         {
+            if (!_directionKey.Contains(key)) return _currentImage;
+
             // Always update the camera position first.
             Camera = SimulateCameraMovement(key, Camera);
 
@@ -136,6 +143,7 @@ namespace Voxels
             {
                 // After returning the cached bitmap, rebuild the cache.
                 RebuildCache();
+                _currentImage = cachedBitmap;
                 return cachedBitmap; // Return the cached bitmap if it exists.
             }
 
@@ -144,8 +152,11 @@ namespace Voxels
 
             // If not cached, generate the bitmap.
             var raster = new Raster();
-            return raster.RenderImmediate(_colorMap, _heightMap, Camera, _topographyHeight,
+
+            _currentImage = raster.RenderWithDepthBuffer(_colorMap, _heightMap, Camera, _topographyHeight,
                 _topographyWidth, _colorHeight, _colorWidth);
+
+            return _currentImage;
         }
 
         /// <summary>
@@ -162,8 +173,11 @@ namespace Voxels
 
             // Generate the start bitmap
             var raster = new Raster();
-            return raster.RenderWithDepthBuffer(_colorMap, _heightMap, Camera, _topographyHeight,
+
+            _currentImage = raster.RenderWithDepthBuffer(_colorMap, _heightMap, Camera, _topographyHeight,
                 _topographyWidth, _colorHeight, _colorWidth);
+
+            return _currentImage;
         }
 
 
@@ -206,9 +220,9 @@ namespace Voxels
         /// Simulates the camera movement.
         /// </summary>
         /// <param name="key">The key.</param>
-        /// <param name="camera">The camera.</param>
+        /// <param name="cam">The camera.</param>
         /// <returns>New Camera Values</returns>
-        private Camera SimulateCameraMovement(Key key, Camera camera)
+        private Camera SimulateCameraMovement(Key key, Camera cam)
         {
             UpdateDeltaTime(); // Update deltaTime based on frame time
 
@@ -222,37 +236,37 @@ namespace Voxels
             switch (key)
             {
                 case Key.W:
-                    camera.X -= (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcSin(Camera.Angle));
-                    camera.Y -= (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcCos(Camera.Angle));
+                    cam.X -= (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcSin(cam.Angle));
+                    cam.Y -= (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcCos(cam.Angle));
                     break;
                 case Key.S:
-                    camera.X += (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcSin(Camera.Angle));
-                    camera.Y += (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcCos(Camera.Angle));
+                    cam.X += (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcSin(cam.Angle));
+                    cam.Y += (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcCos(cam.Angle));
                     break;
                 case Key.A:
-                    camera.Angle += (int)(RotationSpeed * _elapsedTime); // Turn left
+                    cam.Angle += (int)(RotationSpeed * _elapsedTime); // Turn left
                     break;
                 case Key.D:
-                    camera.Angle -= (int)(RotationSpeed * _elapsedTime); // Turn right
+                    cam.Angle -= (int)(RotationSpeed * _elapsedTime); // Turn right
                     break;
                 case Key.O:
-                    camera.Horizon += (int)(RotationSpeed * _elapsedTime); // Move up
+                    cam.Horizon += (int)(RotationSpeed * _elapsedTime); // Move up
                     break;
                 case Key.P:
-                    camera.Horizon -= (int)(RotationSpeed * _elapsedTime); // Move down
+                    cam.Horizon -= (int)(RotationSpeed * _elapsedTime); // Move down
                     break;
                 case Key.X:
-                    camera.Pitch = Math.Max(camera.Pitch - (int)(RotationSpeed * _elapsedTime), -90); // Look down
+                    cam.Pitch = Math.Max(cam.Pitch - (int)(RotationSpeed * _elapsedTime), -90); // Look down
                     break;
                 case Key.Y:
-                    camera.Pitch = Math.Min(camera.Pitch + (int)(RotationSpeed * _elapsedTime), 90); // Look up
+                    cam.Pitch = Math.Min(cam.Pitch + (int)(RotationSpeed * _elapsedTime), 90); // Look up
                     break;
             }
 
             // Log the new camera state
             Trace.WriteLine($"After: {Camera}");
 
-            return camera;
+            return cam;
         }
 
         /// <summary>
@@ -277,7 +291,7 @@ namespace Voxels
             _isCachePreloading = true;
 
             // Preload all possible directions
-            foreach (var directionKey in new[] { Key.W, Key.S, Key.A, Key.D, Key.O, Key.P, Key.X, Key.Y }.TakeWhile(_ => !cancellationToken.IsCancellationRequested))
+            foreach (var directionKey in _directionKey.TakeWhile(_ => !cancellationToken.IsCancellationRequested))
             {
                 GenerateAndCacheBitmapForKey(directionKey);
             }

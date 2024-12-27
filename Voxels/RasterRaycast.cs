@@ -8,12 +8,9 @@ namespace Voxels
 {
     public class RasterRaycast
     {
-        private int[,] _map;
-        private int _cell;
-        private Camera6 _camera = null;
+        public Camera6 Camera { get; set; } = null;
         private readonly Raycaster _ray;
-        private readonly int _screenheight;
-        private readonly int _screenwidth;
+        private readonly CameraContext _context;
 
         public float RotationSpeed { get; set; } = 10f;
 
@@ -29,31 +26,27 @@ namespace Voxels
         /// </summary>
         private float _elapsedTime;
 
-        public RasterRaycast(int[,] map, int cell, Camera6 camera, int screenheight, int screenwidth)
+
+        public RasterRaycast(int[,] map, Camera6 camera, CameraContext context)
         {
-            _map = map;
-            _cell = cell;
-            _screenheight = screenheight;
-            _screenwidth = screenwidth;
-            _camera = camera;
+            _context = context;
+            Camera = camera;
 
-            _ray = new Raycaster(map, cell, screenheight, screenwidth);
+            _ray = new Raycaster(map, context);
         }
-
-        public static Camera Camera { get; set; }
 
         public Bitmap Render(Key eKey)
         {
-            _camera = SimulateCameraMovement(eKey, _camera);
-            return _ray.Render(_camera);
+            Camera = SimulateCameraMovement(eKey, Camera);
+            return _ray.Render(Camera);
         }
 
         public Bitmap Render()
         {
-            return _ray.Render(_camera);
+            return _ray.Render(Camera);
         }
 
-        private Camera6 SimulateCameraMovement(Key key, Camera6 camera)
+        private Camera6 SimulateCameraMovement(Key key, Camera6 cam)
         {
             UpdateDeltaTime(); // Update deltaTime based on frame time
 
@@ -61,30 +54,30 @@ namespace Voxels
             Trace.WriteLine($"Key: {key}");
 
             // Log the old camera state
-            Trace.WriteLine($"Before: {Camera}");
+            Trace.WriteLine($"Before: {cam}");
 
             // Update the actual camera object directly
             switch (key)
             {
                 case Key.W:
-                    camera.X -= (int) Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcSin(Camera.Angle));
-                    camera.Y -= (int) Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcCos(Camera.Angle));
+                    cam.X -= (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcSin(cam.Angle));
+                    cam.Y -= (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcCos(cam.Angle));
                     break;
                 case Key.S:
-                    camera.X += (int) Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcSin(Camera.Angle));
-                    camera.Y += (int) Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcCos(Camera.Angle));
+                    cam.X += (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcSin(cam.Angle));
+                    cam.Y += (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcCos(cam.Angle));
                     break;
                 case Key.A:
-                    camera.Direction += (int) (RotationSpeed * _elapsedTime); // Turn left
+                    cam.Angle += (int) (RotationSpeed * _elapsedTime); // Turn left
                     break;
                 case Key.D:
-                    camera.Direction -= (int) (RotationSpeed * _elapsedTime); // Turn right
+                    cam.Angle -= (int) (RotationSpeed * _elapsedTime); // Turn right
                     break;
                 case Key.O:
-                    camera.Direction += (int) (RotationSpeed * _elapsedTime); // Move up
+                    cam.Angle += (int) (RotationSpeed * _elapsedTime); // Move up
                     break;
                 case Key.P:
-                    camera.Direction -= (int) (RotationSpeed * _elapsedTime); // Move down
+                    cam.Angle -= (int) (RotationSpeed * _elapsedTime); // Move down
                     break;
                 case Key.X:
                     //camera.Pitch = Math.Max(camera.Pitch - (int) (RotationSpeed * _elapsedTime), -90); // Look down
@@ -93,10 +86,11 @@ namespace Voxels
                     //camera.Pitch = Math.Min(camera.Pitch + (int) (RotationSpeed * _elapsedTime), 90); // Look up
                     break;
             }
-            // Log the new camera state
-            Trace.WriteLine($"After: {Camera}");
 
-            return camera;
+            // Log the new camera state
+            Trace.WriteLine($"After: {cam}");
+
+            return cam;
         }
 
         /// <summary>

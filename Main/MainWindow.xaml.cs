@@ -58,9 +58,13 @@ namespace Main
                     _active = "Raycast";
                     if (_raycaster == null) return;
 
-                    bmp = RasterRaycast.Render(e.Key);
+                    bmp = _raycaster.Render(e.Key);
                     ImageView.Source = bmp.ToBitmapImage();
-                    camera = RasterRaycast.Camera;
+                    var camera6 = _raycaster.Camera;
+
+                    TxtBox.Text = string.Concat(TxtBox.Text, " Time Diff:", timer.Elapsed, Environment.NewLine);
+                    TxtBox.Text = string.Concat(TxtBox.Text, camera6.ToString(),
+                        Environment.NewLine);
                     break;
                 case "Voxel":
                     if (_voxel == null) return;
@@ -68,6 +72,11 @@ namespace Main
                     bmp = _voxel.GetBitmapForKey(e.Key);
                     ImageView.Source = bmp.ToBitmapImage();
                     camera = _voxel.Camera;
+
+
+                    TxtBox.Text = string.Concat(TxtBox.Text, " Time Diff:", timer.Elapsed, Environment.NewLine);
+                    TxtBox.Text = string.Concat(TxtBox.Text, camera.ToString(),
+                        Environment.NewLine);
                     break;
                 default:
                     // Handle unexpected cases if needed
@@ -75,11 +84,6 @@ namespace Main
             }
 
             timer.Stop();
-
-
-            TxtBox.Text = string.Concat(TxtBox.Text, " Time Diff:", timer.Elapsed, Environment.NewLine);
-            TxtBox.Text = string.Concat(TxtBox.Text, camera.ToString(),
-                Environment.NewLine);
         }
 
         /// <summary>
@@ -126,9 +130,11 @@ namespace Main
 
             // Set up a camera
             var camera = new Camera6(96, 96, 60, 0);  // Position and angle of the camera
+            //setup the context
+            CameraContext context =new (64, 800, 600);
 
             // Create Raycaster and render
-            _raycaster = new RasterRaycast(map,64, camera, 800, 600);
+            _raycaster = new RasterRaycast(map, camera, context);
             var bmp = _raycaster.Render();
             ImageView.Source = bmp.ToBitmapImage();
         }

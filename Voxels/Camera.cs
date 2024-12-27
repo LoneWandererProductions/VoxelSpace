@@ -13,19 +13,6 @@ namespace Voxels
 {
     public sealed class Camera
     {
-        public Camera(int x, int y, int angle, int screenHeight, int screenWidth)
-        {
-            X = x;
-            Y = y;
-            Angle = angle;
-            ScreenWidth = screenWidth;
-            ScreenHeight = screenHeight;
-        }
-
-        public Camera()
-        {
-        }
-
         /// <summary>
         ///     Gets or sets the color of the background.
         /// </summary>

@@ -6,43 +6,39 @@ namespace Voxels
     public class Raycaster
     {
         private readonly int[,] _map;
-        private readonly int _cellSize;
         private readonly int _mapWidth;
         private readonly int _mapHeight;
-        private readonly int _screenWidth;
-        private readonly int _screenHeight;
+        private readonly CameraContext _context;
 
-        public Raycaster(int[,] map, int cellSize, int screenheight, int screenwidth)
+        public Raycaster(int[,] map, CameraContext context)
         {
             _map = map;
-            _cellSize = cellSize;
             _mapWidth = map.GetLength(1);
             _mapHeight = map.GetLength(0);
-            _screenHeight = screenheight;
-            _screenWidth = screenwidth;
+            _context = context;
         }
 
         public Bitmap Render(Camera6 camera)
         {
-            Bitmap bitmap = new(_screenWidth, _screenHeight);
+            Bitmap bitmap = new(_context.ScreenWidth, _context.ScreenHeight);
             using var g = Graphics.FromImage(bitmap);
             g.Clear(Color.Black);
 
             var halfFov = camera.Fov / 2.0;
-            var angleStep = camera.Fov / _screenWidth;
+            var angleStep = camera.Fov / _context.ScreenWidth;
 
-            for (var x = 0; x < _screenWidth; x++)
+            for (var x = 0; x < _context.ScreenWidth; x++)
             {
-                var rayAngle = (camera.Direction - halfFov) + x * angleStep;
+                var rayAngle = (camera.Angle - halfFov) + x * angleStep;
                 var rayX = Math.Cos(DegreeToRadian(rayAngle));
                 var rayY = Math.Sin(DegreeToRadian(rayAngle));
 
                 var distanceToWall = CastRay(camera.X, camera.Y, rayX, rayY);
 
                 // Adjusted wall height calculation
-                var wallHeight = (int)(_screenHeight / distanceToWall);
-                var wallTop = Math.Max(0, (_screenHeight - wallHeight) / 2);
-                var wallBottom = Math.Min(_screenHeight, (_screenHeight + wallHeight) / 2);
+                var wallHeight = (int)(_context.ScreenHeight / distanceToWall);
+                var wallTop = Math.Max(0, (_context.ScreenHeight - wallHeight) / 2);
+                var wallBottom = Math.Min(_context.ScreenHeight, (_context.ScreenHeight + wallHeight) / 2);
 
                 var wallColor = GetWallColor(distanceToWall);
 
@@ -60,14 +56,14 @@ namespace Voxels
 
             while (true)
             {
-                var mapX = (int)(x / _cellSize);
-                var mapY = (int)(y / _cellSize);
+                var mapX = (int)(x / _context.CellSize);
+                var mapY = (int)(y / _context.CellSize);
 
                 if (mapX < 0 || mapX >= _mapWidth || mapY < 0 || mapY >= _mapHeight)
                     return double.MaxValue; // Ray out of bounds.
 
                 if (_map[mapY, mapX] > 0)
-                    return Math.Sqrt((x - startX) * (x - startX) + (y - startY) * (y - startY)) / _cellSize;
+                    return Math.Sqrt((x - startX) * (x - startX) + (y - startY) * (y - startY)) / _context.CellSize;
 
                 x += rayDirX * 0.1; // Step ray.
                 y += rayDirY * 0.1;
