@@ -100,7 +100,7 @@ namespace Voxels
             _cachePreloadThread = new Thread(() => PreloadCache(_cancellationTokenSource.Token));
 
             // Initialize last update time
-            Helper.LastUpdateTime = DateTime.Now;
+            InputHelper.LastUpdateTime = DateTime.Now;
         }
 
         /// <summary>
@@ -121,7 +121,7 @@ namespace Voxels
             if (!_directionKey.Contains(key)) return _currentImage;
 
             // Always update the camera position first.
-            Camera = Helper.SimulateCameraMovementVoxel(key, Camera);
+            Camera = InputHelper.SimulateCameraMovementVoxel(key, Camera);
 
             // Check if the bitmap is already cached.
             if (_lazyCache.TryGetValue(key, out var cachedBitmap))
@@ -154,7 +154,7 @@ namespace Voxels
 
             if (Camera == null) return null;
 
-            Helper.UpdateDeltaTime();
+            InputHelper.UpdateDeltaTime();
 
             // Generate the start bitmap
             var raster = new Raster();
@@ -190,7 +190,7 @@ namespace Voxels
 
                 var simulatedCamera = Camera.Clone();
                 // Simulate camera movement for the requested direction
-                simulatedCamera = Helper.SimulateCameraMovementVoxel(key, simulatedCamera);
+                simulatedCamera = InputHelper.SimulateCameraMovementVoxel(key, simulatedCamera);
 
                 // Generate the bitmap
                 var raster = new Raster();

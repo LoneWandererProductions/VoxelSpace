@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Drawing;
+using Voxels;
 
-namespace Voxels
+namespace SpeedTests
 {
     public class Raycaster6
     {

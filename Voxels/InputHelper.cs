@@ -5,7 +5,7 @@ using Mathematics;
 
 namespace Voxels
 {
-    public static class Helper
+    public static class InputHelper
     {
         public static float RotationSpeed { get; set; } = 30f;
 
