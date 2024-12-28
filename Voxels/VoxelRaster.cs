@@ -138,7 +138,7 @@ namespace Voxels
             // If not cached, generate the bitmap.
             var raster = new Raster();
 
-            _currentImage = raster.RenderWithDepthBuffer(_colorMap, _heightMap, Camera, _topographyHeight,
+            _currentImage = raster.RenderWithContainer(_colorMap, _heightMap, Camera, _topographyHeight,
                 _topographyWidth, _colorHeight, _colorWidth);
 
             return _currentImage;
@@ -159,7 +159,7 @@ namespace Voxels
             // Generate the start bitmap
             var raster = new Raster();
 
-            _currentImage = raster.RenderWithDepthBuffer(_colorMap, _heightMap, Camera, _topographyHeight,
+            _currentImage = raster.RenderWithContainer(_colorMap, _heightMap, Camera, _topographyHeight,
                 _topographyWidth, _colorHeight, _colorWidth);
 
             return _currentImage;
@@ -196,7 +196,7 @@ namespace Voxels
                 var raster = new Raster();
 
                 // Cache the bitmap
-                _lazyCache[key] = raster.RenderWithDepthBuffer(_colorMap, _heightMap, simulatedCamera,
+                _lazyCache[key] = raster.RenderWithContainer(_colorMap, _heightMap, simulatedCamera,
                     _topographyHeight, _topographyWidth, _colorHeight, _colorWidth);
             }
         }

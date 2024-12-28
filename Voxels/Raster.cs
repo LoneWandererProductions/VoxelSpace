@@ -62,15 +62,14 @@ namespace Voxels
         public Bitmap RenderImmediate(Color[,] colorMap, int[,] heightMap, Camera camera,
             int topographyHeight, int topographyWidth, int colorHeight, int colorWidth)
         {
-            if (heightMap == null) return null;
+            if (heightMap == null)
+                return null;
 
             var bmp = new Bitmap(camera.ScreenWidth, camera.ScreenHeight);
-
             _yBuffer = new float[camera.ScreenWidth];
 
-            // Initialize the y-buffer to the screen height
-            for (var i = 0; i < _yBuffer.Length; i++)
-                _yBuffer[i] = camera.ScreenHeight;
+            // Initialize y-buffer to the maximum height of the screen
+            Array.Fill(_yBuffer, camera.ScreenHeight);
 
             // Precompute yaw (left-right rotation)
             var sinPhi = ExtendedMath.CalcSin(camera.Angle);
@@ -79,6 +78,9 @@ namespace Voxels
             // Precompute pitch (up-down rotation)
             var sinTheta = ExtendedMath.CalcSin(camera.Pitch);
             var cosTheta = ExtendedMath.CalcCos(camera.Pitch);
+
+            // Calculate focal length based on FOV (in radians)
+            var focalLength = (float)(0.5 * camera.ScreenWidth / Math.Tan(camera.Fov * 0.5));
 
             float z = 1;
             float dz = 1;
@@ -102,27 +104,28 @@ namespace Voxels
 
                 for (var i = 0; i < camera.ScreenWidth; i++)
                 {
-                    var diffuseX = (int)pLeft.X;
-                    var diffuseY = (int)pLeft.Y;
-                    var heightX = (int)pLeft.X;
-                    var heightY = (int)pLeft.Y;
+                    // Calculate wrapped indices for height and color maps
+                    var heightX = (int)pLeft.X & (topographyWidth - 1);
+                    var heightY = (int)pLeft.Y & (topographyHeight - 1);
+                    var diffuseX = (int)pLeft.X & (colorWidth - 1);
+                    var diffuseY = (int)pLeft.Y & (colorHeight - 1);
 
-                    // Wrap around height and color map indices
-                    var heightOfHeightMap = heightMap[heightX & (topographyWidth - 1), heightY & (topographyHeight - 1)];
-                    var color = colorMap[diffuseX & (colorWidth - 1), diffuseY & (colorHeight - 1)];
+                    // Get height from the height map and color from the color map
+                    var heightOfHeightMap = heightMap[heightX, heightY];
+                    var color = colorMap[diffuseX, diffuseY];
 
-                    // Adjust the height on screen based on pitch
+                    // Adjust the height on screen using pitch and FOV (scaling with focal length)
                     var heightOnScreen = (float)((camera.Height - heightOfHeightMap) * cosTheta - z * sinTheta) / z
-                                         * camera.Scale + camera.Horizon;
+                        * focalLength / camera.ScreenWidth + camera.Horizon;
 
-                    // Draw the vertical column
+                    // Draw the vertical column for the current screen x-coordinate
                     DrawVerticalLine(color, i, (int)heightOnScreen, (int)_yBuffer[i], bmp);
 
-                    // Update the y-buffer
+                    // Update the y-buffer if the new height is closer to the viewer
                     if (heightOnScreen < _yBuffer[i])
                         _yBuffer[i] = heightOnScreen;
 
-                    // Move to the next pixel column
+                    // Increment horizontal position along the depth slice
                     pLeft.X += dx;
                     pLeft.Y += dy;
                 }
@@ -135,6 +138,7 @@ namespace Voxels
             return bmp;
         }
 
+
         /// <summary>
         ///     Draws the vertical line.
         /// </summary>
@@ -143,7 +147,7 @@ namespace Voxels
         /// <param name="heightOnScreen">The height on screen.</param>
         /// <param name="buffer">The buffer.</param>
         /// <param name="bmp">The bitmap we draw on</param>
-        private void DrawVerticalLine(Color col, int x, int heightOnScreen, float buffer, Bitmap bmp)
+        private void DrawVerticalLine(Color col, int x, int heightOnScreen, float buffer, Image bmp)
         {
             if (heightOnScreen > buffer) return;
 
@@ -189,17 +193,22 @@ namespace Voxels
             var sinPitch = ExtendedMath.CalcSin(camera.Pitch);
             var cosPitch = ExtendedMath.CalcCos(camera.Pitch);
 
+            // Calculate field-of-view scaling factor
+            var fovScale = (float)Math.Tan(camera.Fov / 2);
+
             float z = 1;
             float dz = 1;
 
             while (z < camera.ZFar)
             {
                 // Calculate the left and right endpoints of the view slice at depth z
-                var pLeftX = (float)(-cosPhi * z - sinPhi * z) + camera.X;
-                var pLeftY = (float)(sinPhi * z - cosPhi * z) + camera.Y;
+                var sliceWidth = z * fovScale;
 
-                var pRightX = (float)(cosPhi * z - sinPhi * z) + camera.X;
-                var pRightY = (float)(-sinPhi * z - cosPhi * z) + camera.Y;
+                var pLeftX = (float)(-sliceWidth * cosPhi - sliceWidth * sinPhi) + camera.X;
+                var pLeftY = (float)(sliceWidth * sinPhi - sliceWidth * cosPhi) + camera.Y;
+
+                var pRightX = (float)(sliceWidth * cosPhi - sliceWidth * sinPhi) + camera.X;
+                var pRightY = (float)(-sliceWidth * sinPhi - sliceWidth * cosPhi) + camera.Y;
 
                 var dx = (pRightX - pLeftX) / camera.ScreenWidth;
                 var dy = (pRightY - pLeftY) / camera.ScreenWidth;
@@ -263,11 +272,12 @@ namespace Voxels
             Color[,] colorMap, int[,] heightMap, Camera camera,
             int topographyHeight, int topographyWidth, int colorHeight, int colorWidth)
         {
-            // Preallocate flat array for colors and initialize the Y-buffer
             var pixelColors = new Color[camera.ScreenWidth * camera.ScreenHeight];
+
             _yBuffer = new float[camera.ScreenWidth];
-            for (var i = 0; i < _yBuffer.Length; i++)
-                _yBuffer[i] = camera.ScreenHeight;
+
+            // Initialize y-buffer to the maximum height of the screen
+            Array.Fill(_yBuffer, camera.ScreenHeight);
 
             var pixelTuples = new List<(int x, int y, Color color)>(camera.ScreenWidth * camera.ScreenHeight);
 
@@ -277,14 +287,19 @@ namespace Voxels
             float z = 1;
             float dz = 1;
 
-            // Process depth slices
+            float tanFovHalf = (float)Math.Tan(camera.Fov / 2.0 * Math.PI / 180.0);
+
             while (z < camera.ZFar)
             {
-                var pLeftX = (float)(-cosPhi * z - sinPhi * z) + camera.X;
-                var pLeftY = (float)(sinPhi * z - cosPhi * z) + camera.Y;
+                // Calculate frustum width based on FOV and depth (z)
+                float halfWidth = z * tanFovHalf;
 
-                var pRightX = (float)(cosPhi * z - sinPhi * z) + camera.X;
-                var pRightY = (float)(-sinPhi * z - cosPhi * z) + camera.Y;
+                // Frustum bounds
+                var pLeftX = (float)(-cosPhi * halfWidth - sinPhi * z) + camera.X;
+                var pLeftY = (float)(sinPhi * halfWidth - cosPhi * z) + camera.Y;
+
+                var pRightX = (float)(cosPhi * halfWidth - sinPhi * z) + camera.X;
+                var pRightY = (float)(-sinPhi * halfWidth - cosPhi * z) + camera.Y;
 
                 var dx = (pRightX - pLeftX) / camera.ScreenWidth;
                 var dy = (pRightY - pLeftY) / camera.ScreenWidth;
@@ -302,7 +317,6 @@ namespace Voxels
                     var color = colorMap[diffuseX & (colorWidth - 1), diffuseY & (colorHeight - 1)];
 
                     var heightOnScreen = (float)(((camera.Height - heightOfHeightMap) / z * camera.Scale + camera.Horizon) -
-                                                 //handle Looking up and down
                                                  ExtendedMath.CalcTan(camera.Pitch) * camera.Scale);
 
                     var y1 = (int)heightOnScreen;
@@ -311,13 +325,10 @@ namespace Voxels
                     {
                         _yBuffer[i] = heightOnScreen;
 
-                        // Calculate flat array index and set the color
                         var index = y1 * camera.ScreenWidth + i;
-                        if (index >= 0 && index < pixelColors.Length) // Bounds check
+                        if (index >= 0 && index < pixelColors.Length)
                         {
                             pixelColors[index] = color;
-
-                            // Add to the list for DirectBitmap
                             pixelTuples.Add((i, y1, color));
                         }
                     }
@@ -330,10 +341,7 @@ namespace Voxels
                 dz += 0.005f;
             }
 
-            // Create the final bitmap
             var dbm = new DirectBitmap(camera.ScreenWidth, camera.ScreenHeight);
-
-            // Use SetPixelsSimd with the prepared tuples
             dbm.SetPixelsSimd(pixelTuples);
 
             return dbm.Bitmap;

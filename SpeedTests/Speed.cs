@@ -110,12 +110,14 @@ namespace SpeedTests
 
             // Initialize and test Raycaster
             stopwatch.Start();
-            var cellSize = 64;
-            Raycaster6 raycaster = new(map, cellSize);
+            //setup the context
+            CameraContext context = new(64, 800, 600);
+
+            Raycaster6 raycaster = new(map, context);
 
             var camera = new Camera(96, 96, 60, 0); // Initial position and direction.
 
-            var rendered = raycaster.Render(camera, 800, 600);
+            var rendered = raycaster.Render(camera);
             rendered.Save("raycaster6_output.png");
             stopwatch.Stop();
 
@@ -134,10 +136,11 @@ namespace SpeedTests
                 { 1, 0, 0, 0, 1 },
                 { 1, 1, 1, 1, 1 }
             };
-
+            //setup the context
             var cellSize = 64;
+            CameraContext context = new(cellSize, 800, 600);
 
-            Raycaster6 raycaster = new(map, cellSize);
+            Raycaster6 raycaster = new(map, context);
 
             double startX = 96; // Camera position X.
             double startY = 96; // Camera position Y.

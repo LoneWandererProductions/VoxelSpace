@@ -1,4 +1,4 @@
-/*
+﻿/*
  * COPYRIGHT:   See COPYING in the top level directory
  * PROJECT:     Voxels
  * FILE:        Voxels/Camera.cs
@@ -25,7 +25,13 @@ namespace Voxels
         {
         }
 
-        public double Fov { get; set; }
+        /// <summary>
+        /// Gets or sets the fov.
+        /// </summary>
+        /// <value>
+        /// The fov.
+        /// </value>
+        public double Fov { get; set; } = 90;
 
         /// <summary>
         ///     Gets or sets the color of the background.
@@ -52,6 +58,16 @@ namespace Voxels
         ///     The y.
         /// </value>
         public int Y { get; set; }
+
+        /// <summary>
+        /// Gets the z.
+        /// Z = − CellSize / 2: Bottom of the cell.
+        /// Z = + CellSize / 2: Top of the cell.
+        /// </summary>
+        /// <value>
+        /// The z.
+        /// </value>
+        public int Z { get; internal set; }
 
         /// <summary>
         ///     Gets or sets the height.
@@ -135,6 +151,7 @@ namespace Voxels
                 BackgroundColor = BackgroundColor,
                 X = X,
                 Y = Y,
+                Z = Z,
                 Height = Height,
                 Horizon = Horizon,
                 ZFar = ZFar,
@@ -158,6 +175,7 @@ namespace Voxels
             BackgroundColor = original.BackgroundColor;
             X = original.X;
             Y = original.Y;
+            Z = original.Z;
             Horizon = original.Horizon;
             Angle = original.Angle;
             ScreenHeight = original.ScreenHeight;
@@ -179,7 +197,7 @@ namespace Voxels
         /// </returns>
         public override string ToString()
         {
-            return $"Camera [X={X}, Y={Y}, Angle={Angle}, Horizon={Horizon}, Height={Height}, ZFar={ZFar}], Pitch= {Pitch}";
+            return $"Camera [X={X}, Y={Y}, Z={Z}, Angle={Angle}, Horizon={Horizon}, Height={Height}, ZFar={ZFar}], Pitch= {Pitch}";
         }
     }
 }

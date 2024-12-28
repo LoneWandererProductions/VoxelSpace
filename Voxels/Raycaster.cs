@@ -35,10 +35,17 @@ namespace Voxels
 
                 var distanceToWall = CastRay(camera.X, camera.Y, rayX, rayY);
 
-                // Adjusted wall height calculation
+                // Skip rendering walls beyond max visibility range
+                if (distanceToWall > _context.Distance)
+                    continue;
+
+                // Adjust wall height calculation
                 var wallHeight = (int)(_context.ScreenHeight / distanceToWall);
-                var wallTop = Math.Max(0, (_context.ScreenHeight - wallHeight) / 2);
-                var wallBottom = Math.Min(_context.ScreenHeight, (_context.ScreenHeight + wallHeight) / 2);
+
+                // Adjust wall height by camera's Z position (Z offset)
+                var zOffset = (int)((camera.Z / _context.CellSize) * wallHeight);
+                var wallTop = Math.Max(0, (_context.ScreenHeight - wallHeight) / 2 - zOffset);
+                var wallBottom = Math.Min(_context.ScreenHeight, (_context.ScreenHeight + wallHeight) / 2 - zOffset);
 
                 var wallColor = GetWallColor(distanceToWall);
 
@@ -48,7 +55,6 @@ namespace Voxels
             return bitmap;
         }
 
-        //for testing public
         public double CastRay(double startX, double startY, double rayDirX, double rayDirY)
         {
             var x = startX;
@@ -70,11 +76,19 @@ namespace Voxels
             }
         }
 
-
         private Color GetWallColor(double distance)
         {
-            var intensity = Math.Max(0, 255 - (int)(distance * 10));
-            return Color.FromArgb(intensity, intensity, intensity);
+            // Linear blend between wall color and background color based on distance
+            var fogFactor = Math.Min(1.0, distance / _context.Distance);
+            var wallBaseColor = Color.Gray; // Wall base color
+            var backgroundColor = Color.Black; // Background fog color
+
+            // Blend colors based on fog factor
+            var red = (int)((1 - fogFactor) * wallBaseColor.R + fogFactor * backgroundColor.R);
+            var green = (int)((1 - fogFactor) * wallBaseColor.G + fogFactor * backgroundColor.G);
+            var blue = (int)((1 - fogFactor) * wallBaseColor.B + fogFactor * backgroundColor.B);
+
+            return Color.FromArgb(red, green, blue);
         }
 
         private static double DegreeToRadian(double degree) => degree * Math.PI / 180.0;
