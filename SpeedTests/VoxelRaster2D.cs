@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.Drawing;
 using Imaging;
 using Mathematics;
+using Voxels;
 
-namespace Voxels
+namespace SpeedTests
 {
-    internal sealed class Raster : IDisposable
+    internal sealed class VoxelRaster2D : IDisposable
     {
         // At the class level, define the Pen and SolidBrush (reuse them later).
 
@@ -27,7 +28,7 @@ namespace Voxels
         /// </summary>
         private float[] _yBuffer;
 
-        public Raster()
+        public VoxelRaster2D()
         {
             // Initialize the Pen and SolidBrush once.
             _linePen = new Pen(Color.Black); // Adjust the color as needed
@@ -364,7 +365,7 @@ namespace Voxels
             _disposed = true;
         }
 
-        ~Raster()
+        ~VoxelRaster2D()
         {
             // Finalizer calls Dispose(false).
             Dispose(false);

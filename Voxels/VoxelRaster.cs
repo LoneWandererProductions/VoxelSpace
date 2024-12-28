@@ -136,7 +136,7 @@ namespace Voxels
             RebuildCache();
 
             // If not cached, generate the bitmap.
-            var raster = new Raster();
+            var raster = new VoxelRaster3D();
 
             _currentImage = raster.RenderWithContainer(_colorMap, _heightMap, Camera, _topographyHeight,
                 _topographyWidth, _colorHeight, _colorWidth);
@@ -154,10 +154,12 @@ namespace Voxels
 
             if (Camera == null) return null;
 
+            Camera.Pitch = 50;
+
             InputHelper.UpdateDeltaTime();
 
             // Generate the start bitmap
-            var raster = new Raster();
+            var raster = new VoxelRaster3D();
 
             _currentImage = raster.RenderWithContainer(_colorMap, _heightMap, Camera, _topographyHeight,
                 _topographyWidth, _colorHeight, _colorWidth);
@@ -193,7 +195,7 @@ namespace Voxels
                 simulatedCamera = InputHelper.SimulateCameraMovementVoxel(key, simulatedCamera);
 
                 // Generate the bitmap
-                var raster = new Raster();
+                var raster = new VoxelRaster3D();
 
                 // Cache the bitmap
                 _lazyCache[key] = raster.RenderWithContainer(_colorMap, _heightMap, simulatedCamera,

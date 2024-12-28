@@ -100,7 +100,7 @@ namespace SpeedTests
         {
             if (_heightMap == null) return null;
 
-            var raster = new Raster();
+            var raster = new VoxelRaster2D();
 
             return raster.RenderImmediate(_colorMap, _heightMap, Camera, _topographyHeight, _topographyWidth,
                 _colorHeight, _colorWidth);
@@ -114,7 +114,7 @@ namespace SpeedTests
         {
             if (_heightMap == null) return null;
 
-            var raster = new Raster();
+            var raster = new VoxelRaster2D();
 
             return raster.RenderWithContainer(_colorMap, _heightMap, Camera, _topographyHeight, _topographyWidth,
                 _colorHeight, _colorWidth);
@@ -124,7 +124,7 @@ namespace SpeedTests
         {
             if (_heightMap == null) return null;
 
-            var raster = new Raster();
+            var raster = new VoxelRaster2D();
 
             return raster.RenderWithDepthBuffer(_colorMap, _heightMap, Camera, _topographyHeight, _topographyWidth,
                 _colorHeight, _colorWidth);
