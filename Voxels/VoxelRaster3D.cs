@@ -87,8 +87,6 @@ namespace Voxels
             // Initialize y-buffer to the maximum height of the screen
             Array.Fill(_yBuffer, camera.ScreenHeight);
 
-            var pixelTuples = new List<(int x, int y, Color color)>(camera.ScreenWidth * camera.ScreenHeight);
-
             var sinPhi = ExtendedMath.CalcSin(camera.Angle);
             var cosPhi = ExtendedMath.CalcCos(camera.Angle);
 
@@ -135,8 +133,6 @@ namespace Voxels
                     {
                         _yBuffer[i] = heightOnScreen;
 
-                        pixelTuples.Add((i, y1, color));
-
                         if (color != Color.Transparent)
                         {
                             var colorId = color.ToArgb();  // Convert color to a unique integer ID
@@ -154,7 +150,7 @@ namespace Voxels
                 dz += DzIncrement;
             }
 
-            pixelTuples = FillMissingColors();
+            var pixelTuples = FillMissingColors();
 
             var dbm = new DirectBitmap(camera.ScreenWidth, camera.ScreenHeight);
             dbm.SetPixelsSimd(pixelTuples);
@@ -173,7 +169,7 @@ namespace Voxels
             // Loop through each column slice (x-axis)
             for (var x = 0; x < _columnSlices.Count; x++)
             {
-                var columnSlice = _columnSlices[x];
+                Span<int> columnSlice = _columnSlices[x]; // Use Span for better slicing performance
                 var lastKnownColorId = 0; // Start with no known color ID
 
                 // Loop through each pixel in the column (y-axis)
