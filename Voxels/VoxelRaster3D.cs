@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
-using System.Linq;
 using Imaging;
 using Mathematics;
 
 namespace Voxels
 {
-    internal sealed class VoxelRaster3D : IDisposable
+    public sealed class VoxelRaster3D : IDisposable
     {
         /// <summary>
         /// The disposed
@@ -28,12 +28,7 @@ namespace Voxels
         public VoxelRaster3D(CameraContext context)
         {
             _context = context;
-            // Initialize column slices with the screen dimensions
-            _columnSlices = new List<int[]>(context.ScreenWidth);
-            for (var x = 0; x < context.ScreenWidth; x++)
-            {
-                _columnSlices.Add(new int[context.ScreenHeight]);
-            }
+            _columnSlices = new List<int[]>(_context.ScreenWidth);
         }
 
         /// <inheritdoc />
@@ -61,7 +56,7 @@ namespace Voxels
         /// <returns>
         ///     Finished Bitmap
         /// </returns>
-        internal Bitmap RenderWithContainer(
+        public Bitmap RenderWithContainer(
             Color[,] colorMap, int[,] heightMap, RVCamera camera,
             int topographyHeight, int topographyWidth, int colorHeight, int colorWidth)
         {
@@ -72,9 +67,14 @@ namespace Voxels
             // Step 1: Initialize the slices and the color dictionary
             _columnSlices = new List<int[]>(_context.ScreenWidth);
             var colorDictionary = new Dictionary<int, Color>();
+
+            _columnSlices = new List<int[]>(_context.ScreenWidth);
+
+            _columnSlices.Clear();
+            _columnSlices.Capacity = _context.ScreenWidth;
             for (var x = 0; x < _context.ScreenWidth; x++)
             {
-                _columnSlices.Add(new int[_context.ScreenHeight]); // Initialize each column slice with screenHeight
+                _columnSlices.Add(new int[_context.ScreenHeight]);
             }
             //TODO in the future move into constructor and use a copy
 
@@ -88,7 +88,7 @@ namespace Voxels
             float dz = 1;
 
             // Calculate the tangent of half the field of view (FOV) angle for the camera's projection
-            var tanFovHalf = (float)Math.Tan(camera.Fov / 2.0 * Math.PI / 180.0);
+            var tanFovHalf = (float)Math.Tan(_context.Fov / 2.0 * Math.PI / 180.0);
 
 
             while (z < camera.ZFar)
@@ -118,8 +118,8 @@ namespace Voxels
 
                     var color = colorMap[diffuseX & (colorWidth - 1), diffuseY & (colorHeight - 1)];
 
-                    var heightOnScreen = (float)(((_context.Height - heightOfHeightMap) / z * camera.Scale + camera.Horizon) -
-                                                 ExtendedMath.CalcTan(camera.Pitch) * camera.Scale);
+                    var heightOnScreen = (float)(((_context.Height - heightOfHeightMap) / z * _context.Scale + camera.Horizon) -
+                                                 ExtendedMath.CalcTan(camera.Pitch) * _context.Scale);
 
                     var y1 = (int)heightOnScreen;
 
@@ -156,7 +156,7 @@ namespace Voxels
         }
 
 
-        private List<(int x, int y, Color color)> FillMissingColors(Dictionary<int, Color> colorDictionary)
+        private IEnumerable<(int x, int y, Color color)> FillMissingColors(IReadOnlyDictionary<int, Color> colorDictionary)
         {
             var filledPixelTuples = new List<(int x, int y, Color color)>(_columnSlices.Count * _columnSlices[0].Length);
 
@@ -178,11 +178,22 @@ namespace Voxels
                         columnSlice[y] = lastKnownColorId;
                     }
 
-                    // Add the filled pixel to the output tuples
-                    if (columnSlice[y] == 0) continue;
+                    if (columnSlice[y] == 0)
+                    {
+                        // Transparent; no action needed
+                        continue;
+                    }
 
-                    var color = colorDictionary[columnSlice[y]]; // Get color from dictionary
-                    filledPixelTuples.Add((x, y, color));
+                    // Safeguard: Ensure the color ID exists in the dictionary
+                    if (colorDictionary.TryGetValue(columnSlice[y], out var color))
+                    {
+                        filledPixelTuples.Add((x, y, color));
+                    }
+                    else
+                    {
+                        // Handle missing color ID (e.g., log, default color, or skip)
+                        Trace.WriteLine($"Warning: Color ID {columnSlice[y]} not found in the dictionary.");
+                    }
                 }
             }
 

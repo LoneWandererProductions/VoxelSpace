@@ -13,25 +13,16 @@ namespace Voxels
 {
     public sealed class RVCamera
     {
-        public RVCamera(int x, int y, double fov, int direction)
+        public RVCamera(int x, int y, int direction)
         {
             X = x;
             Y = y;
-            Fov = fov;
             Angle = direction;
         }
 
         public RVCamera()
         {
         }
-
-        /// <summary>
-        /// Gets or sets the fov.
-        /// </summary>
-        /// <value>
-        /// The fov.
-        /// </value>
-        public double Fov { get; set; } = 90;
 
         /// <summary>
         ///     Gets or sets the color of the background.
@@ -67,16 +58,7 @@ namespace Voxels
         /// <value>
         /// The z.
         /// </value>
-        public int Z { get; internal set; }
-
-        /// <summary>
-        ///     Gets or sets the height.
-        ///     height of the camera
-        /// </summary>
-        /// <value>
-        ///     The height.
-        /// </value>
-        public int Height { get; init; }
+        public int Z { get; set; }
 
         /// <summary>
         ///     Gets or sets the horizon.
@@ -114,13 +96,6 @@ namespace Voxels
         /// </value>
         public int Pitch { get; set; }
 
-        /// <summary>
-        ///     Gets the scale.
-        /// </summary>
-        /// <value>
-        ///     The scale.
-        /// </value>
-        public int Scale { get; init; }
 
         /// <summary>
         ///     Creates a deep copy of the current Camera instance.
@@ -134,13 +109,10 @@ namespace Voxels
                 X = X,
                 Y = Y,
                 Z = Z,
-                Height = Height,
                 Horizon = Horizon,
                 ZFar = ZFar,
                 Angle = Angle,
-                Pitch = Pitch,
-                Scale = Scale,
-                Fov = Fov
+                Pitch = Pitch
             };
         }
 
@@ -159,7 +131,6 @@ namespace Voxels
             Horizon = original.Horizon;
             Angle = original.Angle;
             Pitch = Pitch;
-            Fov = Fov;
 
             // Immutable properties are skipped in restoration:
             // this.Height = original.Height;
@@ -175,7 +146,7 @@ namespace Voxels
         /// </returns>
         public override string ToString()
         {
-            return $"Camera [X={X}, Y={Y}, Z={Z}, Angle={Angle}, Horizon={Horizon}, Height={Height}, ZFar={ZFar}], Pitch= {Pitch}";
+            return $"Camera [X={X}, Y={Y}, Z={Z}, Angle={Angle}, Horizon={Horizon}, ZFar={ZFar}], Pitch= {Pitch}";
         }
     }
 }

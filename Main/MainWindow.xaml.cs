@@ -78,6 +78,8 @@ namespace Main
                     TxtBox.Text = string.Concat(TxtBox.Text, camera.ToString(),
                         Environment.NewLine);
                     break;
+                case "Hybrid":
+                    break;
                 default:
                     // Handle unexpected cases if needed
                     return;
@@ -107,6 +109,11 @@ namespace Main
                         _active = "Voxel";
                         InitiateVoxel();
                         break;
+                    case "Hybrid":
+                        // Add logic for Voxel
+                        _active = "Hybrid";
+                        InitiateHybrid();
+                        break;
                 }
             }
         }
@@ -129,9 +136,9 @@ namespace Main
             };
 
             // Set up a camera
-            var camera = new RVCamera(96, 96, 60, 0);  // Position and angle of the camera
+            var camera = new RVCamera(96, 96, 0);  // Position and angle of the camera
             //setup the context
-            CameraContext context =new (64, 800, 600);
+            CameraContext context =new (64, 600, 800);
 
             // Create Raycaster and render
             _raycaster = new RasterRaycast(map, camera, context);
@@ -149,13 +156,81 @@ namespace Main
             var heightMap =
                 new Bitmap(Image.FromFile(string.Concat(Directory.GetCurrentDirectory(), "\\Terrain\\D1.png")));
 
-            _voxel = new VoxelRaster(100, 100, 0, 100, 120, 120, 300, colorMap, heightMap, 300, 200);
+            _voxel = new VoxelRaster(100, 100, 0, 100, 120, 120, 300, colorMap, heightMap, 200, 300);
 
             var bmp = _voxel.StartEngine();
             ImageView.Source = bmp.ToBitmapImage();
 
             TxtBox.Text = string.Concat(TxtBox.Text, " x: ", _voxel.Camera.X, " y: ", _voxel.Camera.Y,
                 Environment.NewLine);
+        }
+
+        private void InitiateHybrid()
+        {
+            // Set up the camera context and Raycaster
+            var context = new CameraContext
+            {
+                ScreenWidth = 800,
+                ScreenHeight = 600,
+                Fov = 60,
+                Distance = 15,
+                CellSize = 1,
+                Scale = 100,
+                //Horizon = 200
+            };
+
+            // Generate the 2D map (height map) for the raycaster
+            var mapWidth = 40;
+            var mapHeight = 40;
+            var map = new int[mapHeight, mapWidth];
+
+            // Randomly assign some walls (1) and open spaces (0)
+            var rand = new Random();
+            for (int y = 0; y < mapHeight; y++)
+            {
+                for (int x = 0; x < mapWidth; x++)
+                {
+                    map[y, x] = rand.Next(0, 3); // 0 = empty, 1 = wall, 2 = different type of wall
+                }
+            }
+
+            // Create the voxel height map and color map
+            var heightMap = new int[mapHeight, mapWidth];
+            var colorMap = new Color[mapHeight, mapWidth];
+
+            // Generate height and color for each voxel in the map
+            for (int y = 0; y < mapHeight; y++)
+            {
+                for (int x = 0; x < mapWidth; x++)
+                {
+                    heightMap[y, x] = rand.Next(1, 10); // Random height between 1 and 10
+                    colorMap[y, x] = Color.FromArgb(rand.Next(255), rand.Next(255), rand.Next(255)); // Random color
+                }
+            }
+
+            // Set up the camera
+            var camera = new RVCamera
+            {
+                X = 20,
+                Y = 20,
+                Z = 5,
+                Angle = 0,
+                Pitch = 0
+            };
+
+            // Initialize the VoxelRaster3D and Raycaster
+            var voxelRaster3D = new VoxelRaster3D(context);
+            var raycaster = new Raycaster(map, context);
+
+            // Render the voxel map with the color and height map using the VoxelRaster3D
+            Bitmap voxelRenderedBitmap = voxelRaster3D.RenderWithContainer(colorMap, heightMap, camera, mapHeight, mapWidth, 256, 256);
+
+            // Render the map with raycasting
+            Bitmap raycastedBitmap = raycaster.Render(camera);
+
+            // Show the images (you can save or display them depending on your setup)
+            voxelRenderedBitmap.Save("VoxelRendered.png");
+            raycastedBitmap.Save("Raycasted.png");
         }
     }
 }

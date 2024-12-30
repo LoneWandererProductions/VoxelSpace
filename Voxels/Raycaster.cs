@@ -24,8 +24,8 @@ namespace Voxels
             using var g = Graphics.FromImage(bitmap);
             g.Clear(Color.Black);
 
-            var halfFov = camera.Fov / 2.0;
-            var angleStep = camera.Fov / _context.ScreenWidth;
+            var halfFov = _context.Fov / 2.0;
+            var angleStep = _context.Fov / _context.ScreenWidth;
 
             for (var x = 0; x < _context.ScreenWidth; x++)
             {

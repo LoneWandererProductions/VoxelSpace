@@ -58,7 +58,8 @@ namespace Voxels
 
         private readonly Key[] _directionKey;
         private Bitmap _currentImage;
-        private readonly VoxelRaster3D _raster;
+
+        private readonly CameraContext _context;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="VoxelRaster" /> class.
@@ -84,15 +85,11 @@ namespace Voxels
                 X = x,
                 Y = y,
                 Angle = degree,
-                Height = height,
                 Horizon = horizon,
-                Scale = scale,
                 ZFar = distance
             };
 
-            CameraContext context = new() { Height = height, Distance = distance, ScreenWidth = screenWidth, ScreenHeight =  screenHeight};
-
-            _raster = new VoxelRaster3D(context);
+            _context = new CameraContext() { Height = height, Distance = distance, ScreenWidth = screenWidth, ScreenHeight =  screenHeight, Scale = scale};
 
             ProcessColorMap(colorMap);
 
@@ -142,7 +139,10 @@ namespace Voxels
             // After each movement, rebuild the cache
             RebuildCache();
 
-            _currentImage = _raster.RenderWithContainer(_colorMap, _heightMap, Camera, _topographyHeight,
+            // initiate new instance
+            var raster = new VoxelRaster3D(_context);
+
+            _currentImage = raster.RenderWithContainer(_colorMap, _heightMap, Camera, _topographyHeight,
                 _topographyWidth, _colorHeight, _colorWidth);
 
             return _currentImage;
@@ -162,7 +162,10 @@ namespace Voxels
 
             InputHelper.UpdateDeltaTime();
 
-            _currentImage = _raster.RenderWithContainer(_colorMap, _heightMap, Camera, _topographyHeight,
+            // initiate new instance
+            var raster = new VoxelRaster3D(_context);
+
+            _currentImage = raster.RenderWithContainer(_colorMap, _heightMap, Camera, _topographyHeight,
                 _topographyWidth, _colorHeight, _colorWidth);
 
             return _currentImage;
@@ -195,8 +198,10 @@ namespace Voxels
                 // Simulate camera movement for the requested direction
                 simulatedCamera = InputHelper.SimulateCameraMovementVoxel(key, simulatedCamera);
 
+                // new instance needed to avoid conflicts
+                var raster = new VoxelRaster3D(_context);
                 // Cache the bitmap
-                _lazyCache[key] = _raster.RenderWithContainer(_colorMap, _heightMap, simulatedCamera,
+                _lazyCache[key] = raster.RenderWithContainer(_colorMap, _heightMap, simulatedCamera,
                     _topographyHeight, _topographyWidth, _colorHeight, _colorWidth);
             }
         }

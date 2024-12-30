@@ -20,6 +20,7 @@
         <ComboBox Grid.Row="0" Grid.Column="0" x:Name="comboBoxRender" SelectionChanged="comboBoxRender_SelectionChanged">
             <ComboBoxItem Content="Voxel" />
             <ComboBoxItem Content="Raycast" />
+            <ComboBoxItem Content="Hybrid" />
         </ComboBox>
     </Grid>
 </Window>
