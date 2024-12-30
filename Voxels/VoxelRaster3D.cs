@@ -20,26 +20,20 @@ namespace Voxels
         private float[] _yBuffer;
 
         private List<int[]> _columnSlices;
-        private Dictionary<int, Color> _colorDictionary;
+
+        private readonly CameraContext _context;
 
         private const float DzIncrement = 0.005f;
 
-        //TODO for the future
-        public VoxelRaster3D(int screenWidth, int screenHeight)
+        public VoxelRaster3D(CameraContext context)
         {
+            _context = context;
             // Initialize column slices with the screen dimensions
-            _columnSlices = new List<int[]>(screenWidth);
-            for (var x = 0; x < screenWidth; x++)
+            _columnSlices = new List<int[]>(context.ScreenWidth);
+            for (var x = 0; x < context.ScreenWidth; x++)
             {
-                _columnSlices.Add(new int[screenHeight]);
+                _columnSlices.Add(new int[context.ScreenHeight]);
             }
-
-            // Create a deep copy of _columnSlices for this render call
-            // var currentColumnSlices = _columnSlices.Select(slice => (int[])slice.Clone()).ToList();
-        }
-
-        public VoxelRaster3D()
-        {
         }
 
         /// <inheritdoc />
@@ -68,24 +62,24 @@ namespace Voxels
         ///     Finished Bitmap
         /// </returns>
         internal Bitmap RenderWithContainer(
-            Color[,] colorMap, int[,] heightMap, Camera camera,
+            Color[,] colorMap, int[,] heightMap, RVCamera camera,
             int topographyHeight, int topographyWidth, int colorHeight, int colorWidth)
         {
             // Initialize the Y-buffer to store the closest Y values for depth testing
-            _yBuffer = new float[camera.ScreenWidth];
-            Array.Fill(_yBuffer, camera.ScreenHeight); // Initially set all values to the screen height (farthest)
+            _yBuffer = new float[_context.ScreenWidth];
+            Array.Fill(_yBuffer, _context.ScreenHeight); // Initially set all values to the screen height (farthest)
 
             // Step 1: Initialize the slices and the color dictionary
-            _columnSlices = new List<int[]>(camera.ScreenWidth);
-            _colorDictionary = new Dictionary<int, Color>();
-            for (var x = 0; x < camera.ScreenWidth; x++)
+            _columnSlices = new List<int[]>(_context.ScreenWidth);
+            var colorDictionary = new Dictionary<int, Color>();
+            for (var x = 0; x < _context.ScreenWidth; x++)
             {
-                _columnSlices.Add(new int[camera.ScreenHeight]); // Initialize each column slice with screenHeight
+                _columnSlices.Add(new int[_context.ScreenHeight]); // Initialize each column slice with screenHeight
             }
             //TODO in the future move into constructor and use a copy
 
             // Initialize y-buffer to the maximum height of the screen
-            Array.Fill(_yBuffer, camera.ScreenHeight);
+            Array.Fill(_yBuffer, _context.ScreenHeight);
 
             var sinPhi = ExtendedMath.CalcSin(camera.Angle);
             var cosPhi = ExtendedMath.CalcCos(camera.Angle);
@@ -109,10 +103,10 @@ namespace Voxels
                 var pRightX = (float)(cosPhi * halfWidth - sinPhi * z) + camera.X;
                 var pRightY = (float)(-sinPhi * halfWidth - cosPhi * z) + camera.Y;
 
-                var dx = (pRightX - pLeftX) / camera.ScreenWidth;
-                var dy = (pRightY - pLeftY) / camera.ScreenWidth;
+                var dx = (pRightX - pLeftX) / _context.ScreenWidth;
+                var dy = (pRightY - pLeftY) / _context.ScreenWidth;
 
-                for (var i = 0; i < camera.ScreenWidth; i++)
+                for (var i = 0; i < _context.ScreenWidth; i++)
                 {
                     var diffuseX = (int)pLeftX;
                     var diffuseY = (int)pLeftY;
@@ -124,19 +118,19 @@ namespace Voxels
 
                     var color = colorMap[diffuseX & (colorWidth - 1), diffuseY & (colorHeight - 1)];
 
-                    var heightOnScreen = (float)(((camera.Height - heightOfHeightMap) / z * camera.Scale + camera.Horizon) -
+                    var heightOnScreen = (float)(((_context.Height - heightOfHeightMap) / z * camera.Scale + camera.Horizon) -
                                                  ExtendedMath.CalcTan(camera.Pitch) * camera.Scale);
 
                     var y1 = (int)heightOnScreen;
 
-                    if (y1 < _yBuffer[i] && y1 >= 0 && y1 < camera.ScreenHeight)
+                    if (y1 < _yBuffer[i] && y1 >= 0 && y1 < _context.ScreenHeight)
                     {
                         _yBuffer[i] = heightOnScreen;
 
                         if (color != Color.Transparent)
                         {
                             var colorId = color.ToArgb();  // Convert color to a unique integer ID
-                            _colorDictionary[colorId] = color;  // Store the color in the dictionary
+                            colorDictionary[colorId] = color;  // Store the color in the dictionary
 
                             _columnSlices[i][y1] = colorId;  // Assign the color ID to the slice
                         }
@@ -150,9 +144,9 @@ namespace Voxels
                 dz += DzIncrement;
             }
 
-            var pixelTuples = FillMissingColors();
+            var pixelTuples = FillMissingColors(colorDictionary);
 
-            var dbm = new DirectBitmap(camera.ScreenWidth, camera.ScreenHeight);
+            var dbm = new DirectBitmap(_context.ScreenWidth, _context.ScreenHeight);
             dbm.SetPixelsSimd(pixelTuples);
 
             // After rendering, clear the buffers:
@@ -162,7 +156,7 @@ namespace Voxels
         }
 
 
-        private List<(int x, int y, Color color)> FillMissingColors()
+        private List<(int x, int y, Color color)> FillMissingColors(Dictionary<int, Color> colorDictionary)
         {
             var filledPixelTuples = new List<(int x, int y, Color color)>(_columnSlices.Count * _columnSlices[0].Length);
 
@@ -187,7 +181,7 @@ namespace Voxels
                     // Add the filled pixel to the output tuples
                     if (columnSlice[y] == 0) continue;
 
-                    var color = _colorDictionary[columnSlice[y]]; // Get color from dictionary
+                    var color = colorDictionary[columnSlice[y]]; // Get color from dictionary
                     filledPixelTuples.Add((x, y, color));
                 }
             }

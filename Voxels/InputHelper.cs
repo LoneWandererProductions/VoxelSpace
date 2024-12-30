@@ -27,7 +27,7 @@ namespace Voxels
         /// <param name="key">The key.</param>
         /// <param name="cam">The camera.</param>
         /// <returns>New Camera Values</returns>
-        public static Camera SimulateCameraMovementVoxel(Key key, Camera cam)
+        public static RVCamera SimulateCameraMovementVoxel(Key key, RVCamera cam)
         {
             UpdateDeltaTime(); // Update deltaTime based on frame time
 
@@ -80,7 +80,7 @@ namespace Voxels
         /// <param name="key">The key.</param>
         /// <param name="cam">The camera.</param>
         /// <returns>New Camera Values</returns>
-        public static Camera SimulateCameraMovementRay(Key key, Camera cam)
+        public static RVCamera SimulateCameraMovementRay(Key key, RVCamera cam)
         {
             UpdateDeltaTime(); // Update deltaTime based on frame time
 

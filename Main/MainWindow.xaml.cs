@@ -49,7 +49,7 @@ namespace Main
             timer.Start();
 
             Bitmap bmp;
-            Camera camera;
+            RVCamera camera;
 
             switch (_active)
             {
@@ -129,7 +129,7 @@ namespace Main
             };
 
             // Set up a camera
-            var camera = new Camera(96, 96, 60, 0);  // Position and angle of the camera
+            var camera = new RVCamera(96, 96, 60, 0);  // Position and angle of the camera
             //setup the context
             CameraContext context =new (64, 800, 600);
 
@@ -149,7 +149,7 @@ namespace Main
             var heightMap =
                 new Bitmap(Image.FromFile(string.Concat(Directory.GetCurrentDirectory(), "\\Terrain\\D1.png")));
 
-            _voxel = new VoxelRaster(100, 100, 0, 100, 120, 120, 300, colorMap, heightMap);
+            _voxel = new VoxelRaster(100, 100, 0, 100, 120, 120, 300, colorMap, heightMap, 300, 200);
 
             var bmp = _voxel.StartEngine();
             ImageView.Source = bmp.ToBitmapImage();

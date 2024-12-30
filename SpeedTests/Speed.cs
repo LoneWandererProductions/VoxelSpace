@@ -45,7 +45,7 @@ namespace SpeedTests
 
             _voxel = new VoxelRasterTest(100, 100, 0, 100, 120, 120, 300, colorMap, heightMap);
 
-            _raster = new VoxelRaster(100, 100, 0, 100, 120, 120, 300, colorMap, heightMap);
+            _raster = new VoxelRaster(100, 100, 0, 100, 120, 120, 300, colorMap, heightMap, 800, 600);
         }
 
         /// <summary>

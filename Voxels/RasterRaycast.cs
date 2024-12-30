@@ -5,10 +5,10 @@ namespace Voxels
 {
     public class RasterRaycast
     {
-        public Camera Camera { get; set; }
+        public RVCamera Camera { get; set; }
         private readonly Raycaster _ray;
 
-        public RasterRaycast(int[,] map, Camera camera, CameraContext context)
+        public RasterRaycast(int[,] map, RVCamera camera, CameraContext context)
         {
             Camera = camera;
 

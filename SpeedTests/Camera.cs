@@ -9,7 +9,7 @@
 using System;
 using System.Drawing;
 
-namespace Voxels
+namespace SpeedTests
 {
     public sealed class Camera
     {

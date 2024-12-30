@@ -58,9 +58,10 @@ namespace Voxels
 
         private readonly Key[] _directionKey;
         private Bitmap _currentImage;
+        private readonly VoxelRaster3D _raster;
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="VoxelRaster" /> class.
+        /// Initializes a new instance of the <see cref="VoxelRaster" /> class.
         /// </summary>
         /// <param name="x">The x.</param>
         /// <param name="y">The y.</param>
@@ -71,12 +72,14 @@ namespace Voxels
         /// <param name="distance">The distance.</param>
         /// <param name="colorMap">The bitmap with the colors</param>
         /// <param name="heightMap">The bitmap with the height map.</param>
+        /// <param name="screenHeight">Height of the screen.</param>
+        /// <param name="screenWidth">Width of the screen.</param>
         public VoxelRaster(int x, int y, int degree, int height, int horizon, int scale, int distance, Bitmap colorMap,
-            Bitmap heightMap)
+            Bitmap heightMap, int screenHeight, int screenWidth)
         {
             _directionKey = new[] {Key.W, Key.S, Key.A, Key.D, Key.O, Key.P, Key.X, Key.Y};
 
-            Camera = new Camera
+            Camera = new RVCamera
             {
                 X = x,
                 Y = y,
@@ -86,6 +89,10 @@ namespace Voxels
                 Scale = scale,
                 ZFar = distance
             };
+
+            CameraContext context = new() { Height = height, Distance = distance, ScreenWidth = screenWidth, ScreenHeight =  screenHeight};
+
+            _raster = new VoxelRaster3D(context);
 
             ProcessColorMap(colorMap);
 
@@ -109,7 +116,7 @@ namespace Voxels
         /// <value>
         ///     The camera.
         /// </value>
-        public Camera Camera { get; set; }
+        public RVCamera Camera { get; set; }
 
         /// <summary>
         ///     Gets the bitmap for key.
@@ -135,10 +142,7 @@ namespace Voxels
             // After each movement, rebuild the cache
             RebuildCache();
 
-            // If not cached, generate the bitmap.
-            var raster = new VoxelRaster3D();
-
-            _currentImage = raster.RenderWithContainer(_colorMap, _heightMap, Camera, _topographyHeight,
+            _currentImage = _raster.RenderWithContainer(_colorMap, _heightMap, Camera, _topographyHeight,
                 _topographyWidth, _colorHeight, _colorWidth);
 
             return _currentImage;
@@ -158,10 +162,7 @@ namespace Voxels
 
             InputHelper.UpdateDeltaTime();
 
-            // Generate the start bitmap
-            var raster = new VoxelRaster3D();
-
-            _currentImage = raster.RenderWithContainer(_colorMap, _heightMap, Camera, _topographyHeight,
+            _currentImage = _raster.RenderWithContainer(_colorMap, _heightMap, Camera, _topographyHeight,
                 _topographyWidth, _colorHeight, _colorWidth);
 
             return _currentImage;
@@ -194,11 +195,8 @@ namespace Voxels
                 // Simulate camera movement for the requested direction
                 simulatedCamera = InputHelper.SimulateCameraMovementVoxel(key, simulatedCamera);
 
-                // Generate the bitmap
-                var raster = new VoxelRaster3D();
-
                 // Cache the bitmap
-                _lazyCache[key] = raster.RenderWithContainer(_colorMap, _heightMap, simulatedCamera,
+                _lazyCache[key] = _raster.RenderWithContainer(_colorMap, _heightMap, simulatedCamera,
                     _topographyHeight, _topographyWidth, _colorHeight, _colorWidth);
             }
         }
@@ -272,7 +270,7 @@ namespace Voxels
                 _cancellationTokenSource?.Cancel();
                 _cancellationTokenSource?.Dispose();
 
-                if (_cachePreloadThread != null && _cachePreloadThread.IsAlive)
+                if (_cachePreloadThread is {IsAlive: true})
                 {
                     try
                     {
