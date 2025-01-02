@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Threading;
@@ -60,6 +61,8 @@ namespace Voxels
         private Bitmap _currentImage;
 
         private readonly CameraContext _context;
+        private VoxelRaster3D _raster;
+        private Dictionary<int, Color> _colorDictionary;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="VoxelRaster" /> class.
@@ -94,6 +97,10 @@ namespace Voxels
             ProcessColorMap(colorMap);
 
             ProcessHeightMap(heightMap);
+
+            BuildColorDictionary();
+
+            _raster = new VoxelRaster3D(_context);
 
             _lazyCache = new ConcurrentDictionary<Key, Bitmap>();
 
@@ -140,9 +147,9 @@ namespace Voxels
             RebuildCache();
 
             // initiate new instance
-            var raster = new VoxelRaster3D(_context);
+            //_raster = new VoxelRaster3D(_context);
 
-            _currentImage = raster.RenderWithContainer(_colorMap, _heightMap, Camera, _topographyHeight,
+            _currentImage = _raster.RenderWithContainer(_colorMap, _heightMap, Camera, _topographyHeight,
                 _topographyWidth, _colorHeight, _colorWidth);
 
             return _currentImage;
@@ -163,12 +170,31 @@ namespace Voxels
             InputHelper.UpdateDeltaTime();
 
             // initiate new instance
-            var raster = new VoxelRaster3D(_context);
+            //var raster = new VoxelRaster3D(_context);
 
-            _currentImage = raster.RenderWithContainer(_colorMap, _heightMap, Camera, _topographyHeight,
+            _currentImage = _raster.RenderWithContainer(_colorMap, _heightMap, Camera, _topographyHeight,
                 _topographyWidth, _colorHeight, _colorWidth);
 
             return _currentImage;
+        }
+
+        private void BuildColorDictionary()
+        {
+            _colorDictionary = new Dictionary<int, Color>();
+
+            // Iterate over all pixels in the colorMap and add them to the dictionary
+            for (int x = 0; x < _colorWidth; x++)
+            {
+                for (int y = 0; y < _colorHeight; y++)
+                {
+                    var color = _colorMap[x, y];
+                    var colorId = color.ToArgb();
+                    if (!_colorDictionary.ContainsKey(colorId))
+                    {
+                        _colorDictionary.Add(colorId, color);
+                    }
+                }
+            }
         }
 
 
@@ -199,9 +225,9 @@ namespace Voxels
                 simulatedCamera = InputHelper.SimulateCameraMovementVoxel(key, simulatedCamera);
 
                 // new instance needed to avoid conflicts
-                var raster = new VoxelRaster3D(_context);
+                //var raster = new VoxelRaster3D(_context);
                 // Cache the bitmap
-                _lazyCache[key] = raster.RenderWithContainer(_colorMap, _heightMap, simulatedCamera,
+                _lazyCache[key] = _raster.RenderWithContainer(_colorMap, _heightMap, simulatedCamera,
                     _topographyHeight, _topographyWidth, _colorHeight, _colorWidth);
             }
         }

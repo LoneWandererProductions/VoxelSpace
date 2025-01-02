@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using System.Numerics;
+using System.Threading.Tasks;
 using Imaging;
 using Mathematics;
 
@@ -22,13 +25,24 @@ namespace Voxels
         private List<int[]> _columnSlices;
 
         private readonly CameraContext _context;
+        private DirectBitmap _directBitmap;
 
         private const float DzIncrement = 0.005f;
 
         public VoxelRaster3D(CameraContext context)
         {
             _context = context;
+            InitializeBuffers();
+        }
+
+        private void InitializeBuffers()
+        {
+            _yBuffer = new float[_context.ScreenWidth];
             _columnSlices = new List<int[]>(_context.ScreenWidth);
+            for (var i = 0; i < _context.ScreenWidth; i++)
+            {
+                _columnSlices.Add(new int[_context.ScreenHeight]);
+            }
         }
 
         /// <inheritdoc />
@@ -61,25 +75,11 @@ namespace Voxels
             int topographyHeight, int topographyWidth, int colorHeight, int colorWidth)
         {
             // Initialize the Y-buffer to store the closest Y values for depth testing
-            _yBuffer = new float[_context.ScreenWidth];
-            Array.Fill(_yBuffer, _context.ScreenHeight); // Initially set all values to the screen height (farthest)
-
-            // Step 1: Initialize the slices and the color dictionary
-            _columnSlices = new List<int[]>(_context.ScreenWidth);
-            var colorDictionary = new Dictionary<int, Color>();
-
-            _columnSlices = new List<int[]>(_context.ScreenWidth);
-
-            _columnSlices.Clear();
-            _columnSlices.Capacity = _context.ScreenWidth;
-            for (var x = 0; x < _context.ScreenWidth; x++)
-            {
-                _columnSlices.Add(new int[_context.ScreenHeight]);
-            }
-            //TODO in the future move into constructor and use a copy
-
-            // Initialize y-buffer to the maximum height of the screen
+            // Clear buffers (reuse instead of reallocating)
             Array.Fill(_yBuffer, _context.ScreenHeight);
+            foreach (var slice in _columnSlices) Array.Fill(slice, 0);
+
+            var colorDictionary = new Dictionary<int, Color>();
 
             var sinPhi = ExtendedMath.CalcSin(camera.Angle);
             var cosPhi = ExtendedMath.CalcCos(camera.Angle);
@@ -146,22 +146,22 @@ namespace Voxels
 
             var pixelTuples = FillMissingColors(colorDictionary);
 
-            var dbm = new DirectBitmap(_context.ScreenWidth, _context.ScreenHeight);
-            dbm.SetPixelsSimd(pixelTuples);
+            // Reuse DirectBitmap instance to avoid creating new objects
+            _directBitmap = new DirectBitmap(_context.ScreenWidth, _context.ScreenHeight);
+            _directBitmap.SetPixelsSimd(pixelTuples);
 
             // After rendering, clear the buffers:
             Array.Clear(_yBuffer, 0, _yBuffer.Length);
 
-            return dbm.Bitmap;
+            return _directBitmap.Bitmap;
         }
-
 
         private IEnumerable<(int x, int y, Color color)> FillMissingColors(IReadOnlyDictionary<int, Color> colorDictionary)
         {
-            var filledPixelTuples = new List<(int x, int y, Color color)>(_columnSlices.Count * _columnSlices[0].Length);
+            var filledPixelTuples = new ConcurrentBag<(int x, int y, Color color)>();
 
-            // Loop through each column slice (x-axis)
-            for (var x = 0; x < _columnSlices.Count; x++)
+            // Use Parallel.For to process each column slice in parallel
+            Parallel.For(0, _columnSlices.Count, x =>
             {
                 Span<int> columnSlice = _columnSlices[x]; // Use Span for better slicing performance
                 var lastKnownColorId = 0; // Start with no known color ID
@@ -195,11 +195,10 @@ namespace Voxels
                         Trace.WriteLine($"Warning: Color ID {columnSlice[y]} not found in the dictionary.");
                     }
                 }
-            }
+            });
 
             return filledPixelTuples;
         }
-
 
         private void Dispose(bool disposing)
         {
