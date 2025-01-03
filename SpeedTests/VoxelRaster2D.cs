@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Drawing;
 using Imaging;
 using Mathematics;
-using Voxels;
 
 namespace SpeedTests
 {
@@ -16,12 +15,12 @@ namespace SpeedTests
         /// </summary>
         private readonly Pen _linePen;
 
+        private bool _disposed;
+
         /// <summary>
         ///     The solid brush
         /// </summary>
         private SolidBrush _solidBrush;
-
-        private bool _disposed;
 
         /// <summary>
         ///     The y buffer
@@ -152,7 +151,7 @@ namespace SpeedTests
         {
             if (heightOnScreen > buffer) return;
 
-            var lineHeight = (int) (buffer - heightOnScreen);
+            var lineHeight = (int)(buffer - heightOnScreen);
             var rect = new Rectangle(x, heightOnScreen, 1, lineHeight);
 
             _solidBrush = new SolidBrush(col); // Update the brush color
@@ -288,12 +287,12 @@ namespace SpeedTests
             float z = 1;
             float dz = 1;
 
-            float tanFovHalf = (float)Math.Tan(camera.Fov / 2.0 * Math.PI / 180.0);
+            var tanFovHalf = (float)Math.Tan(camera.Fov / 2.0 * Math.PI / 180.0);
 
             while (z < camera.ZFar)
             {
                 // Calculate frustum width based on FOV and depth (z)
-                float halfWidth = z * tanFovHalf;
+                var halfWidth = z * tanFovHalf;
 
                 // Frustum bounds
                 var pLeftX = (float)(-cosPhi * halfWidth - sinPhi * z) + camera.X;
@@ -317,7 +316,8 @@ namespace SpeedTests
 
                     var color = colorMap[diffuseX & (colorWidth - 1), diffuseY & (colorHeight - 1)];
 
-                    var heightOnScreen = (float)(((camera.Height - heightOfHeightMap) / z * camera.Scale + camera.Horizon) -
+                    var heightOnScreen = (float)((camera.Height - heightOfHeightMap) / z * camera.Scale +
+                                                 camera.Horizon -
                                                  ExtendedMath.CalcTan(camera.Pitch) * camera.Scale);
 
                     var y1 = (int)heightOnScreen;

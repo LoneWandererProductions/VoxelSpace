@@ -6,10 +6,10 @@ namespace SpeedTests
 {
     public class Raycaster6
     {
-        private readonly int[,] _map;
-        private readonly int _mapWidth;
-        private readonly int _mapHeight;
         private readonly CameraContext _context;
+        private readonly int[,] _map;
+        private readonly int _mapHeight;
+        private readonly int _mapWidth;
 
         public Raycaster6(int[,] map, CameraContext context)
         {
@@ -30,7 +30,7 @@ namespace SpeedTests
 
             for (var x = 0; x < _context.ScreenWidth; x++)
             {
-                var rayAngle = (camera.Angle - halfFov) + x * angleStep;
+                var rayAngle = camera.Angle - halfFov + x * angleStep;
                 var rayX = Math.Cos(DegreeToRadian(rayAngle));
                 var rayY = Math.Sin(DegreeToRadian(rayAngle));
 
@@ -42,7 +42,8 @@ namespace SpeedTests
                 // Apply pitch adjustment
                 var pitchOffset = (int)(camera.Pitch * (_context.ScreenHeight / 180.0)); // Scale pitch to screen height
                 var wallTop = Math.Max(0, (_context.ScreenHeight - wallHeight) / 2 - pitchOffset);
-                var wallBottom = Math.Min(_context.ScreenHeight, (_context.ScreenHeight + wallHeight) / 2 - pitchOffset);
+                var wallBottom = Math.Min(_context.ScreenHeight,
+                    (_context.ScreenHeight + wallHeight) / 2 - pitchOffset);
 
                 var wallColor = GetWallColor(distanceToWall);
 
@@ -81,6 +82,9 @@ namespace SpeedTests
             return Color.FromArgb(intensity, intensity, intensity);
         }
 
-        private static double DegreeToRadian(double degree) => degree * Math.PI / 180.0;
+        private static double DegreeToRadian(double degree)
+        {
+            return degree * Math.PI / 180.0;
+        }
     }
 }

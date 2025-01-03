@@ -7,7 +7,7 @@
         Title="MainWindow" Height="450" Width="800" PreviewKeyDown="Window_PreviewKeyDown">
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="25"/>
+            <RowDefinition Height="25" />
             <RowDefinition />
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
@@ -17,7 +17,8 @@
         <Image Name="ImageView" Grid.Column="1" Grid.RowSpan="2" />
         <TextBox Grid.Column="0" x:Name="TxtBox" VerticalContentAlignment="Stretch"
                  TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" IsReadOnly="True" Grid.Row="1" />
-        <ComboBox Grid.Row="0" Grid.Column="0" x:Name="comboBoxRender" SelectionChanged="comboBoxRender_SelectionChanged">
+        <ComboBox Grid.Row="0" Grid.Column="0" x:Name="comboBoxRender"
+                  SelectionChanged="comboBoxRender_SelectionChanged">
             <ComboBoxItem Content="Voxel" />
             <ComboBoxItem Content="Raycast" />
             <ComboBoxItem Content="Hybrid" />

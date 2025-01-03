@@ -26,10 +26,10 @@ namespace SpeedTests
         }
 
         /// <summary>
-        /// Gets or sets the fov.
+        ///     Gets or sets the fov.
         /// </summary>
         /// <value>
-        /// The fov.
+        ///     The fov.
         /// </value>
         public double Fov { get; set; } = 90;
 
@@ -60,12 +60,12 @@ namespace SpeedTests
         public int Y { get; set; }
 
         /// <summary>
-        /// Gets the z.
-        /// Z = − CellSize / 2: Bottom of the cell.
-        /// Z = + CellSize / 2: Top of the cell.
+        ///     Gets the z.
+        ///     Z = − CellSize / 2: Bottom of the cell.
+        ///     Z = + CellSize / 2: Top of the cell.
         /// </summary>
         /// <value>
-        /// The z.
+        ///     The z.
         /// </value>
         public int Z { get; internal set; }
 
@@ -197,7 +197,8 @@ namespace SpeedTests
         /// </returns>
         public override string ToString()
         {
-            return $"Camera [X={X}, Y={Y}, Z={Z}, Angle={Angle}, Horizon={Horizon}, Height={Height}, ZFar={ZFar}], Pitch= {Pitch}";
+            return
+                $"Camera [X={X}, Y={Y}, Z={Z}, Angle={Angle}, Horizon={Horizon}, Height={Height}, ZFar={ZFar}], Pitch= {Pitch}";
         }
     }
 }

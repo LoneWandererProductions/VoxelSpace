@@ -11,16 +11,16 @@ using System.Drawing;
 
 namespace Voxels
 {
-    public sealed class RVCamera
+    public sealed class RvCamera
     {
-        public RVCamera(int x, int y, int direction)
+        public RvCamera(int x, int y, int direction)
         {
             X = x;
             Y = y;
             Angle = direction;
         }
 
-        public RVCamera()
+        public RvCamera()
         {
         }
 
@@ -51,12 +51,12 @@ namespace Voxels
         public int Y { get; set; }
 
         /// <summary>
-        /// Gets the z.
-        /// Z = − CellSize / 2: Bottom of the cell.
-        /// Z = + CellSize / 2: Top of the cell.
+        ///     Gets the z.
+        ///     Z = − CellSize / 2: Bottom of the cell.
+        ///     Z = + CellSize / 2: Top of the cell.
         /// </summary>
         /// <value>
-        /// The z.
+        ///     The z.
         /// </value>
         public int Z { get; set; }
 
@@ -101,9 +101,9 @@ namespace Voxels
         ///     Creates a deep copy of the current Camera instance.
         /// </summary>
         /// <returns>A new Camera instance with the same property values.</returns>
-        internal RVCamera Clone()
+        internal RvCamera Clone()
         {
-            return new RVCamera
+            return new RvCamera
             {
                 BackgroundColor = BackgroundColor,
                 X = X,
@@ -120,7 +120,7 @@ namespace Voxels
         ///     Restores the current Camera instance with the values from another Camera.
         /// </summary>
         /// <param name="original">The Camera instance to copy values from.</param>
-        internal void Restore(RVCamera original)
+        internal void Restore(RvCamera original)
         {
             if (original == null) throw new ArgumentNullException(nameof(original));
 

@@ -5,10 +5,10 @@ namespace Voxels
 {
     public class Raycaster
     {
-        private readonly int[,] _map;
-        private readonly int _mapWidth;
-        private readonly int _mapHeight;
         private readonly CameraContext _context;
+        private readonly int[,] _map;
+        private readonly int _mapHeight;
+        private readonly int _mapWidth;
 
         public Raycaster(int[,] map, CameraContext context)
         {
@@ -18,7 +18,7 @@ namespace Voxels
             _context = context;
         }
 
-        public Bitmap Render(RVCamera camera)
+        public Bitmap Render(RvCamera camera)
         {
             Bitmap bitmap = new(_context.ScreenWidth, _context.ScreenHeight);
             using var g = Graphics.FromImage(bitmap);
@@ -29,7 +29,7 @@ namespace Voxels
 
             for (var x = 0; x < _context.ScreenWidth; x++)
             {
-                var rayAngle = (camera.Angle - halfFov) + x * angleStep;
+                var rayAngle = camera.Angle - halfFov + x * angleStep;
                 var rayX = Math.Cos(DegreeToRadian(rayAngle));
                 var rayY = Math.Sin(DegreeToRadian(rayAngle));
 
@@ -43,7 +43,7 @@ namespace Voxels
                 var wallHeight = (int)(_context.ScreenHeight / distanceToWall);
 
                 // Adjust wall height by camera's Z position (Z offset)
-                var zOffset = (int)((camera.Z / _context.CellSize) * wallHeight);
+                var zOffset = camera.Z / _context.CellSize * wallHeight;
                 var wallTop = Math.Max(0, (_context.ScreenHeight - wallHeight) / 2 - zOffset);
                 var wallBottom = Math.Min(_context.ScreenHeight, (_context.ScreenHeight + wallHeight) / 2 - zOffset);
 
@@ -91,6 +91,9 @@ namespace Voxels
             return Color.FromArgb(red, green, blue);
         }
 
-        private static double DegreeToRadian(double degree) => degree * Math.PI / 180.0;
+        private static double DegreeToRadian(double degree)
+        {
+            return degree * Math.PI / 180.0;
+        }
     }
 }

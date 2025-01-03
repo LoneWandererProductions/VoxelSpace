@@ -7,6 +7,11 @@ namespace Voxels
 {
     public static class InputHelper
     {
+        /// <summary>
+        ///     Time elapsed since the last frame
+        /// </summary>
+        private static float _elapsedTime;
+
         public static float RotationSpeed { get; set; } = 30f;
 
         public static float MovementSpeed { get; set; } = 30f;
@@ -17,17 +22,12 @@ namespace Voxels
         public static DateTime LastUpdateTime { get; set; }
 
         /// <summary>
-        ///     Time elapsed since the last frame
-        /// </summary>
-        private static float _elapsedTime;
-
-        /// <summary>
-        /// Simulates the camera movement.
+        ///     Simulates the camera movement.
         /// </summary>
         /// <param name="key">The key.</param>
         /// <param name="cam">The camera.</param>
         /// <returns>New Camera Values</returns>
-        public static RVCamera SimulateCameraMovementVoxel(Key key, RVCamera cam)
+        public static RvCamera SimulateCameraMovementVoxel(Key key, RvCamera cam)
         {
             UpdateDeltaTime(); // Update deltaTime based on frame time
 
@@ -75,12 +75,12 @@ namespace Voxels
         }
 
         /// <summary>
-        /// Simulates the camera movement.
+        ///     Simulates the camera movement.
         /// </summary>
         /// <param name="key">The key.</param>
         /// <param name="cam">The camera.</param>
         /// <returns>New Camera Values</returns>
-        public static RVCamera SimulateCameraMovementRay(Key key, RVCamera cam)
+        public static RvCamera SimulateCameraMovementRay(Key key, RvCamera cam)
         {
             UpdateDeltaTime(); // Update deltaTime based on frame time
 

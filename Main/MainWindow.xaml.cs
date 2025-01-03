@@ -25,9 +25,9 @@ namespace Main
     /// </summary>
     public sealed partial class MainWindow
     {
-        private VoxelRaster _voxel;
         private string _active;
         private RasterRaycast _raycaster;
+        private VoxelRaster _voxel;
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="MainWindow" /> class.
@@ -49,7 +49,7 @@ namespace Main
             timer.Start();
 
             Bitmap bmp;
-            RVCamera camera;
+            RvCamera camera;
 
             switch (_active)
             {
@@ -89,14 +89,13 @@ namespace Main
         }
 
         /// <summary>
-        /// Handles the SelectionChanged event of the comboBoxRender control.
+        ///     Handles the SelectionChanged event of the comboBoxRender control.
         /// </summary>
         /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="SelectionChangedEventArgs"/> instance containing the event data.</param>
+        /// <param name="e">The <see cref="SelectionChangedEventArgs" /> instance containing the event data.</param>
         private void comboBoxRender_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (comboBoxRender.SelectedItem is ComboBoxItem selectedItem)
-            {
                 switch (selectedItem.Content.ToString())
                 {
                     case "Raycast":
@@ -115,30 +114,29 @@ namespace Main
                         InitiateHybrid();
                         break;
                 }
-            }
         }
 
         private void InitiateVRaycaster()
         {
             // Simple map where 1 is a wall and 0 is empty space
-            int[,] map = new int[10, 10]
+            var map = new int[10, 10]
             {
-                {1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-                {1, 0, 0, 0, 1, 0, 0, 0, 0, 1},
-                {1, 0, 1, 0, 1, 0, 1, 0, 0, 1},
-                {1, 0, 1, 0, 1, 0, 1, 0, 0, 1},
-                {1, 0, 0, 0, 1, 0, 1, 0, 1, 1},
-                {1, 0, 1, 0, 0, 0, 1, 1, 1, 1},
-                {1, 0, 1, 1, 1, 1, 0, 0, 0, 1},
-                {1, 0, 0, 0, 1, 0, 1, 0, 1, 1},
-                {1, 1, 1, 1, 1, 0, 1, 0, 0, 1},
-                {1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
+                { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                { 1, 0, 0, 0, 1, 0, 0, 0, 0, 1 },
+                { 1, 0, 1, 0, 1, 0, 1, 0, 0, 1 },
+                { 1, 0, 1, 0, 1, 0, 1, 0, 0, 1 },
+                { 1, 0, 0, 0, 1, 0, 1, 0, 1, 1 },
+                { 1, 0, 1, 0, 0, 0, 1, 1, 1, 1 },
+                { 1, 0, 1, 1, 1, 1, 0, 0, 0, 1 },
+                { 1, 0, 0, 0, 1, 0, 1, 0, 1, 1 },
+                { 1, 1, 1, 1, 1, 0, 1, 0, 0, 1 },
+                { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }
             };
 
             // Set up a camera
-            var camera = new RVCamera(96, 96, 0);  // Position and angle of the camera
+            var camera = new RvCamera(96, 96, 0); // Position and angle of the camera
             //setup the context
-            CameraContext context =new (64, 600, 800);
+            CameraContext context = new(64, 600, 800);
 
             // Create Raycaster and render
             _raycaster = new RasterRaycast(map, camera, context);
@@ -175,7 +173,7 @@ namespace Main
                 Fov = 60,
                 Distance = 15,
                 CellSize = 1,
-                Scale = 100,
+                Scale = 100
                 //Horizon = 200
             };
 
@@ -186,30 +184,24 @@ namespace Main
 
             // Randomly assign some walls (1) and open spaces (0)
             var rand = new Random();
-            for (int y = 0; y < mapHeight; y++)
-            {
-                for (int x = 0; x < mapWidth; x++)
-                {
-                    map[y, x] = rand.Next(0, 3); // 0 = empty, 1 = wall, 2 = different type of wall
-                }
-            }
+            for (var y = 0; y < mapHeight; y++)
+            for (var x = 0; x < mapWidth; x++)
+                map[y, x] = rand.Next(0, 3); // 0 = empty, 1 = wall, 2 = different type of wall
 
             // Create the voxel height map and color map
             var heightMap = new int[mapHeight, mapWidth];
             var colorMap = new Color[mapHeight, mapWidth];
 
             // Generate height and color for each voxel in the map
-            for (int y = 0; y < mapHeight; y++)
+            for (var y = 0; y < mapHeight; y++)
+            for (var x = 0; x < mapWidth; x++)
             {
-                for (int x = 0; x < mapWidth; x++)
-                {
-                    heightMap[y, x] = rand.Next(1, 10); // Random height between 1 and 10
-                    colorMap[y, x] = Color.FromArgb(rand.Next(255), rand.Next(255), rand.Next(255)); // Random color
-                }
+                heightMap[y, x] = rand.Next(1, 10); // Random height between 1 and 10
+                colorMap[y, x] = Color.FromArgb(rand.Next(255), rand.Next(255), rand.Next(255)); // Random color
             }
 
             // Set up the camera
-            var camera = new RVCamera
+            var camera = new RvCamera
             {
                 X = 20,
                 Y = 20,
@@ -219,14 +211,15 @@ namespace Main
             };
 
             // Initialize the VoxelRaster3D and Raycaster
-            var voxelRaster3D = new VoxelRaster3D(context, colorMap, heightMap, mapWidth, mapHeight, mapWidth, mapHeight);
+            var voxelRaster3D =
+                new VoxelRaster3D(context, colorMap, heightMap, mapWidth, mapHeight, mapWidth, mapHeight);
             var raycaster = new Raycaster(map, context);
 
             // Render the voxel map with the color and height map using the VoxelRaster3D
-            Bitmap voxelRenderedBitmap = voxelRaster3D.RenderWithContainer(camera);
+            var voxelRenderedBitmap = voxelRaster3D.RenderWithContainer(camera);
 
             // Render the map with raycasting
-            Bitmap raycastedBitmap = raycaster.Render(camera);
+            var raycastedBitmap = raycaster.Render(camera);
 
             // Show the images (you can save or display them depending on your setup)
             voxelRenderedBitmap.Save("VoxelRendered.png");

@@ -11,7 +11,6 @@
 
 using System.Drawing;
 using Imaging;
-using Voxels;
 
 namespace SpeedTests
 {
@@ -24,6 +23,38 @@ namespace SpeedTests
         ///     The color height
         /// </summary>
         private int _colorHeight;
+
+        /// <summary>
+        ///     Initializes a new instance of the <see cref="VoxelRasterTest" /> class.
+        /// </summary>
+        /// <param name="x">The x.</param>
+        /// <param name="y">The y.</param>
+        /// <param name="degree">The degree.</param>
+        /// <param name="height">The height.</param>
+        /// <param name="horizon">The horizon.</param>
+        /// <param name="scale">The scale.</param>
+        /// <param name="distance">The distance.</param>
+        /// <param name="colorMap">The bitmap with the colors</param>
+        /// <param name="heightMap">The bitmap with the height map.</param>
+        public VoxelRasterTest(int x, int y, int degree, int height, int horizon, int scale, int distance,
+            Bitmap colorMap,
+            Bitmap heightMap)
+        {
+            Camera = new Camera
+            {
+                X = x,
+                Y = y,
+                Angle = degree,
+                Height = height,
+                Horizon = horizon,
+                Scale = scale,
+                ZFar = distance
+            };
+
+            ProcessColorMap(colorMap);
+
+            ProcessHeightMap(heightMap);
+        }
 
         /// <summary>
         ///     The color map
@@ -51,37 +82,6 @@ namespace SpeedTests
         ///     The topography width
         /// </summary>
         public int TopographyWidth { get; set; }
-
-        /// <summary>
-        ///     Initializes a new instance of the <see cref="VoxelRasterTest" /> class.
-        /// </summary>
-        /// <param name="x">The x.</param>
-        /// <param name="y">The y.</param>
-        /// <param name="degree">The degree.</param>
-        /// <param name="height">The height.</param>
-        /// <param name="horizon">The horizon.</param>
-        /// <param name="scale">The scale.</param>
-        /// <param name="distance">The distance.</param>
-        /// <param name="colorMap">The bitmap with the colors</param>
-        /// <param name="heightMap">The bitmap with the height map.</param>
-        public VoxelRasterTest(int x, int y, int degree, int height, int horizon, int scale, int distance, Bitmap colorMap,
-            Bitmap heightMap)
-        {
-            Camera = new Camera
-            {
-                X = x,
-                Y = y,
-                Angle = degree,
-                Height = height,
-                Horizon = horizon,
-                Scale = scale,
-                ZFar = distance
-            };
-
-            ProcessColorMap(colorMap);
-
-            ProcessHeightMap(heightMap);
-        }
 
         /// <summary>
         ///     Gets or sets the camera.

@@ -26,17 +26,11 @@ namespace Mathematics
         /// <returns>An Identity Matrix</returns>
         public static BaseMatrix MatrixIdentity(int n)
         {
-            if (n <= 0)
-            {
-                throw new ArgumentException(MathResources.MatrixErrorNegativeValue, nameof(n));
-            }
+            if (n <= 0) throw new ArgumentException(MathResources.MatrixErrorNegativeValue, nameof(n));
 
             var result = new double[n, n];
 
-            for (var i = 0; i < n; ++i)
-            {
-                result[i, i] = 1d;
-            }
+            for (var i = 0; i < n; ++i) result[i, i] = 1d;
 
             return new BaseMatrix(result);
         }
@@ -69,12 +63,9 @@ namespace Mathematics
 
                         var res = 0d;
 
-                        for (var k = 0; k < l; k++, iTwo += w)
-                        {
-                            res += pmOne[iOne + k] * pmTwo[iTwo];
-                        }
+                        for (var k = 0; k < l; k++, iTwo += w) res += pmOne[iOne + k] * pmTwo[iTwo];
 
-                        pm[(i * w) + j] = res;
+                        pm[i * w + j] = res;
                     }
                 }
             }
@@ -100,7 +91,7 @@ namespace Mathematics
                 for (var i = 0; i < h; i++)
                 for (var j = 0; j < w; j++)
                 {
-                    var cursor = i + (j * mOne.Width);
+                    var cursor = i + j * mOne.Width;
 
                     pm[cursor] = pmOne[cursor] + pmTwo[cursor];
                 }
@@ -117,15 +108,9 @@ namespace Mathematics
         /// <returns>If Matrices are equal with our preconfigured tolerance.</returns>
         internal static unsafe bool UnsafeCompare(BaseMatrix mOne, BaseMatrix mTwo)
         {
-            if (mOne.Height != mTwo.Height)
-            {
-                return false;
-            }
+            if (mOne.Height != mTwo.Height) return false;
 
-            if (mOne.Width != mTwo.Width)
-            {
-                return false;
-            }
+            if (mOne.Width != mTwo.Width) return false;
 
             var h = mOne.Height;
             var w = mOne.Width;
@@ -135,11 +120,8 @@ namespace Mathematics
                 for (var i = 0; i < h; i++)
                 for (var j = 0; j < w; j++)
                 {
-                    var cursor = i + (j * mOne.Width);
-                    if (Math.Abs(pmOne[cursor] - pmTwo[cursor]) > MathResources.Tolerance)
-                    {
-                        return false;
-                    }
+                    var cursor = i + j * mOne.Width;
+                    if (Math.Abs(pmOne[cursor] - pmTwo[cursor]) > MathResources.Tolerance) return false;
                 }
             }
 
@@ -163,7 +145,7 @@ namespace Mathematics
                 for (var i = 0; i < h; i++)
                 for (var j = 0; j < w; j++)
                 {
-                    var cursor = i + (j * mOne.Width);
+                    var cursor = i + j * mOne.Width;
 
                     pm[cursor] = pmOne[cursor] - pmTwo[cursor];
                 }

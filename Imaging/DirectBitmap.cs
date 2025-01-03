@@ -361,7 +361,7 @@ namespace Imaging
         }
 
         /// <summary>
-        /// Converts the Bits into bitmapImage.
+        ///     Converts the Bits into bitmapImage.
         /// </summary>
         /// <returns>BitmapImage image data</returns>
         public BitmapImage ToBitmapImage()

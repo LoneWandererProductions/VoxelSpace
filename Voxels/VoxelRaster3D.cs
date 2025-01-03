@@ -11,30 +11,32 @@ namespace Voxels
 {
     public sealed class VoxelRaster3D : IDisposable
     {
+        private const float DzIncrement = 0.005f;
+        private readonly int _colorHeight;
+        private readonly int _colorWidth;
+
+        private readonly CameraContext _context;
+        private readonly int _topographyHeight;
+        private readonly int _topographyWidth;
+
+        private List<int[]> _columnSlices;
+        private DirectBitmap _directBitmap;
+
         /// <summary>
-        /// The disposed
+        ///     The disposed
         /// </summary>
         private bool _disposed;
 
+        private Color[] _flatColorMap;
+        private int[] _flatHeightMap;
+
         /// <summary>
-        /// The y buffer
+        ///     The y buffer
         /// </summary>
         private float[] _yBuffer;
 
-        private List<int[]> _columnSlices;
-
-        private readonly CameraContext _context;
-        private DirectBitmap _directBitmap;
-        private Color[] _flatColorMap;
-        private int[] _flatHeightMap;
-        private readonly int _topographyWidth;
-        private readonly int _topographyHeight;
-        private readonly int _colorWidth;
-        private readonly int _colorHeight;
-
-        private const float DzIncrement = 0.005f;
-
-        public VoxelRaster3D(CameraContext context, Color[,] colorMap, int[,] heightMap, int topographyWidth, int topographyHeight, int colorWidth, int colorHeight)
+        public VoxelRaster3D(CameraContext context, Color[,] colorMap, int[,] heightMap, int topographyWidth,
+            int topographyHeight, int colorWidth, int colorHeight)
         {
             _context = context;
             _topographyWidth = topographyWidth;
@@ -44,40 +46,9 @@ namespace Voxels
             InitializeBuffers(colorMap, heightMap, topographyWidth, topographyHeight, colorWidth, colorHeight);
         }
 
-        private void InitializeBuffers(Color[,] colorMap, int[,] heightMap, int topographyWidth, int topographyHeight, int colorWidth, int colorHeight)
-        {
-            _yBuffer = new float[_context.ScreenWidth];
-            _columnSlices = new List<int[]>(_context.ScreenWidth);
-            for (var i = 0; i < _context.ScreenWidth; i++)
-            {
-                _columnSlices.Add(new int[_context.ScreenHeight]);
-            }
-
-            // Flatten heightMap to 1D array
-            _flatHeightMap = new int[topographyWidth * topographyHeight];
-            for (var y = 0; y < topographyHeight; y++)
-            {
-                for (var x = 0; x < topographyWidth; x++)
-                {
-                    _flatHeightMap[y * topographyWidth + x] = heightMap[x, y];
-                }
-            }
-
-            // Flatten colorMap to 1D array
-            _flatColorMap = new Color[colorWidth * colorHeight];
-
-            for (var y = 0; y < colorHeight; y++)
-            {
-                for (var x = 0; x < colorWidth; x++)
-                {
-                    _flatColorMap[y * colorWidth + x] = colorMap[x, y];
-                }
-            }
-        }
-
         /// <inheritdoc />
         /// <summary>
-        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+        ///     Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
         /// </summary>
         public void Dispose()
         {
@@ -87,6 +58,27 @@ namespace Voxels
             GC.SuppressFinalize(this);
         }
 
+        private void InitializeBuffers(Color[,] colorMap, int[,] heightMap, int topographyWidth, int topographyHeight,
+            int colorWidth, int colorHeight)
+        {
+            _yBuffer = new float[_context.ScreenWidth];
+            _columnSlices = new List<int[]>(_context.ScreenWidth);
+            for (var i = 0; i < _context.ScreenWidth; i++) _columnSlices.Add(new int[_context.ScreenHeight]);
+
+            // Flatten heightMap to 1D array
+            _flatHeightMap = new int[topographyWidth * topographyHeight];
+            for (var y = 0; y < topographyHeight; y++)
+            for (var x = 0; x < topographyWidth; x++)
+                _flatHeightMap[y * topographyWidth + x] = heightMap[x, y];
+
+            // Flatten colorMap to 1D array
+            _flatColorMap = new Color[colorWidth * colorHeight];
+
+            for (var y = 0; y < colorHeight; y++)
+            for (var x = 0; x < colorWidth; x++)
+                _flatColorMap[y * colorWidth + x] = colorMap[x, y];
+        }
+
         /// <summary>
         ///     Creates the bitmap from container.
         /// </summary>
@@ -94,7 +86,7 @@ namespace Voxels
         /// <returns>
         ///     Finished Bitmap
         /// </returns>
-        public Bitmap RenderWithContainer(RVCamera camera)
+        public Bitmap RenderWithContainer(RvCamera camera)
         {
             Array.Fill(_yBuffer, _context.ScreenHeight);
 
@@ -107,7 +99,7 @@ namespace Voxels
             float z = camera.Z;
             float dz = 1;
 
-            var fov = (int) (_context.Fov / 2.0);
+            var fov = (int)(_context.Fov / 2.0);
 
             var tanFovHalf = ExtendedMath.CalcTanF(fov);
 
@@ -141,7 +133,7 @@ namespace Voxels
                     var heightOfHeightMap = _flatHeightMap[wrappedHeightY * _topographyWidth + wrappedHeightX];
                     var color = _flatColorMap[wrappedColorY * _colorWidth + wrappedColorX];
 
-                    var heightOnScreen = ((_context.Height - heightOfHeightMap) / z * _context.Scale + camera.Horizon) -
+                    var heightOnScreen = (_context.Height - heightOfHeightMap) / z * _context.Scale + camera.Horizon -
                                          ExtendedMath.CalcTanF(camera.Pitch) * _context.Scale;
 
                     var y1 = (int)heightOnScreen;
@@ -176,7 +168,8 @@ namespace Voxels
             return _directBitmap.Bitmap;
         }
 
-        private IEnumerable<(int x, int y, Color color)> FillMissingColors(IReadOnlyDictionary<int, Color> colorDictionary)
+        private IEnumerable<(int x, int y, Color color)> FillMissingColors(
+            IReadOnlyDictionary<int, Color> colorDictionary)
         {
             var filledPixelTuples = new ConcurrentBag<(int x, int y, Color color)>();
 
@@ -202,13 +195,9 @@ namespace Voxels
                     if (colorId == 0) continue;
 
                     if (colorDictionary.TryGetValue(colorId, out var color))
-                    {
                         filledPixelTuples.Add((x, y, color));
-                    }
                     else
-                    {
                         Trace.WriteLine($"Warning: Color ID {colorId} not found in the dictionary.");
-                    }
                 }
             });
 
@@ -216,19 +205,20 @@ namespace Voxels
         }
 
         /// <summary>
-        /// Releases unmanaged and - optionally - managed resources.
+        ///     Releases unmanaged and - optionally - managed resources.
         /// </summary>
-        /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
+        /// <param name="disposing">
+        ///     <c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only
+        ///     unmanaged resources.
+        /// </param>
         private void Dispose(bool disposing)
         {
             if (_disposed)
                 return;
 
             if (disposing)
-            {
                 // Dispose of managed resources.
                 _directBitmap.Dispose();
-            }
 
             // Dispose of unmanaged resources if needed.
 
@@ -236,7 +226,7 @@ namespace Voxels
         }
 
         /// <summary>
-        /// Finalizes an instance of the <see cref="VoxelRaster3D"/> class.
+        ///     Finalizes an instance of the <see cref="VoxelRaster3D" /> class.
         /// </summary>
         ~VoxelRaster3D()
         {

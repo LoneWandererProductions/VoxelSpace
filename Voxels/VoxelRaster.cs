@@ -11,8 +11,6 @@ namespace Voxels
 {
     public sealed class VoxelRaster : IDisposable
     {
-        private bool _disposed;
-
         /// <summary>
         ///     The cache preload thread
         /// </summary>
@@ -23,9 +21,12 @@ namespace Voxels
         /// </summary>
         private readonly CancellationTokenSource _cancellationTokenSource;
 
+        private readonly Key[] _directionKey;
+
         private readonly ConcurrentDictionary<Key, Bitmap> _lazyCache;
 
         private readonly object _lock = new();
+        private Dictionary<int, Color> _colorDictionary;
 
         /// <summary>
         ///     The color height
@@ -43,6 +44,9 @@ namespace Voxels
         /// </summary>
         private int _colorWidth;
 
+        private Bitmap _currentImage;
+        private bool _disposed;
+
         /// <summary>
         ///     The height map
         ///     Buffer/array to hold height values (1024*1024)
@@ -54,18 +58,13 @@ namespace Voxels
         /// </summary>
         private bool _isCachePreloading;
 
+        private readonly VoxelRaster3D _raster;
+
         private int _topographyHeight;
         private int _topographyWidth;
 
-        private readonly Key[] _directionKey;
-        private Bitmap _currentImage;
-
-        private readonly CameraContext _context;
-        private VoxelRaster3D _raster;
-        private Dictionary<int, Color> _colorDictionary;
-
         /// <summary>
-        /// Initializes a new instance of the <see cref="VoxelRaster" /> class.
+        ///     Initializes a new instance of the <see cref="VoxelRaster" /> class.
         /// </summary>
         /// <param name="x">The x.</param>
         /// <param name="y">The y.</param>
@@ -81,9 +80,9 @@ namespace Voxels
         public VoxelRaster(int x, int y, int degree, int height, int horizon, int scale, int distance, Bitmap colorMap,
             Bitmap heightMap, int screenHeight, int screenWidth)
         {
-            _directionKey = new[] {Key.W, Key.S, Key.A, Key.D, Key.O, Key.P, Key.X, Key.Y};
+            _directionKey = new[] { Key.W, Key.S, Key.A, Key.D, Key.O, Key.P, Key.X, Key.Y };
 
-            Camera = new RVCamera
+            Camera = new RvCamera
             {
                 X = x,
                 Y = y,
@@ -92,7 +91,11 @@ namespace Voxels
                 ZFar = distance
             };
 
-            _context = new CameraContext() { Height = height, Distance = distance, ScreenWidth = screenWidth, ScreenHeight =  screenHeight, Scale = scale};
+            var context = new CameraContext
+            {
+                Height = height, Distance = distance, ScreenWidth = screenWidth, ScreenHeight = screenHeight,
+                Scale = scale
+            };
 
             ProcessColorMap(colorMap);
 
@@ -100,7 +103,8 @@ namespace Voxels
 
             BuildColorDictionary();
 
-            _raster = new VoxelRaster3D(_context,_colorMap, _heightMap, _topographyWidth, _topographyHeight,_colorWidth,  _colorHeight);
+            _raster = new VoxelRaster3D(context, _colorMap, _heightMap, _topographyWidth, _topographyHeight,
+                _colorWidth, _colorHeight);
 
             _lazyCache = new ConcurrentDictionary<Key, Bitmap>();
 
@@ -120,7 +124,13 @@ namespace Voxels
         /// <value>
         ///     The camera.
         /// </value>
-        public RVCamera Camera { get; set; }
+        public RvCamera Camera { get; set; }
+
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
 
         /// <summary>
         ///     Gets the bitmap for key.
@@ -181,17 +191,12 @@ namespace Voxels
             _colorDictionary = new Dictionary<int, Color>();
 
             // Iterate over all pixels in the colorMap and add them to the dictionary
-            for (int x = 0; x < _colorWidth; x++)
+            for (var x = 0; x < _colorWidth; x++)
+            for (var y = 0; y < _colorHeight; y++)
             {
-                for (int y = 0; y < _colorHeight; y++)
-                {
-                    var color = _colorMap[x, y];
-                    var colorId = color.ToArgb();
-                    if (!_colorDictionary.ContainsKey(colorId))
-                    {
-                        _colorDictionary.Add(colorId, color);
-                    }
-                }
+                var color = _colorMap[x, y];
+                var colorId = color.ToArgb();
+                if (!_colorDictionary.ContainsKey(colorId)) _colorDictionary.Add(colorId, color);
             }
         }
 
@@ -236,9 +241,7 @@ namespace Voxels
 
             // Preload all possible directions
             foreach (var directionKey in _directionKey.TakeWhile(_ => !cancellationToken.IsCancellationRequested))
-            {
                 GenerateAndCacheBitmapForKey(directionKey);
-            }
 
             _isCachePreloading = false;
         }
@@ -282,12 +285,6 @@ namespace Voxels
                 _colorMap[i, j] = dbm.GetPixel(i, j);
         }
 
-        public void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-
         private void Dispose(bool disposing)
         {
             if (_disposed) return;
@@ -298,8 +295,7 @@ namespace Voxels
                 _cancellationTokenSource?.Cancel();
                 _cancellationTokenSource?.Dispose();
 
-                if (_cachePreloadThread is {IsAlive: true})
-                {
+                if (_cachePreloadThread is { IsAlive: true })
                     try
                     {
                         _cachePreloadThread.Join(100); // Wait briefly for the thread to finish
@@ -308,13 +304,9 @@ namespace Voxels
                     {
                         // Handle if thread is already in a stopping/invalid state
                     }
-                }
 
                 // Dispose of any cached Bitmaps
-                foreach (var bitmap in _lazyCache.Values)
-                {
-                    bitmap?.Dispose();
-                }
+                foreach (var bitmap in _lazyCache.Values) bitmap?.Dispose();
 
                 _lazyCache.Clear();
             }

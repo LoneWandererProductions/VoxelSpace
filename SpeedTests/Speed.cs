@@ -5,7 +5,7 @@ using System.IO;
 using Imaging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Voxels;
-using PixelData = Voxels.PixelData;
+using PixelData = SpeedTests.PixelData;
 
 namespace SpeedTests
 {
@@ -78,7 +78,7 @@ namespace SpeedTests
 
 
         /// <summary>
-        /// Voxels the raster3 d performance test.
+        ///     Voxels the raster3 d performance test.
         /// </summary>
         [TestMethod]
         public void VoxelRaster3DPerformanceTest()
@@ -102,19 +102,20 @@ namespace SpeedTests
                 Fov = 60,
                 Distance = 15,
                 CellSize = 1,
-                Scale = 100,
+                Scale = 100
                 //Horizon = 200
             };
 
             _voxel = new VoxelRasterTest(100, 100, 0, 100, 120, 120, 300, colorMap, heightMap);
 
             var voxelRaster = new VoxelRaster3D(context, // Example CameraContext
-                _voxel.ColorMap, _voxel.HeightMap, _voxel.TopographyWidth, _voxel.TopographyHeight, _voxel.ColorWidth, _voxel.ColorWidth
+                _voxel.ColorMap, _voxel.HeightMap, _voxel.TopographyWidth, _voxel.TopographyHeight, _voxel.ColorWidth,
+                _voxel.ColorWidth
             );
 
             // Measure the performance of RenderWithContainer
             stopwatch.Start();
-            var renderedBitmap = voxelRaster.RenderWithContainer(new RVCamera()); // Provide a suitable camera object
+            var renderedBitmap = voxelRaster.RenderWithContainer(new RvCamera()); // Provide a suitable camera object
             stopwatch.Stop();
             Trace.WriteLine($"RenderWithContainer rendering time: {stopwatch.ElapsedMilliseconds} ms");
 
@@ -131,7 +132,7 @@ namespace SpeedTests
         }
 
         /// <summary>
-        /// Speeds the and result comparison raycast tests.
+        ///     Speeds the and result comparison raycast tests.
         /// </summary>
         [TestMethod]
         public void SpeedAndResultComparisonRaycastTests()
@@ -141,16 +142,16 @@ namespace SpeedTests
             // Define the map
             var map = new int[10, 10]
             {
-                {1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-                {1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-                {1, 0, 1, 1, 1, 1, 1, 1, 0, 1},
-                {1, 0, 1, 0, 0, 0, 0, 1, 0, 1},
-                {1, 0, 1, 0, 1, 1, 1, 1, 0, 1},
-                {1, 0, 1, 0, 1, 0, 0, 1, 0, 1},
-                {1, 0, 1, 1, 1, 1, 0, 1, 0, 1},
-                {1, 0, 0, 0, 0, 0, 0, 0, 0, 1},
-                {1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-                {1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
+                { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                { 1, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+                { 1, 0, 1, 1, 1, 1, 1, 1, 0, 1 },
+                { 1, 0, 1, 0, 0, 0, 0, 1, 0, 1 },
+                { 1, 0, 1, 0, 1, 1, 1, 1, 0, 1 },
+                { 1, 0, 1, 0, 1, 0, 0, 1, 0, 1 },
+                { 1, 0, 1, 1, 1, 1, 0, 1, 0, 1 },
+                { 1, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+                { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }
             };
 
             // Initialize and test Raycaster
@@ -173,7 +174,7 @@ namespace SpeedTests
         [TestMethod]
         public void ValidateRaycaster()
         {
-            var map = new int[,]
+            var map = new[,]
             {
                 { 1, 1, 1, 1, 1 },
                 { 1, 0, 0, 0, 1 },
@@ -210,7 +211,7 @@ namespace SpeedTests
         }
 
         /// <summary>
-        /// Compares two Bitmaps pixel by pixel.
+        ///     Compares two Bitmaps pixel by pixel.
         /// </summary>
         /// <param name="bmp1">The first Bitmap.</param>
         /// <param name="bmp2">The second Bitmap.</param>
@@ -246,21 +247,21 @@ namespace SpeedTests
             _rasterData = new PixelData[bmpHeight.Width, bmpHeight.Height];
 
             for (var i = 0; i < bmpHeight.Width; i++)
-                for (var j = 0; j < bmpHeight.Height; j++)
+            for (var j = 0; j < bmpHeight.Height; j++)
+            {
+                // Get height from height map (assuming it uses the red channel)
+                int height = dbmHeight.GetPixel(i, j).R;
+
+                // Get color from color map
+                var color = dbmColor.GetPixel(i, j);
+
+                // Store both color and height in the same location
+                _rasterData[i, j] = new PixelData
                 {
-                    // Get height from height map (assuming it uses the red channel)
-                    int height = dbmHeight.GetPixel(i, j).R;
-
-                    // Get color from color map
-                    var color = dbmColor.GetPixel(i, j);
-
-                    // Store both color and height in the same location
-                    _rasterData[i, j] = new PixelData
-                    {
-                        Color = color,
-                        Height = height
-                    };
-                }
+                    Color = color,
+                    Height = height
+                };
+            }
         }
     }
 }
