@@ -100,7 +100,7 @@ namespace Voxels
 
             BuildColorDictionary();
 
-            _raster = new VoxelRaster3D(_context);
+            _raster = new VoxelRaster3D(_context,_colorMap, _heightMap, _topographyWidth, _topographyHeight,_colorWidth,  _colorHeight);
 
             _lazyCache = new ConcurrentDictionary<Key, Bitmap>();
 
@@ -149,8 +149,7 @@ namespace Voxels
             // initiate new instance
             //_raster = new VoxelRaster3D(_context);
 
-            _currentImage = _raster.RenderWithContainer(_colorMap, _heightMap, Camera, _topographyHeight,
-                _topographyWidth, _colorHeight, _colorWidth);
+            _currentImage = _raster.RenderWithContainer(Camera);
 
             return _currentImage;
         }
@@ -172,8 +171,7 @@ namespace Voxels
             // initiate new instance
             //var raster = new VoxelRaster3D(_context);
 
-            _currentImage = _raster.RenderWithContainer(_colorMap, _heightMap, Camera, _topographyHeight,
-                _topographyWidth, _colorHeight, _colorWidth);
+            _currentImage = _raster.RenderWithContainer(Camera);
 
             return _currentImage;
         }
@@ -227,8 +225,7 @@ namespace Voxels
                 // new instance needed to avoid conflicts
                 //var raster = new VoxelRaster3D(_context);
                 // Cache the bitmap
-                _lazyCache[key] = _raster.RenderWithContainer(_colorMap, _heightMap, simulatedCamera,
-                    _topographyHeight, _topographyWidth, _colorHeight, _colorWidth);
+                _lazyCache[key] = _raster.RenderWithContainer(simulatedCamera);
             }
         }
 

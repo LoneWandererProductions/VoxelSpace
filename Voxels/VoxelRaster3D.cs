@@ -3,7 +3,6 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
-using System.Numerics;
 using System.Threading.Tasks;
 using Imaging;
 using Mathematics;
@@ -26,22 +25,53 @@ namespace Voxels
 
         private readonly CameraContext _context;
         private DirectBitmap _directBitmap;
+        private Color[] _flatColorMap;
+        private int[] _flatHeightMap;
+        private readonly int _topographyWidth;
+        private readonly int _topographyHeight;
+        private readonly int _colorWidth;
+        private readonly int _colorHeight;
 
         private const float DzIncrement = 0.005f;
 
-        public VoxelRaster3D(CameraContext context)
+        public VoxelRaster3D(CameraContext context, Color[,] colorMap, int[,] heightMap, int topographyWidth, int topographyHeight, int colorWidth, int colorHeight)
         {
             _context = context;
-            InitializeBuffers();
+            _topographyWidth = topographyWidth;
+            _topographyHeight = topographyHeight;
+            _colorWidth = colorWidth;
+            _colorHeight = colorHeight;
+            InitializeBuffers(colorMap, heightMap, topographyWidth, topographyHeight, colorWidth, colorHeight);
         }
 
-        private void InitializeBuffers()
+        private void InitializeBuffers(Color[,] colorMap, int[,] heightMap, int topographyWidth, int topographyHeight, int colorWidth, int colorHeight)
         {
             _yBuffer = new float[_context.ScreenWidth];
             _columnSlices = new List<int[]>(_context.ScreenWidth);
             for (var i = 0; i < _context.ScreenWidth; i++)
             {
                 _columnSlices.Add(new int[_context.ScreenHeight]);
+            }
+
+            // Flatten heightMap to 1D array
+            _flatHeightMap = new int[topographyWidth * topographyHeight];
+            for (var y = 0; y < topographyHeight; y++)
+            {
+                for (var x = 0; x < topographyWidth; x++)
+                {
+                    _flatHeightMap[y * topographyWidth + x] = heightMap[x, y];
+                }
+            }
+
+            // Flatten colorMap to 1D array
+            _flatColorMap = new Color[colorWidth * colorHeight];
+
+            for (var y = 0; y < colorHeight; y++)
+            {
+                for (var x = 0; x < colorWidth; x++)
+                {
+                    _flatColorMap[y * colorWidth + x] = colorMap[x, y];
+                }
             }
         }
 
@@ -60,43 +90,29 @@ namespace Voxels
         /// <summary>
         ///     Creates the bitmap from container.
         /// </summary>
-        /// <param name="colorMap">The color map.</param>
-        /// <param name="heightMap">The height map.</param>
         /// <param name="camera">The camera.</param>
-        /// <param name="topographyHeight">Height of the topography.</param>
-        /// <param name="topographyWidth">Width of the topography.</param>
-        /// <param name="colorHeight">Height of the color.</param>
-        /// <param name="colorWidth">Width of the color.</param>
         /// <returns>
         ///     Finished Bitmap
         /// </returns>
-        public Bitmap RenderWithContainer(
-            Color[,] colorMap, int[,] heightMap, RVCamera camera,
-            int topographyHeight, int topographyWidth, int colorHeight, int colorWidth)
+        public Bitmap RenderWithContainer(RVCamera camera)
         {
-            // Initialize the Y-buffer to store the closest Y values for depth testing
-            // Clear buffers (reuse instead of reallocating)
             Array.Fill(_yBuffer, _context.ScreenHeight);
-            foreach (var slice in _columnSlices) Array.Fill(slice, 0);
+
+            Parallel.For(0, _columnSlices.Count, i => Array.Fill(_columnSlices[i], 0));
 
             var colorDictionary = new Dictionary<int, Color>();
-
             var sinPhi = ExtendedMath.CalcSin(camera.Angle);
             var cosPhi = ExtendedMath.CalcCos(camera.Angle);
 
-            float z = camera.Z; // Start at the camera's current Z position
+            float z = camera.Z;
             float dz = 1;
 
-            // Calculate the tangent of half the field of view (FOV) angle for the camera's projection
             var tanFovHalf = (float)Math.Tan(_context.Fov / 2.0 * Math.PI / 180.0);
-
 
             while (z < camera.ZFar)
             {
-                // Calculate frustum width based on FOV and depth (z)
                 var halfWidth = z * tanFovHalf;
 
-                // Frustum bounds
                 var pLeftX = (float)(-cosPhi * halfWidth - sinPhi * z) + camera.X;
                 var pLeftY = (float)(sinPhi * halfWidth - cosPhi * z) + camera.Y;
 
@@ -113,10 +129,15 @@ namespace Voxels
                     var heightX = (int)pLeftX;
                     var heightY = (int)pLeftY;
 
-                    var heightOfHeightMap =
-                        heightMap[heightX & (topographyWidth - 1), heightY & (topographyHeight - 1)];
+                    //access via Indexing
+                    var wrappedHeightX = heightX & (_topographyWidth - 1);
+                    var wrappedHeightY = heightY & (_topographyHeight - 1);
+                    var wrappedColorX = diffuseX & (_colorWidth - 1);
+                    var wrappedColorY = diffuseY & (_colorHeight - 1);
 
-                    var color = colorMap[diffuseX & (colorWidth - 1), diffuseY & (colorHeight - 1)];
+                    // Access the flattened arrays using the calculated indices
+                    var heightOfHeightMap = _flatHeightMap[wrappedHeightY * _topographyWidth + wrappedHeightX];
+                    var color = _flatColorMap[wrappedColorY * _colorWidth + wrappedColorX];
 
                     var heightOnScreen = (float)(((_context.Height - heightOfHeightMap) / z * _context.Scale + camera.Horizon) -
                                                  ExtendedMath.CalcTan(camera.Pitch) * _context.Scale);
@@ -129,10 +150,9 @@ namespace Voxels
 
                         if (color != Color.Transparent)
                         {
-                            var colorId = color.ToArgb();  // Convert color to a unique integer ID
-                            colorDictionary[colorId] = color;  // Store the color in the dictionary
-
-                            _columnSlices[i][y1] = colorId;  // Assign the color ID to the slice
+                            var colorId = color.ToArgb();
+                            colorDictionary[colorId] = color;
+                            _columnSlices[i][y1] = colorId;
                         }
                     }
 
@@ -146,11 +166,9 @@ namespace Voxels
 
             var pixelTuples = FillMissingColors(colorDictionary);
 
-            // Reuse DirectBitmap instance to avoid creating new objects
             _directBitmap = new DirectBitmap(_context.ScreenWidth, _context.ScreenHeight);
             _directBitmap.SetPixelsSimd(pixelTuples);
 
-            // After rendering, clear the buffers:
             Array.Clear(_yBuffer, 0, _yBuffer.Length);
 
             return _directBitmap.Bitmap;
@@ -160,38 +178,30 @@ namespace Voxels
         {
             var filledPixelTuples = new ConcurrentBag<(int x, int y, Color color)>();
 
-            // Use Parallel.For to process each column slice in parallel
             Parallel.For(0, _columnSlices.Count, x =>
             {
-                Span<int> columnSlice = _columnSlices[x]; // Use Span for better slicing performance
-                var lastKnownColorId = 0; // Start with no known color ID
+                Span<int> columnSlice = _columnSlices[x]; // Span used for performance
+                var lastKnownColorId = 0;
 
-                // Loop through each pixel in the column (y-axis)
                 for (var y = 0; y < columnSlice.Length; y++)
                 {
-                    if (columnSlice[y] != 0) // If there's a valid color ID
+                    if (columnSlice[y] != 0)
                     {
-                        lastKnownColorId = columnSlice[y]; // Update the last known color ID
+                        lastKnownColorId = columnSlice[y];
                     }
-                    else if (lastKnownColorId != 0) // If transparent, replace with last known color ID
+                    else if (lastKnownColorId != 0)
                     {
                         columnSlice[y] = lastKnownColorId;
                     }
 
-                    if (columnSlice[y] == 0)
-                    {
-                        // Transparent; no action needed
-                        continue;
-                    }
+                    if (columnSlice[y] == 0) continue;
 
-                    // Safeguard: Ensure the color ID exists in the dictionary
                     if (colorDictionary.TryGetValue(columnSlice[y], out var color))
                     {
                         filledPixelTuples.Add((x, y, color));
                     }
                     else
                     {
-                        // Handle missing color ID (e.g., log, default color, or skip)
                         Trace.WriteLine($"Warning: Color ID {columnSlice[y]} not found in the dictionary.");
                     }
                 }
@@ -208,6 +218,7 @@ namespace Voxels
             if (disposing)
             {
                 // Dispose of managed resources.
+                _directBitmap.Dispose();
             }
 
             // Dispose of unmanaged resources if needed.

@@ -219,11 +219,11 @@ namespace Main
             };
 
             // Initialize the VoxelRaster3D and Raycaster
-            var voxelRaster3D = new VoxelRaster3D(context);
+            var voxelRaster3D = new VoxelRaster3D(context, colorMap, heightMap, mapWidth, mapHeight, mapWidth, mapHeight);
             var raycaster = new Raycaster(map, context);
 
             // Render the voxel map with the color and height map using the VoxelRaster3D
-            Bitmap voxelRenderedBitmap = voxelRaster3D.RenderWithContainer(colorMap, heightMap, camera, mapHeight, mapWidth, 256, 256);
+            Bitmap voxelRenderedBitmap = voxelRaster3D.RenderWithContainer(camera);
 
             // Render the map with raycasting
             Bitmap raycastedBitmap = raycaster.Render(camera);
