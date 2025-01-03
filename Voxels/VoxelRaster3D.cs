@@ -178,31 +178,34 @@ namespace Voxels
         {
             var filledPixelTuples = new ConcurrentBag<(int x, int y, Color color)>();
 
-            Parallel.For(0, _columnSlices.Count, x =>
+            _ = Parallel.For(0, _columnSlices.Count, x =>
             {
                 Span<int> columnSlice = _columnSlices[x]; // Span used for performance
                 var lastKnownColorId = 0;
 
                 for (var y = 0; y < columnSlice.Length; y++)
                 {
-                    if (columnSlice[y] != 0)
+                    var colorId = columnSlice[y]; // Local variable to store the value
+
+                    if (colorId != 0)
                     {
-                        lastKnownColorId = columnSlice[y];
+                        lastKnownColorId = colorId;
                     }
                     else if (lastKnownColorId != 0)
                     {
                         columnSlice[y] = lastKnownColorId;
+                        colorId = lastKnownColorId; // Update colorId to avoid redundant checks
                     }
 
-                    if (columnSlice[y] == 0) continue;
+                    if (colorId == 0) continue;
 
-                    if (colorDictionary.TryGetValue(columnSlice[y], out var color))
+                    if (colorDictionary.TryGetValue(colorId, out var color))
                     {
                         filledPixelTuples.Add((x, y, color));
                     }
                     else
                     {
-                        Trace.WriteLine($"Warning: Color ID {columnSlice[y]} not found in the dictionary.");
+                        Trace.WriteLine($"Warning: Color ID {colorId} not found in the dictionary.");
                     }
                 }
             });
@@ -210,6 +213,10 @@ namespace Voxels
             return filledPixelTuples;
         }
 
+        /// <summary>
+        /// Releases unmanaged and - optionally - managed resources.
+        /// </summary>
+        /// <param name="disposing"><c>true</c> to release both managed and unmanaged resources; <c>false</c> to release only unmanaged resources.</param>
         private void Dispose(bool disposing)
         {
             if (_disposed)

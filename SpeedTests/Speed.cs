@@ -85,6 +85,58 @@ namespace SpeedTests
             // Compare the two images (depth, direct) is not possible since they are different
         }
 
+
+        /// <summary>
+        /// Voxels the raster3 d performance test.
+        /// </summary>
+        [TestMethod]
+        public void VoxelRaster3DPerformanceTest()
+        {
+            var stopwatch = new Stopwatch();
+
+            // Initialize the test data: colorMap and heightMap
+            var colorMapPath = Path.Combine(Directory.GetCurrentDirectory(), "Terrain", "C1W.png");
+            var heightMapPath = Path.Combine(Directory.GetCurrentDirectory(), "Terrain", "D1.png");
+
+            Assert.IsTrue(File.Exists(colorMapPath), "Color map file not found.");
+            Assert.IsTrue(File.Exists(heightMapPath), "Height map file not found.");
+
+            var colorMap = new Bitmap(Image.FromFile(colorMapPath));
+            var heightMap = new Bitmap(Image.FromFile(heightMapPath));
+
+            var context = new CameraContext
+            {
+                ScreenWidth = 800,
+                ScreenHeight = 600,
+                Fov = 60,
+                Distance = 15,
+                CellSize = 1,
+                Scale = 100,
+                //Horizon = 200
+            };
+
+            _voxel = new VoxelRasterTest(100, 100, 0, 100, 120, 120, 300, colorMap, heightMap);
+
+            var voxelRaster = new VoxelRaster3D(context, // Example CameraContext
+                _voxel.ColorMap, _voxel.HeightMap, _voxel.TopographyWidth, _voxel.TopographyHeight, _voxel.ColorWidth, _voxel.ColorWidth
+            );
+
+            // Measure the performance of RenderWithContainer
+            stopwatch.Start();
+            var renderedBitmap = voxelRaster.RenderWithContainer(new RVCamera());  // Provide a suitable camera object
+            stopwatch.Stop();
+            Trace.WriteLine($"RenderWithContainer rendering time: {stopwatch.ElapsedMilliseconds} ms");
+
+            // Validate the result
+            Assert.IsNotNull(renderedBitmap, "RenderWithContainer produced a null Bitmap.");
+
+            // Optionally: Compare the bitmap with expected results or other methods if needed
+            // You can use image comparison libraries or hash-based checks
+        }
+
+
+
+
         /// <summary>
         /// Speeds the and result comparison raycast tests.
         /// </summary>

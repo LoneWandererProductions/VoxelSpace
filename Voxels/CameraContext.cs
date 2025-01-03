@@ -2,11 +2,19 @@
 {
     public class CameraContext
     {
+
         public CameraContext()
         {
         }
 
         public CameraContext(int cellSize, int screenHeight, int screenWidth)
+        {
+            CellSize = cellSize;
+            ScreenHeight = screenHeight;
+            ScreenWidth = screenWidth;
+        }
+
+        public CameraContext(int cellSize, int screenHeight, int screenWidth, int v1, int v2)
         {
             CellSize = cellSize;
             ScreenHeight = screenHeight;

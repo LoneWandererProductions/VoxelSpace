@@ -29,28 +29,28 @@ namespace SpeedTests
         ///     The color map
         ///     Buffer/array to hold color values (1024*1024)
         /// </summary>
-        private Color[,] _colorMap;
+        public Color[,] ColorMap { get; set; }
 
         /// <summary>
         ///     The color width
         /// </summary>
-        private int _colorWidth;
+        public int ColorWidth { get; set; }
 
         /// <summary>
         ///     The height map
         ///     Buffer/array to hold height values (1024*1024)
         /// </summary>
-        private int[,] _heightMap;
+        public int[,] HeightMap { get; set; }
 
         /// <summary>
         ///     The topography height
         /// </summary>
-        private int _topographyHeight;
+        public int TopographyHeight { get; set; }
 
         /// <summary>
         ///     The topography width
         /// </summary>
-        private int _topographyWidth;
+        public int TopographyWidth { get; set; }
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="VoxelRasterTest" /> class.
@@ -98,12 +98,12 @@ namespace SpeedTests
         /// <returns>The finished Bitmap created directly.</returns>
         public Bitmap RenderDirect()
         {
-            if (_heightMap == null) return null;
+            if (HeightMap == null) return null;
 
             var raster = new VoxelRaster2D();
 
-            return raster.RenderImmediate(_colorMap, _heightMap, Camera, _topographyHeight, _topographyWidth,
-                _colorHeight, _colorWidth);
+            return raster.RenderImmediate(ColorMap, HeightMap, Camera, TopographyHeight, TopographyWidth,
+                _colorHeight, ColorWidth);
         }
 
         /// <summary>
@@ -112,22 +112,22 @@ namespace SpeedTests
         /// <returns></returns>
         public Bitmap RenderWithContainer()
         {
-            if (_heightMap == null) return null;
+            if (HeightMap == null) return null;
 
             var raster = new VoxelRaster2D();
 
-            return raster.RenderWithContainer(_colorMap, _heightMap, Camera, _topographyHeight, _topographyWidth,
-                _colorHeight, _colorWidth);
+            return raster.RenderWithContainer(ColorMap, HeightMap, Camera, TopographyHeight, TopographyWidth,
+                _colorHeight, ColorWidth);
         }
 
         public Bitmap RenderDepth()
         {
-            if (_heightMap == null) return null;
+            if (HeightMap == null) return null;
 
             var raster = new VoxelRaster2D();
 
-            return raster.RenderWithDepthBuffer(_colorMap, _heightMap, Camera, _topographyHeight, _topographyWidth,
-                _colorHeight, _colorWidth);
+            return raster.RenderWithDepthBuffer(ColorMap, HeightMap, Camera, TopographyHeight, TopographyWidth,
+                _colorHeight, ColorWidth);
         }
 
         /// <summary>
@@ -138,15 +138,15 @@ namespace SpeedTests
         {
             if (bmp == null) return;
 
-            _topographyHeight = bmp.Height;
-            _topographyWidth = bmp.Width;
+            TopographyHeight = bmp.Height;
+            TopographyWidth = bmp.Width;
 
             var dbm = DirectBitmap.GetInstance(bmp);
 
-            _heightMap = new int[bmp.Width, bmp.Height];
+            HeightMap = new int[bmp.Width, bmp.Height];
             for (var i = 0; i < bmp.Width; i++)
             for (var j = 0; j < bmp.Height; j++)
-                _heightMap[i, j] = dbm.GetPixel(i, j).R;
+                HeightMap[i, j] = dbm.GetPixel(i, j).R;
         }
 
         /// <summary>
@@ -158,14 +158,14 @@ namespace SpeedTests
             if (bmp == null) return;
 
             _colorHeight = bmp.Height;
-            _colorWidth = bmp.Width;
+            ColorWidth = bmp.Width;
 
             var dbm = DirectBitmap.GetInstance(bmp);
 
-            _colorMap = new Color[bmp.Width, bmp.Height];
+            ColorMap = new Color[bmp.Width, bmp.Height];
             for (var i = 0; i < bmp.Width; i++)
             for (var j = 0; j < bmp.Height; j++)
-                _colorMap[i, j] = dbm.GetPixel(i, j);
+                ColorMap[i, j] = dbm.GetPixel(i, j);
         }
     }
 }
