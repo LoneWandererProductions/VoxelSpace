@@ -1,7 +1,7 @@
 ﻿/*
  * COPYRIGHT:   See COPYING in the top level directory
  * PROJECT:     Voxels
- * FILE:        Voxels/Camera.cs
+ * FILE:        Voxels/RvCamera.cs
  * PURPOSE:     All possible options
  * PROGRAMER:   Peter Geinitz (Wayfarer)
  */
