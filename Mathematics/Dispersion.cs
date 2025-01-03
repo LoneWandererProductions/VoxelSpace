@@ -28,7 +28,10 @@ namespace Mathematics
         /// <param name="row">The row.</param>
         public Dispersion(List<double> row)
         {
-            if (row == null || row.Count == 0) throw new ArgumentException(MathResources.StatisticsErrorInput);
+            if (row == null || row.Count == 0)
+            {
+                throw new ArgumentException(MathResources.StatisticsErrorInput);
+            }
 
             Row = row;
             CalculateStatistics();
@@ -176,7 +179,7 @@ namespace Mathematics
         {
             var sortedList = Row.OrderBy(x => x).ToList();
             var n = sortedList.Count;
-            Median = n % 2 == 0 ? (sortedList[n / 2 - 1] + sortedList[n / 2]) / 2.0 : sortedList[n / 2];
+            Median = n % 2 == 0 ? (sortedList[(n / 2) - 1] + sortedList[n / 2]) / 2.0 : sortedList[n / 2];
         }
 
         /// <summary>

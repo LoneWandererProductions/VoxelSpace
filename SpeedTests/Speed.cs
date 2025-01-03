@@ -17,15 +17,6 @@ namespace SpeedTests
         private PixelData[,] _rasterData;
         private VoxelRasterTest _voxel;
 
-        private static readonly int[,] Map =
-        {
-                { 1, 1, 1, 1, 1, 1, 1 },
-                { 1, 0, 0, 0, 0, 0, 1 },
-                { 1, 0, 1, 0, 1, 0, 1 },
-                { 1, 0, 0, 0, 0, 0, 1 },
-                { 1, 1, 1, 1, 1, 1, 1 }
-        };
-
         /// <summary>
         ///     Initializes this instance.
         /// </summary>
@@ -123,19 +114,21 @@ namespace SpeedTests
 
             // Measure the performance of RenderWithContainer
             stopwatch.Start();
-            var renderedBitmap = voxelRaster.RenderWithContainer(new RVCamera());  // Provide a suitable camera object
+            var renderedBitmap = voxelRaster.RenderWithContainer(new RVCamera()); // Provide a suitable camera object
             stopwatch.Stop();
             Trace.WriteLine($"RenderWithContainer rendering time: {stopwatch.ElapsedMilliseconds} ms");
 
+            stopwatch.Start();
+            var btm = renderedBitmap.ToBitmapImage();
+            stopwatch.Stop();
+            Trace.WriteLine($"Conversion Time: {stopwatch.ElapsedMilliseconds} ms");
             // Validate the result
             Assert.IsNotNull(renderedBitmap, "RenderWithContainer produced a null Bitmap.");
+            Assert.IsNotNull(btm, "ToBitmapImage produced a null Bitmap.");
 
             // Optionally: Compare the bitmap with expected results or other methods if needed
             // You can use image comparison libraries or hash-based checks
         }
-
-
-
 
         /// <summary>
         /// Speeds the and result comparison raycast tests.
@@ -189,13 +182,13 @@ namespace SpeedTests
                 { 1, 1, 1, 1, 1 }
             };
             //setup the context
-            var cellSize = 64;
+            const int cellSize = 64;
             CameraContext context = new(cellSize, 800, 600);
 
             Raycaster6 raycaster = new(map, context);
 
-            double startX = 96; // Camera position X.
-            double startY = 96; // Camera position Y.
+            const double startX = 96; // Camera position X.
+            const double startY = 96; // Camera position Y.
             double[] testAngles = { 0, 45, 90, 135, 180 }; // Test angles in degrees.
 
             foreach (var angle in testAngles)

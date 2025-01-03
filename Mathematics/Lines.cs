@@ -62,11 +62,11 @@ namespace Mathematics
             lst = new List<Coordinate2D>();
 
             var m = (to.Y - from.Y) / (to.X - from.X);
-            var n = from.Y - m * from.X;
+            var n = from.Y - (m * from.X);
 
             for (var x = from.X; x <= to.X; x++)
             {
-                var y = m * x + n;
+                var y = (m * x) + n;
                 var point = new Coordinate2D { X = x, Y = y };
                 lst.Add(point);
             }
@@ -113,11 +113,11 @@ namespace Mathematics
             }
 
             var m = (to.Y - from.Y) / (to.X - from.X);
-            var n = from.Y - m * from.X;
+            var n = from.Y - (m * from.X);
 
             for (var x = from.X; x <= to.X; x++)
             {
-                var y = m * x + n;
+                var y = (m * x) + n;
                 var point = new Vector3D { X = x, Y = y };
                 lst.Add(point);
             }

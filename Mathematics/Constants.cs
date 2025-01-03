@@ -27,6 +27,25 @@ namespace Mathematics
         private static readonly double MinusSixPlusTwo = (-Math.Sqrt(6) + Two) / 4;
 
         /// <summary>
+        ///     Predefined tangent values for common angles
+        ///     The tangents
+        /// </summary>
+        public static readonly Dictionary<int, double> Tangents = new()
+        {
+            { 0, 0.0 },
+            { 30, Math.Tan(30 * Math.PI / 180.0) }, // √3 / 3
+            { 45, 1.0 },
+            { 60, Math.Tan(60 * Math.PI / 180.0) }, // √3
+            { 90, double.NaN }, // Undefined
+            { 120, -Math.Tan(60 * Math.PI / 180.0) },
+            { 135, -1.0 },
+            { 150, -Math.Tan(30 * Math.PI / 180.0) },
+            { 180, 0.0 },
+            { 270, double.NaN }, // Undefined
+            { 360, 0.0 }
+        };
+
+        /// <summary>
         ///     Gets the sinus.
         ///     http://www2.hs-esslingen.de/~kamelzer/2011WS/Werte_sin_cos.pdf
         ///     https://de.wikipedia.org/wiki/Sinus_und_Kosinus

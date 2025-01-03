@@ -101,23 +101,25 @@ namespace Voxels
             Parallel.For(0, _columnSlices.Count, i => Array.Fill(_columnSlices[i], 0));
 
             var colorDictionary = new Dictionary<int, Color>();
-            var sinPhi = ExtendedMath.CalcSin(camera.Angle);
-            var cosPhi = ExtendedMath.CalcCos(camera.Angle);
+            var sinPhi = ExtendedMath.CalcSinF(camera.Angle);
+            var cosPhi = ExtendedMath.CalcCosF(camera.Angle);
 
             float z = camera.Z;
             float dz = 1;
 
-            var tanFovHalf = (float)Math.Tan(_context.Fov / 2.0 * Math.PI / 180.0);
+            var fov = (int) (_context.Fov / 2.0);
+
+            var tanFovHalf = ExtendedMath.CalcTanF(fov);
 
             while (z < camera.ZFar)
             {
                 var halfWidth = z * tanFovHalf;
 
-                var pLeftX = (float)(-cosPhi * halfWidth - sinPhi * z) + camera.X;
-                var pLeftY = (float)(sinPhi * halfWidth - cosPhi * z) + camera.Y;
+                var pLeftX = -cosPhi * halfWidth - sinPhi * z + camera.X;
+                var pLeftY = sinPhi * halfWidth - cosPhi * z + camera.Y;
 
-                var pRightX = (float)(cosPhi * halfWidth - sinPhi * z) + camera.X;
-                var pRightY = (float)(-sinPhi * halfWidth - cosPhi * z) + camera.Y;
+                var pRightX = cosPhi * halfWidth - sinPhi * z + camera.X;
+                var pRightY = -sinPhi * halfWidth - cosPhi * z + camera.Y;
 
                 var dx = (pRightX - pLeftX) / _context.ScreenWidth;
                 var dy = (pRightY - pLeftY) / _context.ScreenWidth;
@@ -139,8 +141,8 @@ namespace Voxels
                     var heightOfHeightMap = _flatHeightMap[wrappedHeightY * _topographyWidth + wrappedHeightX];
                     var color = _flatColorMap[wrappedColorY * _colorWidth + wrappedColorX];
 
-                    var heightOnScreen = (float)(((_context.Height - heightOfHeightMap) / z * _context.Scale + camera.Horizon) -
-                                                 ExtendedMath.CalcTan(camera.Pitch) * _context.Scale);
+                    var heightOnScreen = ((_context.Height - heightOfHeightMap) / z * _context.Scale + camera.Horizon) -
+                                         ExtendedMath.CalcTanF(camera.Pitch) * _context.Scale;
 
                     var y1 = (int)heightOnScreen;
 

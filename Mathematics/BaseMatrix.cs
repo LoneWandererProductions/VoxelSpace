@@ -31,9 +31,15 @@ namespace Mathematics
         /// <param name="dimY">The Height.</param>
         public BaseMatrix(int dimX, int dimY)
         {
-            if (dimX <= 0) throw new ArgumentException(MathResources.MatrixErrorNegativeValue, nameof(dimX));
+            if (dimX <= 0)
+            {
+                throw new ArgumentException(MathResources.MatrixErrorNegativeValue, nameof(dimX));
+            }
 
-            if (dimY <= 0) throw new ArgumentException(MathResources.MatrixErrorNegativeValue, nameof(dimY));
+            if (dimY <= 0)
+            {
+                throw new ArgumentException(MathResources.MatrixErrorNegativeValue, nameof(dimY));
+            }
 
             Matrix = new double[dimX, dimY];
         }
@@ -45,7 +51,9 @@ namespace Mathematics
         public BaseMatrix(double[,] matrix)
         {
             if (matrix.GetLength(0) <= 0 || matrix.GetLength(1) <= 0)
+            {
                 throw new ArgumentException(MathResources.MatrixErrorNegativeValue, nameof(matrix));
+            }
 
             Matrix = matrix;
         }
@@ -133,7 +141,10 @@ namespace Mathematics
         /// </param>
         private void Dispose(bool disposing)
         {
-            if (Disposed) return;
+            if (Disposed)
+            {
+                return;
+            }
 
             if (disposing)
             {
@@ -163,7 +174,10 @@ namespace Mathematics
         /// <returns>The Inverse Matrix</returns>
         public BaseMatrix Inverse()
         {
-            if (Height != Width) throw new NotImplementedException(MathResources.MatrixErrorInverseNotCubic);
+            if (Height != Width)
+            {
+                throw new NotImplementedException(MathResources.MatrixErrorInverseNotCubic);
+            }
 
             var result = MatrixInverse.Inverse(Matrix);
             return new BaseMatrix(result);
@@ -176,7 +190,10 @@ namespace Mathematics
         /// <exception cref="System.NotImplementedException"></exception>
         public KeyValuePair<BaseMatrix, BaseMatrix> LuDecomposition()
         {
-            if (Height != Width) throw new NotImplementedException(MathResources.MatrixErrorInverseNotCubic);
+            if (Height != Width)
+            {
+                throw new NotImplementedException(MathResources.MatrixErrorInverseNotCubic);
+            }
 
             var (l, u) = MatrixInverse.LuDecomposition(Matrix);
 
@@ -206,7 +223,10 @@ namespace Mathematics
         /// </returns>
         public static BaseMatrix operator *(BaseMatrix first, BaseMatrix second)
         {
-            if (first.Width != second.Height) throw new ArithmeticException(MathResources.MatrixErrorColumns);
+            if (first.Width != second.Height)
+            {
+                throw new ArithmeticException(MathResources.MatrixErrorColumns);
+            }
 
             return MatrixUtility.UnsafeMultiplication(first, second);
         }
@@ -249,9 +269,15 @@ namespace Mathematics
         /// </returns>
         public static BaseMatrix operator +(BaseMatrix first, BaseMatrix second)
         {
-            if (first.Width != second.Width) throw new ArithmeticException();
+            if (first.Width != second.Width)
+            {
+                throw new ArithmeticException();
+            }
 
-            if (first.Height != second.Height) throw new ArithmeticException();
+            if (first.Height != second.Height)
+            {
+                throw new ArithmeticException();
+            }
 
             return MatrixUtility.UnsafeAddition(first, second);
         }
@@ -266,9 +292,15 @@ namespace Mathematics
         /// </returns>
         public static BaseMatrix operator -(BaseMatrix first, BaseMatrix second)
         {
-            if (first.Width != second.Width) throw new ArithmeticException();
+            if (first.Width != second.Width)
+            {
+                throw new ArithmeticException();
+            }
 
-            if (first.Height != second.Height) throw new ArithmeticException();
+            if (first.Height != second.Height)
+            {
+                throw new ArithmeticException();
+            }
 
             return MatrixUtility.UnsafeSubtraction(first, second);
         }
@@ -344,7 +376,10 @@ namespace Mathematics
         /// </returns>
         public static explicit operator Vector3D(BaseMatrix first)
         {
-            if (first.Height != 4 && first.Width != 4) return null;
+            if (first.Height != 4 && first.Width != 4)
+            {
+                return null;
+            }
 
             var v = new Vector3D(first[0, 0], first[0, 1], first[0, 2]);
             v.SetW(first[0, 3]);

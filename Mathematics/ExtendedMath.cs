@@ -24,7 +24,7 @@ namespace Mathematics
         ///     https://de.wikipedia.org/wiki/Radiant_(Einheit)
         /// </summary>
         /// <param name="degree">Degree we want to Rotate</param>
-        /// <returns>The <see cref="double" />.</returns>
+        /// <returns>The <see cref="double" /> The radial Value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double CalcCos(int degree)
         {
@@ -32,7 +32,10 @@ namespace Mathematics
             var lookupDegree = Math.Abs(degree);
 
             // Look up the cosine value in the dictionary for the positive angle.
-            if (Constants.CoSinus.ContainsKey(lookupDegree)) return Constants.CoSinus[lookupDegree];
+            if (Constants.CoSinus.ContainsKey(lookupDegree))
+            {
+                return Constants.CoSinus[lookupDegree];
+            }
 
             // If the value is not found, calculate it normally.
             const double rad = Math.PI / 180.0;
@@ -44,7 +47,7 @@ namespace Mathematics
         ///     https://de.wikipedia.org/wiki/Radiant_(Einheit)
         /// </summary>
         /// <param name="degree">Degree we want to Rotate</param>
-        /// <returns>The <see cref="double" />.</returns>
+        /// <returns>The <see cref="double" /> The radial Value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double CalcSin(int degree)
         {
@@ -55,7 +58,10 @@ namespace Mathematics
                 sin = Constants.Sinus[Math.Abs(degree)];
 
                 //catch negative degrees
-                if (degree < 0) sin *= -1;
+                if (degree < 0)
+                {
+                    sin *= -1;
+                }
             }
             else
             {
@@ -76,15 +82,48 @@ namespace Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double CalcTan(int degree)
         {
-            // Check for cases where tangent is undefined due to division by zero (90° + k * 180°)
-            if (degree % 180 == 90)
-                throw new DivideByZeroException($"Tangent is undefined for {degree} degrees.");
+            // Normalize degree to [0, 360)
+            var normalizedDegree = ((degree % 360) + 360) % 360;
 
-            // Calculate tangent using sine and cosine
-            var sin = CalcSin(degree);
-            var cos = CalcCos(degree);
+            // Check if the angle is predefined in the lookup table
+            if (Constants.Tangents.ContainsKey(normalizedDegree))
+            {
+                var tangent = Constants.Tangents[normalizedDegree];
+                if (double.IsNaN(tangent))
+                {
+                    throw new DivideByZeroException($"Tangent is undefined for {degree} degrees.");
+                }
 
-            return sin / cos;
+                return tangent;
+            }
+
+            // Calculate tangent for other angles
+            const double rad = Math.PI / 180.0;
+            return Math.Tan(normalizedDegree * rad);
         }
+
+        /// <summary>
+        /// Calculates the cos as float. Variation of CalcCos.
+        /// </summary>
+        /// <param name="degree">The degree.</param>
+        /// <returns>The <see cref="float" /> The radial Value.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float CalcCosF(int degree) => (float)CalcCos(degree);
+
+        /// <summary>
+        /// Calculates the sin float. Variation of CalcSin.
+        /// </summary>
+        /// <param name="degree">The degree.</param>
+        /// <returns>The <see cref="float" /> The radial Value.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float CalcSinF(int degree) => (float)CalcSin(degree);
+
+        /// <summary>
+        /// Calculates the tan float. Variation of CalcTan.
+        /// </summary>
+        /// <param name="degree">The degree.</param>
+        /// <returns>The <see cref="float" /> The radial Value.</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float CalcTanF(int degree) => (float)CalcTan(degree);
     }
 }

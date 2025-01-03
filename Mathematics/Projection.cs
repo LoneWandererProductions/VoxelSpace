@@ -42,7 +42,10 @@ namespace Mathematics
             if (Debug)
             {
                 Trace.WriteLine(MathResources.Debug3DWorld);
-                foreach (var triangle in cache) Trace.WriteLine(triangle.ToString());
+                foreach (var triangle in cache)
+                {
+                    Trace.WriteLine(triangle.ToString());
+                }
             }
 
             cache = transform.CameraType switch
@@ -55,13 +58,19 @@ namespace Mathematics
             if (Debug)
             {
                 Trace.WriteLine(MathResources.Debug3DCamera);
-                foreach (var triangle in cache) Trace.WriteLine(triangle.ToString());
+                foreach (var triangle in cache)
+                {
+                    Trace.WriteLine(triangle.ToString());
+                }
             }
 
             if (Debug)
             {
                 Trace.WriteLine(MathResources.Debug3DClipping);
-                foreach (var triangle in cache) Trace.WriteLine(triangle.ToString());
+                foreach (var triangle in cache)
+                {
+                    Trace.WriteLine(triangle.ToString());
+                }
             }
 
             cache = transform.DisplayType switch
@@ -74,7 +83,10 @@ namespace Mathematics
             if (Debug)
             {
                 Trace.WriteLine(MathResources.Debug3D);
-                foreach (var triangle in cache) Trace.WriteLine(triangle.ToString());
+                foreach (var triangle in cache)
+                {
+                    Trace.WriteLine(triangle.ToString());
+                }
             }
 
             cache = ProjectionRaster.Clipping(cache);
@@ -87,8 +99,10 @@ namespace Mathematics
             }
 
             if (transform.DisplayType == Display.Orthographic)
+            {
                 return ProjectionRaster.MoveIntoViewOrthographic(cache, Projection3DRegister.Width,
                     Projection3DRegister.Height);
+            }
 
             return ProjectionRaster.MoveIntoView(cache, Projection3DRegister.Width, Projection3DRegister.Height);
         }
