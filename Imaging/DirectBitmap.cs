@@ -16,11 +16,15 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
-using System.Drawing.Imaging;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Windows;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using Color = System.Drawing.Color;
+using PixelFormat = System.Drawing.Imaging.PixelFormat;
 
 namespace Imaging
 {
@@ -354,6 +358,30 @@ namespace Imaging
             }
 
             return span;
+        }
+
+        /// <summary>
+        /// Converts the Bits into bitmapImage.
+        /// </summary>
+        /// <returns>BitmapImage image data</returns>
+        public BitmapImage ToBitmapImage()
+        {
+            // Create a WriteableBitmap with the same dimensions as the DirectBitmap
+            var writeableBitmap = new WriteableBitmap(Width, Height, 96, 96, PixelFormats.Bgra32, null);
+
+            // Write the pixel data (from DirectBitmap's Bits) into the WriteableBitmap
+            writeableBitmap.WritePixels(
+                new Int32Rect(0, 0, Width, Height),
+                Bits,
+                Width * 4, // Each pixel has 4 bytes (BGRA)
+                0);
+
+            // Return the WriteableBitmap as a BitmapImage
+            return new BitmapImage
+            {
+                CreateOptions = BitmapCreateOptions.None,
+                CacheOption = BitmapCacheOption.OnLoad
+            };
         }
 
         /// <summary>
