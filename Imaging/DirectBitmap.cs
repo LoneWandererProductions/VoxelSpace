@@ -36,6 +36,8 @@ namespace Imaging
     /// <seealso cref="T:System.IDisposable" />
     public sealed class DirectBitmap : IDisposable
     {
+        private readonly object _syncLock = new object();
+
         /// <summary>
         ///     Initializes a new instance of the <see cref="DirectBitmap" /> class.
         ///     Bitmap which references pixel data directly
@@ -171,10 +173,13 @@ namespace Imaging
         /// <param name="color">The color.</param>
         public void DrawVerticalLine(int x, int y, int height, Color color)
         {
-            var colorArgb = color.ToArgb();
-            for (var i = y; i < y + height && i < Height; i++)
+            lock (_syncLock)
             {
-                Bits[x + (i * Width)] = colorArgb;
+                var colorArgb = color.ToArgb();
+                for (var i = y; i < y + height && i < Height; i++)
+                {
+                    Bits[x + (i * Width)] = colorArgb;
+                }
             }
         }
 
@@ -188,36 +193,39 @@ namespace Imaging
         /// <param name="color">The color.</param>
         public void DrawHorizontalLine(int x, int y, int length, Color color)
         {
-            if (y < 0 || y >= Height || length <= 0)
+            lock (_syncLock)
             {
-                return;
-            }
+                if (y < 0 || y >= Height || length <= 0)
+                {
+                    return;
+                }
 
-            var colorArgb = color.ToArgb();
-            var vectorCount = Vector<int>.Count;
-            var colorVector = new Vector<int>(colorArgb);
+                var colorArgb = color.ToArgb();
+                var vectorCount = Vector<int>.Count;
+                var colorVector = new Vector<int>(colorArgb);
 
-            var endX = Math.Min(x + length, Width);
+                var endX = Math.Min(x + length, Width);
 
-            // Align start position to the next multiple of vectorCount if possible
-            var startX = (x + vectorCount - 1) & ~(vectorCount - 1);
+                // Align start position to the next multiple of vectorCount if possible
+                var startX = (x + vectorCount - 1) & ~(vectorCount - 1);
 
-            // Fill initial non-aligned part
-            for (var i = x; i < startX && i < endX; i++)
-            {
-                Bits[i + (y * Width)] = colorArgb;
-            }
+                // Fill initial non-aligned part
+                for (var i = x; i < startX && i < endX; i++)
+                {
+                    Bits[i + (y * Width)] = colorArgb;
+                }
 
-            // Fill aligned part with SIMD
-            for (var xPos = startX; xPos + vectorCount <= endX; xPos += vectorCount)
-            {
-                colorVector.CopyTo(Bits, xPos + (y * Width));
-            }
+                // Fill aligned part with SIMD
+                for (var xPos = startX; xPos + vectorCount <= endX; xPos += vectorCount)
+                {
+                    colorVector.CopyTo(Bits, xPos + (y * Width));
+                }
 
-            // Fill final non-aligned part
-            for (var i = endX - vectorCount; i < endX; i++)
-            {
-                Bits[i + (y * Width)] = colorArgb;
+                // Fill final non-aligned part
+                for (var i = endX - vectorCount; i < endX; i++)
+                {
+                    Bits[i + (y * Width)] = colorArgb;
+                }
             }
         }
 
@@ -232,27 +240,37 @@ namespace Imaging
         /// <param name="color">The color.</param>
         public void DrawRectangle(int x1, int y2, int width, int height, Color color)
         {
-            var colorArgb = color.ToArgb();
-            var vectorCount = Vector<int>.Count;
-            var colorVector = new Vector<int>(colorArgb);
-
-            for (var y = y2; y < y2 + height && y < Height; y++)
-            for (var x = x1; x < x1 + width && x < Width; x += vectorCount)
+            lock (_syncLock)
             {
-                var startIndex = x + (y * Width);
-                if (startIndex + vectorCount <= Bits.Length)
+                var colorArgb = color.ToArgb();
+                var vectorCount = Vector<int>.Count;
+                var colorVector = new Vector<int>(colorArgb);
+
+                // Loop over the rectangle's rows.
+                for (var y = y2; y < y2 + height && y < Height; y++)
                 {
-                    colorVector.CopyTo(Bits, startIndex);
-                }
-                else
-                {
-                    for (var j = 0; j < vectorCount && startIndex + j < Bits.Length; j++)
+                    // Loop over the rectangle's columns with SIMD optimizations.
+                    for (var x = x1; x < x1 + width && x < Width; x += vectorCount)
                     {
-                        Bits[startIndex + j] = colorArgb;
+                        var startIndex = x + (y * Width);
+                        // Ensure we don't go out of bounds.
+                        if (startIndex + vectorCount <= Bits.Length)
+                        {
+                            colorVector.CopyTo(Bits, startIndex);
+                        }
+                        else
+                        {
+                            // Handle remainder if not divisible by vectorCount
+                            for (var j = 0; j < vectorCount && startIndex + j < Bits.Length; j++)
+                            {
+                                Bits[startIndex + j] = colorArgb;
+                            }
+                        }
                     }
                 }
             }
         }
+
 
         /// <summary>
         ///     Sets the area.
@@ -261,33 +279,43 @@ namespace Imaging
         /// <param name="color">The color.</param>
         public void SetArea(IEnumerable<int> idList, Color color)
         {
-            var colorArgb = color.ToArgb();
-            var indices = idList.ToArray();
-            var vectorCount = Vector<int>.Count;
-
-            for (var i = 0; i < indices.Length; i += vectorCount)
+            lock (_syncLock)
             {
-                var chunkSize = Math.Min(vectorCount, indices.Length - i);
+                var colorArgb = color.ToArgb();
+                var indices = idList.ToArray();
+                var vectorCount = Vector<int>.Count;
+                var colorVector = new Vector<int>(colorArgb);
 
-                if (chunkSize == vectorCount)
+                // Process the indices in chunks that fit within a Vector<int>
+                for (var i = 0; i < indices.Length; i += vectorCount)
                 {
-                    var indexVector = new Vector<int>(indices, i);
+                    var chunkSize = Math.Min(vectorCount, indices.Length - i);
 
-                    for (var j = 0; j < chunkSize; j++)
+                    // If the chunk size is equal to vectorCount, we can process the entire chunk in parallel using SIMD
+                    if (chunkSize == vectorCount)
                     {
-                        if (indexVector[j] < Bits.Length)
+                        var indexVector = new Vector<int>(indices, i);
+
+                        // Use SIMD to write the color to multiple positions in the Bits array at once
+                        for (var j = 0; j < vectorCount; j++)
                         {
-                            Bits[indexVector[j]] = colorArgb;
+                            var index = indexVector[j];
+                            if (index < Bits.Length)
+                            {
+                                Bits[index] = colorArgb;
+                            }
                         }
                     }
-                }
-                else
-                {
-                    for (var j = i; j < i + chunkSize; j++)
+                    else
                     {
-                        if (indices[j] < Bits.Length)
+                        // For the remainder of the indices, process them individually
+                        for (var j = i; j < i + chunkSize; j++)
                         {
-                            Bits[indices[j]] = colorArgb;
+                            var index = indices[j];
+                            if (index < Bits.Length)
+                            {
+                                Bits[index] = colorArgb;
+                            }
                         }
                     }
                 }
@@ -303,8 +331,11 @@ namespace Imaging
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public void SetPixel(int x, int y, Color color)
         {
-            var index = x + (y * Width);
-            Bits[index] = color.ToArgb();
+            lock (_syncLock)
+            {
+                var index = x + (y * Width);
+                Bits[index] = color.ToArgb();
+            }
         }
 
         /// <summary>
@@ -320,103 +351,112 @@ namespace Imaging
         /// </summary>
         public void SetPixelsSimd(IEnumerable<(int x, int y, Color color)> pixels)
         {
-            var pixelArray = pixels.ToArray();
-            var vectorCount = Vector<int>.Count;
-
-            // Ensure Bits array is properly initialized
-            if (Bits == null || Bits.Length < Width * Height)
+            lock (_syncLock)
             {
-                throw new InvalidOperationException(ImagingResources.ErrorInvalidOperation);
-            }
+                var pixelArray = pixels.ToArray();
+                var vectorCount = Vector<int>.Count;
 
-            for (var i = 0; i < pixelArray.Length; i += vectorCount)
-            {
-                var indices = new int[vectorCount];
-                var colors = new int[vectorCount];
-
-                // Load data into vectors
-                for (var j = 0; j < vectorCount; j++)
+                // Ensure Bits array is properly initialized
+                if (Bits == null || Bits.Length < Width * Height)
                 {
-                    if (i + j < pixelArray.Length)
-                    {
-                        var (x, y, color) = pixelArray[i + j];
-                        indices[j] = x + (y * Width);
-                        colors[j] = color.ToArgb();
-                    }
-                    else
-                    {
-                        // Handle cases where the remaining elements are less than vectorCount
-                        indices[j] = 0;
-                        colors[j] = Color.Transparent.ToArgb(); // Use a default color or handle it as needed
-                    }
+                    throw new InvalidOperationException(ImagingResources.ErrorInvalidOperation);
                 }
 
-                // Write data to Bits array
-                for (var j = 0; j < vectorCount; j++)
+                for (var i = 0; i < pixelArray.Length; i += vectorCount)
                 {
-                    if (i + j < pixelArray.Length)
+                    var indices = new int[vectorCount];
+                    var colors = new int[vectorCount];
+
+                    // Load data into vectors
+                    for (var j = 0; j < vectorCount; j++)
                     {
-                        Bits[indices[j]] = colors[j];
-                    }
-                }
-            }
-        }
-
-        public void DrawVerticalLinesSimd(IEnumerable<(int x, int y, int finalY, Color color)> verticalLines)
-        {
-            foreach (var (x, y, finalY, color) in verticalLines)
-            {
-                // Skip if the line is outside bounds or invalid
-                if (x < 0 || x >= Width || y >= Height || finalY <= y)
-                {
-                    continue;
-                }
-
-                // Ensure the starting and ending points are within bounds
-                var startY = Math.Max(0, y);
-                var endY = Math.Min(Height, finalY);
-
-                var colorArgb = color.ToArgb();
-                var colorVector = new Vector<int>(colorArgb);
-
-                for (var i = startY; i < endY;)
-                {
-                    var currentOffset = x + (i * Width);
-
-                    // Process as many pixels as Vector<int> can handle
-                    var remaining = endY - i;
-                    var vectorLength = Vector<int>.Count;
-                    var count = Math.Min(remaining, vectorLength);
-
-                    // Write vectorized color values to memory
-                    unsafe
-                    {
-                        fixed (int* bitsPtr = Bits)
+                        if (i + j < pixelArray.Length)
                         {
-                            // Write the vectorized color to the memory block
-                            var bitsSpan = new Span<int>(bitsPtr + currentOffset, count);
-
-                            if (bitsSpan.Length >= vectorLength)
-                            {
-                                // Only copy a full vector when the span is large enough
-                                colorVector.CopyTo(bitsSpan);
-                            }
-                            else
-                            {
-                                // Fill remaining pixels one by one
-                                for (var j = 0; j < bitsSpan.Length; j++)
-                                {
-                                    bitsSpan[j] = colorArgb;
-                                }
-                            }
+                            var (x, y, color) = pixelArray[i + j];
+                            indices[j] = x + (y * Width);
+                            colors[j] = color.ToArgb();
+                        }
+                        else
+                        {
+                            // Handle cases where the remaining elements are less than vectorCount
+                            indices[j] = 0;
+                            colors[j] = Color.Transparent.ToArgb(); // Default color
                         }
                     }
 
-                    i += count; // Advance by the number of elements processed
+                    // Write data to Bits array
+                    for (var j = 0; j < vectorCount; j++)
+                    {
+                        if (i + j < pixelArray.Length)
+                        {
+                            Bits[indices[j]] = colors[j];
+                        }
+                    }
                 }
             }
         }
 
+        /// <summary>
+        /// Draws the vertical lines simd.
+        /// </summary>
+        /// <param name="verticalLines">The vertical lines.</param>
+        public void DrawVerticalLinesSimd(IEnumerable<(int x, int y, int finalY, Color color)> verticalLines)
+        {
+            lock (_syncLock)
+            {
+                foreach (var (x, y, finalY, color) in verticalLines)
+                {
+                    // Skip if the line is outside bounds or invalid
+                    if (x < 0 || x >= Width || y >= Height || finalY <= y)
+                    {
+                        continue;
+                    }
+
+                    // Ensure the starting and ending points are within bounds
+                    var startY = Math.Max(0, y);
+                    var endY = Math.Min(Height, finalY);
+
+                    var colorArgb = color.ToArgb();
+                    var colorVector = new Vector<int>(colorArgb);
+
+                    for (var i = startY; i < endY;)
+                    {
+                        var currentOffset = x + (i * Width);
+
+                        // Process as many pixels as Vector<int> can handle
+                        var remaining = endY - i;
+                        var vectorLength = Vector<int>.Count;
+                        var count = Math.Min(remaining, vectorLength);
+
+                        // Write vectorized color values to memory
+                        unsafe
+                        {
+                            fixed (int* bitsPtr = Bits)
+                            {
+                                // Write the vectorized color to the memory block
+                                var bitsSpan = new Span<int>(bitsPtr + currentOffset, count);
+
+                                if (bitsSpan.Length >= vectorLength)
+                                {
+                                    // Only copy a full vector when the span is large enough
+                                    colorVector.CopyTo(bitsSpan);
+                                }
+                                else
+                                {
+                                    // Fill remaining pixels one by one
+                                    for (var j = 0; j < bitsSpan.Length; j++)
+                                    {
+                                        bitsSpan[j] = colorArgb;
+                                    }
+                                }
+                            }
+                        }
+
+                        i += count; // Advance by the number of elements processed
+                    }
+                }
+            }
+        }
 
         /// <summary>
         ///     Gets the pixel.
