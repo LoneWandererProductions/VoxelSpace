@@ -16,6 +16,7 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -405,19 +406,41 @@ namespace Imaging
         /// <returns>BitmapImage image data</returns>
         public BitmapImage ToBitmapImage()
         {
-            // Create a WriteableBitmap with the same dimensions as the DirectBitmap
-            var writeableBitmap = new WriteableBitmap(Width, Height, 96, 96, PixelFormats.Bgra32, null);
+            // Ensure this method runs on the UI thread.
+            BitmapImage bitmapImage = null;
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                // Create a WriteableBitmap with the same dimensions as the DirectBitmap
+                var writeableBitmap = new WriteableBitmap(Width, Height, 96, 96, PixelFormats.Bgra32, null);
 
-            // Write the pixel data (from DirectBitmap's Bits) into the WriteableBitmap
-            writeableBitmap.WritePixels(
-                new Int32Rect(0, 0, Width, Height),
-                Bits,
-                Width * 4, // Each pixel has 4 bytes (BGRA)
-                0);
+                // Write the pixel data (from DirectBitmap's Bits) into the WriteableBitmap
+                writeableBitmap.WritePixels(
+                    new Int32Rect(0, 0, Width, Height),
+                    Bits,
+                    Width * 4, // Each pixel has 4 bytes (BGRA)
+                    0);
 
-            // Return the WriteableBitmap as a BitmapImage
-            return new BitmapImage { CreateOptions = BitmapCreateOptions.None, CacheOption = BitmapCacheOption.OnLoad };
+                // Create a BitmapImage and set the WriteableBitmap's pixel data
+                bitmapImage = new BitmapImage();
+                using (var stream = new MemoryStream())
+                {
+                    // Encode the WriteableBitmap to a MemoryStream
+                    PngBitmapEncoder encoder = new PngBitmapEncoder();
+                    encoder.Frames.Add(BitmapFrame.Create(writeableBitmap));
+                    encoder.Save(stream);
+
+                    // Set the stream as the source for the BitmapImage
+                    stream.Seek(0, SeekOrigin.Begin);
+                    bitmapImage.BeginInit();
+                    bitmapImage.StreamSource = stream;
+                    bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+                    bitmapImage.EndInit();
+                }
+            });
+
+            return bitmapImage;
         }
+
 
         /// <summary>
         ///     Converts to string.
