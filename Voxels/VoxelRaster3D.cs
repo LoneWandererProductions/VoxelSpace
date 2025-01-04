@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
+using System.Linq;
 using System.Threading.Tasks;
 using Imaging;
 using Mathematics;
@@ -158,17 +159,103 @@ namespace Voxels
                 dz += DzIncrement;
             }
 
-            var pixelTuples = FillMissingColors(colorDictionary);
+            var lines = FillMissingColorsWithVerticalLines(colorDictionary);
+            var points = ConvertColumnSlicesToSinglePixels(colorDictionary);
+            var all = FillMissingColorsOld(colorDictionary);
 
             _directBitmap = new DirectBitmap(_context.ScreenWidth, _context.ScreenHeight);
-            _directBitmap.SetPixelsSimd(pixelTuples);
+
+            //_directBitmap.DrawVerticalLinesSimd(lines);
+            //_directBitmap.SetPixelsSimd(points);
+            _directBitmap.SetPixelsSimd(all);
 
             Array.Clear(_yBuffer, 0, _yBuffer.Length);
 
             return _directBitmap.Bitmap;
         }
 
-        private IEnumerable<(int x, int y, Color color)> FillMissingColors(
+        private IEnumerable<(int x, int y, Color color)> ConvertColumnSlicesToSinglePixels(IReadOnlyDictionary<int, Color> colorDictionary)
+        {
+            var singlePixels = new List<(int x, int y, Color color)>();
+
+            // Iterate through each column slice
+            for (int x = 0; x < _columnSlices.Count; x++)
+            {
+                Span<int> columnSlice = _columnSlices[x]; // Span used for performance
+
+                // Iterate through each pixel in the column slice
+                for (int y = 0; y < columnSlice.Length; y++)
+                {
+                    var colorId = columnSlice[y];
+
+                    // Skip zero values (no color assigned)
+                    if (colorId == 0) continue;
+
+                    if (colorDictionary.TryGetValue(colorId, out var color))
+                    {
+                        // Add pixel to the list of single pixels
+                        singlePixels.Add((x, y, color));
+                    }
+                    else
+                    {
+                        Trace.WriteLine($"Warning: Color ID {colorId} not found in the dictionary.");
+                    }
+                }
+            }
+
+            // Return the list of single pixels
+            return singlePixels;
+        }
+
+        private List<(int x, int y, int finalY, Color color)> FillMissingColorsWithVerticalLines(
+            IReadOnlyDictionary<int, Color> colorDictionary)
+        {
+            var verticalLines = new ConcurrentBag<(int x, int y, int finalY, Color color)>();
+
+            _ = Parallel.For(0, _columnSlices.Count, x =>
+            {
+                Span<int> columnSlice = _columnSlices[x]; // Span used for performance
+                var lastKnownColorId = 0;
+                var count = 0;
+
+                for (var y = 0; y < columnSlice.Length; y++)
+                {
+                    var colorId = columnSlice[y]; // Local variable to store the value
+
+                    if (colorId != 0)
+                    {
+                        lastKnownColorId = colorId;
+                        count = 0;
+                    }
+                    else if (lastKnownColorId != 0)
+                    {
+                        colorId = lastKnownColorId; // Continue using the last known color
+                    }
+
+                    count++;
+                    if (colorId == 0) continue;
+                    if(count < 1) continue;
+
+                    if (colorDictionary.TryGetValue(colorId, out var color))
+                    {
+                        var start = y - count;
+                        verticalLines.Add((x, start, y, color));
+                        count = 0;
+                    }
+                    else
+                    {
+                        Trace.WriteLine($"Warning: Color ID {colorId} not found in the dictionary.");
+                    }
+
+                    lastKnownColorId = 0;
+                }
+            });
+
+            // Convert ConcurrentBag to List if necessary for further processing
+            return verticalLines.ToList();
+        }
+
+        private IEnumerable<(int x, int y, Color color)> FillMissingColorsOld(
             IReadOnlyDictionary<int, Color> colorDictionary)
         {
             var filledPixelTuples = new ConcurrentBag<(int x, int y, Color color)>();
@@ -188,8 +275,7 @@ namespace Voxels
                     }
                     else if (lastKnownColorId != 0)
                     {
-                        columnSlice[y] = lastKnownColorId;
-                        colorId = lastKnownColorId; // Update colorId to avoid redundant checks
+                        colorId = lastKnownColorId; // Continue using the last known color
                     }
 
                     if (colorId == 0) continue;
@@ -203,6 +289,7 @@ namespace Voxels
 
             return filledPixelTuples;
         }
+
 
         /// <summary>
         ///     Releases unmanaged and - optionally - managed resources.

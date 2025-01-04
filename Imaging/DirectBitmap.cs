@@ -362,6 +362,62 @@ namespace Imaging
             }
         }
 
+        public void DrawVerticalLinesSimd(IEnumerable<(int x, int y, int finalY, Color color)> verticalLines)
+        {
+            foreach (var (x, y, finalY, color) in verticalLines)
+            {
+                // Skip if the line is outside bounds or invalid
+                if (x < 0 || x >= Width || y >= Height || finalY <= y)
+                {
+                    continue;
+                }
+
+                // Ensure the starting and ending points are within bounds
+                var startY = Math.Max(0, y);
+                var endY = Math.Min(Height, finalY);
+
+                var colorArgb = color.ToArgb();
+                var colorVector = new Vector<int>(colorArgb);
+
+                for (var i = startY; i < endY;)
+                {
+                    var currentOffset = x + (i * Width);
+
+                    // Process as many pixels as Vector<int> can handle
+                    var remaining = endY - i;
+                    var vectorLength = Vector<int>.Count;
+                    var count = Math.Min(remaining, vectorLength);
+
+                    // Write vectorized color values to memory
+                    unsafe
+                    {
+                        fixed (int* bitsPtr = Bits)
+                        {
+                            // Write the vectorized color to the memory block
+                            var bitsSpan = new Span<int>(bitsPtr + currentOffset, count);
+
+                            if (bitsSpan.Length >= vectorLength)
+                            {
+                                // Only copy a full vector when the span is large enough
+                                colorVector.CopyTo(bitsSpan);
+                            }
+                            else
+                            {
+                                // Fill remaining pixels one by one
+                                for (var j = 0; j < bitsSpan.Length; j++)
+                                {
+                                    bitsSpan[j] = colorArgb;
+                                }
+                            }
+                        }
+                    }
+
+                    i += count; // Advance by the number of elements processed
+                }
+            }
+        }
+
+
         /// <summary>
         ///     Gets the pixel.
         /// </summary>
