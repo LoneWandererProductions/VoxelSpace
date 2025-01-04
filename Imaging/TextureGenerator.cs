@@ -46,7 +46,7 @@ namespace Imaging
         public Bitmap GenerateNoiseBitmap(int width, int height)
         {
             var config = ImageSettings.GetSettings(TextureType.Noise);
-            return Texture.GenerateNoiseBitmap(
+            return TextureStream.GenerateNoiseBitmap(
                 width,
                 height,
                 config.MinValue,
@@ -68,7 +68,7 @@ namespace Imaging
         public Bitmap GenerateCloudsBitmap(int width, int height)
         {
             var config = ImageSettings.GetSettings(TextureType.Clouds);
-            return Texture.GenerateCloudsBitmap(
+            return TextureStream.GenerateCloudsBitmap(
                 width,
                 height,
                 config.MinValue,
@@ -88,7 +88,7 @@ namespace Imaging
         public Bitmap GenerateMarbleBitmap(int width, int height)
         {
             var config = ImageSettings.GetSettings(TextureType.Marble);
-            return Texture.GenerateMarbleBitmap(
+            return TextureStream.GenerateMarbleBitmap(
                 width,
                 height,
                 config.XPeriod,
@@ -110,7 +110,7 @@ namespace Imaging
         public Bitmap GenerateWaveBitmap(int width, int height)
         {
             var config = ImageSettings.GetSettings(TextureType.Wave);
-            return Texture.GenerateWaveBitmap(
+            return TextureStream.GenerateWaveBitmap(
                 width,
                 height,
                 config.Alpha,
@@ -130,7 +130,7 @@ namespace Imaging
         public Bitmap GenerateWoodBitmap(int width, int height)
         {
             var config = ImageSettings.GetSettings(TextureType.Wood);
-            return Texture.GenerateWoodBitmap(
+            return TextureStream.GenerateWoodBitmap(
                 width,
                 height,
                 config.Alpha,
@@ -156,15 +156,46 @@ namespace Imaging
             Point? startPoint = null,
             object shapeParams = null)
         {
-            // If no start point is provided, default to (0, 0)
-            var actualStartPoint = startPoint ?? new Point(0, 0);
-
             return TextureAreas.GenerateTexture(
                 width,
                 height,
                 filter,
                 shape,
-                ImageSettings, shapeParams, actualStartPoint);
+                ImageSettings, shapeParams, startPoint);
+        }
+
+        /// <inheritdoc />
+        /// <summary>
+        ///     Generates the texture overlay.
+        /// </summary>
+        /// <param name="image">The image.</param>
+        /// <param name="height">The height.</param>
+        /// <param name="filter">The filter.</param>
+        /// <param name="shape">The shape.</param>
+        /// <param name="startPoint">The start point.</param>
+        /// <param name="shapeParams">The shape parameters.</param>
+        /// <param name="width">The width.</param>
+        /// <returns>
+        ///     Texture Bitmap
+        /// </returns>
+        /// <exception cref="System.ArgumentOutOfRangeException">
+        ///     filter - null
+        ///     or
+        ///     shape - null
+        /// </exception>
+        public Bitmap GenerateTextureOverlay(Bitmap image, int width, int height, TextureType filter, MaskShape shape,
+            Point? startPoint = null,
+            object shapeParams = null)
+        {
+            var overlay = TextureAreas.GenerateTexture(
+                width,
+                height,
+                filter,
+                shape,
+                ImageSettings, shapeParams, startPoint);
+
+            //overlay both images and return
+            return ImageStream.CombineBitmap(image, overlay, 0, 0);
         }
 
         /// <inheritdoc />
@@ -178,7 +209,7 @@ namespace Imaging
         {
             var config = ImageSettings.GetSettings(TextureType.Crosshatch);
 
-            return Texture.GenerateCrosshatchBitmap(
+            return TextureStream.GenerateCrosshatchBitmap(
                 width,
                 height,
                 config.LineSpacing,
@@ -189,6 +220,7 @@ namespace Imaging
             );
         }
 
+        /// <inheritdoc />
         /// <summary>
         ///     Generates the concrete bitmap.
         /// </summary>
@@ -199,7 +231,7 @@ namespace Imaging
         {
             var config = ImageSettings.GetSettings(TextureType.Crosshatch);
 
-            return Texture.GenerateConcreteBitmap(
+            return TextureStream.GenerateConcreteBitmap(
                 width,
                 height,
                 config.MinValue,
@@ -209,6 +241,7 @@ namespace Imaging
             );
         }
 
+        /// <inheritdoc />
         /// <summary>
         ///     Generates the canvas bitmap.
         /// </summary>
@@ -219,7 +252,7 @@ namespace Imaging
         {
             var config = ImageSettings.GetSettings(TextureType.Crosshatch);
 
-            return Texture.GenerateCanvasBitmap(
+            return TextureStream.GenerateCanvasBitmap(
                 width,
                 height,
                 config.LineSpacing,

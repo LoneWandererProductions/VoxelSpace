@@ -1,4 +1,12 @@
-﻿using System.Drawing;
+﻿/*
+ * COPYRIGHT:   See COPYING in the top level directory
+ * PROJECT:     Imaging
+ * FILE:        Imaging/ImageExtension.cs
+ * PURPOSE:     Image Extensions, I think that are helpful and should be there from the beginning
+ * PROGRAMER:   Peter Geinitz (Wayfarer)
+ */
+
+using System.Drawing;
 using System.Windows.Media.Imaging;
 
 namespace Imaging
@@ -46,6 +54,17 @@ namespace Imaging
         {
             var bitmap = new Bitmap(image);
             return bitmap.ToBitmapImage();
+        }
+
+        /// <summary>
+        /// Converts to argb.
+        /// </summary>
+        /// <param name="color">The color.</param>
+        /// <returns>Id of the color</returns>
+        public static int ToArgb(this System.Windows.Media.Color color)
+        {
+            // ARGB format: (Alpha << 24) | (Red << 16) | (Green << 8) | Blue
+            return (color.A << 24) | (color.R << 16) | (color.G << 8) | color.B;
         }
     }
 }

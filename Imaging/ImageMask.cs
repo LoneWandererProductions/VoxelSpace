@@ -41,7 +41,6 @@ namespace Imaging
             return rectBitmap;
         }
 
-
         /// <summary>
         ///     Applies the circle mask.
         /// </summary>

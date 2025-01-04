@@ -47,11 +47,6 @@ namespace Imaging
                 new UIPropertyMetadata(string.Empty, GifSourcePropertyChanged));
 
         /// <summary>
-        ///     The animation
-        /// </summary>
-        private Int32Animation _animation;
-
-        /// <summary>
         ///     The image list
         /// </summary>
         private List<ImageSource> _imageList;
@@ -131,7 +126,9 @@ namespace Imaging
             // Check if the image exists
             if (!File.Exists(GifSource))
                 // Log or show an error message
+            {
                 return;
+            }
 
             try
             {
@@ -139,7 +136,10 @@ namespace Imaging
                 var info = ImageGifMetadataExtractor.ExtractGifMetadata(GifSource);
 
                 // Handle possible error if GIF is not animated
-                if (info.Frames.Count == 0) return;
+                if (info.Frames.Count == 0)
+                {
+                    return;
+                }
 
                 // Load the GIF frames using the handler
                 _imageList = await ImageGifHandler.LoadGif(GifSource);
@@ -179,7 +179,10 @@ namespace Imaging
                 ImageLoaded?.Invoke(this, EventArgs.Empty);
 
                 // Optionally start the animation automatically if AutoStart is true
-                if (AutoStart) StartAnimation();
+                if (AutoStart)
+                {
+                    StartAnimation();
+                }
             }
             catch (Exception ex)
             {
@@ -193,9 +196,13 @@ namespace Imaging
         private static void VisibilityPropertyChanged(DependencyObject sender, DependencyPropertyChangedEventArgs e)
         {
             if ((Visibility)e.NewValue == Visibility.Visible)
+            {
                 ((ImageGif)sender).StartAnimation();
+            }
             else
+            {
                 ((ImageGif)sender).StopAnimation();
+            }
         }
 
         /// <summary>
@@ -203,11 +210,16 @@ namespace Imaging
         /// </summary>
         private static void ChangingFrameIndex(DependencyObject obj, DependencyPropertyChangedEventArgs ev)
         {
-            if (obj is not ImageGif { AutoStart: true } gifImage) return;
+            if (obj is not ImageGif { AutoStart: true } gifImage)
+            {
+                return;
+            }
 
             var newIndex = (int)ev.NewValue;
             if (newIndex >= 0 && newIndex < gifImage._imageList.Count)
+            {
                 gifImage.Source = gifImage._imageList[newIndex];
+            }
         }
 
         /// <summary>
@@ -259,7 +271,10 @@ namespace Imaging
         /// <param name="disposing">if set to <c>true</c> [disposing].</param>
         private void Dispose(bool disposing)
         {
-            if (_isDisposed) return;
+            if (_isDisposed)
+            {
+                return;
+            }
 
             if (disposing)
             {

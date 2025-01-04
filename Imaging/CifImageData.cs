@@ -23,29 +23,41 @@ namespace Imaging
         internal static readonly Func<List<string>, CifImageData> Converter = parts =>
         {
             var hex = parts[0];
-            if (!int.TryParse(parts[1], out var a)) return null;
+            if (!int.TryParse(parts[1], out var a))
+            {
+                return null;
+            }
 
             var converter = new ColorHsv(hex, a);
             var color = Color.FromArgb((byte)converter.A, (byte)converter.R, (byte)converter.G, (byte)converter.B);
             var coordinates = new List<int>();
 
             for (var i = 2; i < parts.Count; i++)
+            {
                 if (parts[i].Contains(ImagingResources.IntervalSplitter))
                 {
                     var lst = parts[i].Split(ImagingResources.CifSeparator).ToList();
                     var sequence = GetStartEndPoint(lst);
 
-                    if (sequence == null) continue;
+                    if (sequence == null)
+                    {
+                        continue;
+                    }
 
                     // Ensure Start and End are not null before casting
                     if (sequence.Value.Start.HasValue && sequence.Value.End.HasValue)
+                    {
                         for (var id = sequence.Value.Start.Value; id <= sequence.Value.End.Value; id++)
+                        {
                             coordinates.Add(id);
+                        }
+                    }
                 }
                 else if (int.TryParse(parts[i], out var idMaster))
                 {
                     coordinates.Add(idMaster);
                 }
+            }
 
             return new CifImageData { Color = color, Coordinates = coordinates };
         };
@@ -73,7 +85,10 @@ namespace Imaging
         /// <returns>A tuple representing the start and end points, or null if parsing fails.</returns>
         private static (int? Start, int? End)? GetStartEndPoint(IReadOnlyList<string> lst)
         {
-            if (lst.Count < 2) return null;
+            if (lst.Count < 2)
+            {
+                return null;
+            }
 
             var checkStart = int.TryParse(lst[0], out var start);
             var checkEnd = int.TryParse(lst[1], out var end);

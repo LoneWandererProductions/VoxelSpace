@@ -7,6 +7,8 @@
  * SOURCES:     https://en.wikipedia.org/wiki/Midpoint_circle_algorithm
  */
 
+// ReSharper disable MissingSpace
+
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -39,10 +41,12 @@ namespace Imaging
             for (var x = Math.Max(0, center.X - radius); x <= Math.Min(width - 1, center.X + radius); x++)
             {
                 var dx = x - center.X;
-                var height = (int)Math.Sqrt(radius * radius - dx * dx);
+                var height = (int)Math.Sqrt((radius * radius) - (dx * dx));
 
                 for (var y = Math.Max(0, center.Y - height); y <= Math.Min(length - 1, center.Y + height); y++)
+                {
                     points.Add(new Point(x, y));
+                }
             }
 
             return points;
@@ -72,7 +76,9 @@ namespace Imaging
             // Normalize the kernel
             for (var y = 0; y < size; y++)
             for (var x = 0; x < size; x++)
+            {
                 kernel[y, x] /= sum;
+            }
 
             return kernel;
         }
@@ -119,16 +125,30 @@ namespace Imaging
             for (var x = 0; x < image.Width; x++)
             {
                 var pixel = image.GetPixel(x, y);
-                if (pixel.A != 0) // Not fully transparent
+                if (pixel.A == 0)
                 {
-                    hasNonTransparentPixel = true;
-                    if (x < minX) minX = x;
+                    continue;
+                }
 
-                    if (x > maxX) maxX = x;
+                hasNonTransparentPixel = true;
+                if (x < minX)
+                {
+                    minX = x;
+                }
 
-                    if (y < minY) minY = y;
+                if (x > maxX)
+                {
+                    maxX = x;
+                }
 
-                    if (y > maxY) maxY = y;
+                if (y < minY)
+                {
+                    minY = y;
+                }
+
+                if (y > maxY)
+                {
+                    maxY = y;
                 }
             }
 
@@ -146,16 +166,24 @@ namespace Imaging
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void HandleException(Exception ex)
         {
+            if (ex == null)
+            {
+                throw new ArgumentNullException(nameof(ex), ImagingResources.ExceptionNull);
+            }
+
             // Log the exception details (implementation may vary)
-            Trace.WriteLine($"Exception Type: {ex.GetType().Name}");
-            Trace.WriteLine($"Message: {ex.Message}");
-            Trace.WriteLine($"Stack Trace: {ex.StackTrace}");
+            Trace.WriteLine(string.Format(ImagingResources.ExceptionType, ex.GetType().Name));
+            Trace.WriteLine(string.Format(ImagingResources.ExceptionMessage, ex.Message));
+            Trace.WriteLine(string.Format(ImagingResources.ExceptionStackTrace, ex.StackTrace));
 
             // Optionally, rethrow or handle further
             if (ex is ArgumentException or InvalidOperationException or NotSupportedException or UriFormatException
                 or IOException)
-                throw new ApplicationException("An error occurred while processing the image.", ex);
+            {
+                throw new ApplicationException(ImagingResources.GeneralProcessingError, ex);
+            }
         }
+
 
         /// <summary>
         ///     Validates the image.
@@ -166,7 +194,10 @@ namespace Imaging
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void ValidateImage(string method, Bitmap image)
         {
-            if (image != null) return;
+            if (image != null)
+            {
+                return;
+            }
 
             var innerException =
                 new ArgumentNullException(string.Concat(method, ImagingResources.Spacing, nameof(image)));
@@ -182,7 +213,10 @@ namespace Imaging
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void ValidateImage(string method, BitmapImage image)
         {
-            if (image != null) return;
+            if (image != null)
+            {
+                return;
+            }
 
             var innerException =
                 new ArgumentNullException(string.Concat(method, ImagingResources.Spacing, nameof(image)));
@@ -214,7 +248,10 @@ namespace Imaging
                 count++;
             }
 
-            if (!calculateMeanColor || count <= 0) return (pixels, null);
+            if (!calculateMeanColor || count <= 0)
+            {
+                return (pixels, null);
+            }
 
             var averageRed = rSum / count;
             var averageGreen = gSum / count;
@@ -234,7 +271,7 @@ namespace Imaging
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static double Interpolate(double a, double b, double t)
         {
-            return a * (1 - t) + b * t;
+            return (a * (1 - t)) + (b * t);
         }
 
         /// <summary>
@@ -282,10 +319,15 @@ namespace Imaging
         internal static void ValidateParameters(int minValue, int maxValue, int alpha)
         {
             if (minValue is < 0 or > 255 || maxValue is < 0 or > 255 || minValue > maxValue)
+            {
                 throw new ArgumentException(
                     ImagingResources.ErrorColorRange);
+            }
 
-            if (alpha is < 0 or > 255) throw new ArgumentException(ImagingResources.ErrorColorRange);
+            if (alpha is < 0 or > 255)
+            {
+                throw new ArgumentException(ImagingResources.ErrorColorRange);
+            }
         }
     }
 }

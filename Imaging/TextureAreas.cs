@@ -1,10 +1,9 @@
 ﻿/*
- * COPYRIGHT:   See COPYING in the top level directory
+ * COPYRIGHT:   See COPYING in the top-level directory
  * PROJECT:     Imaging
  * FILE:        Imaging/TextureAreas.cs
  * PURPOSE:     Provide textures for certain areas
- * PROGRAMER:   Peter Geinitz (Wayfarer)
- * Sources:     https://lodev.org/cgtutor/randomnoise.html
+ * PROGRAMMER:  Peter Geinitz (Wayfarer)
  */
 
 using System;
@@ -18,24 +17,19 @@ namespace Imaging
     internal static class TextureAreas
     {
         /// <summary>
-        ///     Generates the texture.
+        ///     Generates the texture for a specified area.
         /// </summary>
         /// <param name="width">The width.</param>
         /// <param name="height">The height.</param>
-        /// <param name="texture">The filter.</param>
+        /// <param name="texture">The texture type.</param>
         /// <param name="shape">The shape.</param>
-        /// <param name="imageSettings"></param>
-        /// <param name="shapeParams">The shape parameters.</param>
-        /// <param name="startPoint">The optional starting point (top-left corner) of the rectangle. Defaults to (0, 0).</param>
-        /// <returns>
-        ///     Generates a filter for a certain area
-        /// </returns>
-        /// <exception cref="System.ArgumentOutOfRangeException">
-        ///     filter - null
-        ///     or
-        ///     shape - null
-        /// </exception>
-        internal static Bitmap GenerateTexture(int width,
+        /// <param name="imageSettings">The image settings.</param>
+        /// <param name="shapeParams">The shape parameters (optional).</param>
+        /// <param name="startPoint">The optional starting point. Defaults to (0, 0).</param>
+        /// <returns>A Bitmap with the applied texture.</returns>
+        /// <exception cref="ArgumentOutOfRangeException">Thrown for unsupported texture or shape types.</exception>
+        internal static Bitmap GenerateTexture(
+            int width,
             int height,
             TextureType texture,
             MaskShape shape,
@@ -43,90 +37,71 @@ namespace Imaging
             object shapeParams = null,
             Point? startPoint = null)
         {
-            // If no start point is provided, default to (0, 0)
+            if (width <= 0 || height <= 0)
+            {
+                throw new ArgumentException(ImagingResources.InvalidDimensions);
+            }
+
+            if (imageSettings == null)
+            {
+                throw new ArgumentNullException(nameof(imageSettings), ImagingResources.ImageSettingsNull);
+            }
+
+            // Default start point
             var actualStartPoint = startPoint ?? new Point(0, 0);
 
-            // Retrieve the settings for the specified filter
-            var settings = imageSettings.GetSettings(texture);
+            // Retrieve texture settings
+            var settings = imageSettings.GetSettings(texture) ??
+                           throw new ArgumentException(ImagingResources.InvalidTextureSettings, nameof(imageSettings));
 
-            // Create a bitmap to apply the texture
-            Bitmap textureBitmap;
-
-            // Generate texture based on the selected filter
-            switch (texture)
+            // Generate texture
+            var textureBitmap = texture switch
             {
-                case TextureType.Noise:
-                    textureBitmap = Texture.GenerateNoiseBitmap(
-                        width,
-                        height,
-                        settings.MinValue,
-                        settings.MaxValue,
-                        settings.Alpha,
-                        settings.IsMonochrome,
-                        settings.IsTiled,
-                        settings.TurbulenceSize);
-                    break;
+                TextureType.Noise => TextureStream.GenerateNoiseBitmap(
+                    width, height, settings.MinValue, settings.MaxValue, settings.Alpha, settings.IsMonochrome,
+                    settings.IsTiled, settings.TurbulenceSize),
 
-                case TextureType.Clouds:
-                    textureBitmap = Texture.GenerateCloudsBitmap(
-                        width,
-                        height,
-                        settings.MinValue,
-                        settings.MaxValue,
-                        settings.Alpha,
-                        settings.TurbulenceSize);
-                    break;
+                TextureType.Clouds => TextureStream.GenerateCloudsBitmap(
+                    width, height, settings.MinValue, settings.MaxValue, settings.Alpha, settings.TurbulenceSize),
 
-                case TextureType.Marble:
-                    textureBitmap = Texture.GenerateMarbleBitmap(
-                        width,
-                        height,
-                        settings.Alpha,
-                        baseColor: settings.BaseColor);
-                    break;
+                TextureType.Marble => TextureStream.GenerateMarbleBitmap(
+                    width, height, settings.Alpha, baseColor: settings.BaseColor),
 
-                case TextureType.Wood:
-                    textureBitmap = Texture.GenerateWoodBitmap(
-                        width,
-                        height,
-                        settings.Alpha,
-                        baseColor: settings.BaseColor);
-                    break;
+                TextureType.Wood => TextureStream.GenerateWoodBitmap(
+                    width, height, settings.Alpha, baseColor: settings.BaseColor),
 
-                case TextureType.Wave:
-                    textureBitmap = Texture.GenerateWaveBitmap(width, height, settings.Alpha);
-                    break;
-                case TextureType.Crosshatch:
-                    textureBitmap = Texture.GenerateCrosshatchBitmap(width, height, settings.LineSpacing,
-                        settings.LineColor, settings.LineThickness, settings.Angle1, settings.Angle2, settings.Alpha);
-                    break;
-                case TextureType.Concrete:
-                    textureBitmap = Texture.GenerateConcreteBitmap(width, height, settings.MinValue,
-                        settings.MaxValue, settings.Alpha, settings.TurbulenceSize);
-                    break;
-                case TextureType.Canvas:
-                    textureBitmap = Texture.GenerateCanvasBitmap(width, height, settings.LineSpacing,
-                        settings.LineColor, settings.LineThickness, settings.Alpha);
-                    break;
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(texture), texture, null);
-            }
+                TextureType.Wave => TextureStream.GenerateWaveBitmap(
+                    width, height, settings.Alpha),
 
-            // Apply the texture to the specified area shape
-            switch (shape)
+                TextureType.Crosshatch => TextureStream.GenerateCrosshatchBitmap(
+                    width, height, settings.LineSpacing, settings.LineColor, settings.LineThickness, settings.Angle1,
+                    settings.Angle2, settings.Alpha),
+
+                TextureType.Concrete => TextureStream.GenerateConcreteBitmap(
+                    width, height, settings.MinValue, settings.MaxValue, settings.Alpha, settings.TurbulenceSize),
+
+                TextureType.Canvas => TextureStream.GenerateCanvasBitmap(
+                    width, height, settings.LineSpacing, settings.LineColor, settings.LineThickness, settings.Alpha),
+
+                _ => throw new ArgumentOutOfRangeException(nameof(texture), texture,
+                    ImagingResources.UnsupportedTexture)
+            };
+
+            // Validate shape parameters and apply mask
+            return shape switch
             {
-                case MaskShape.Rectangle:
-                    return ImageMask.ApplyRectangleMask(textureBitmap, width, height, actualStartPoint);
+                MaskShape.Rectangle => ImageMask.ApplyRectangleMask(textureBitmap, width, height, actualStartPoint),
 
-                case MaskShape.Circle:
-                    return ImageMask.ApplyCircleMask(textureBitmap, width, height, actualStartPoint);
+                MaskShape.Circle => ImageMask.ApplyCircleMask(textureBitmap, width, height, actualStartPoint),
 
-                case MaskShape.Polygon:
-                    return ImageMask.ApplyPolygonMask(textureBitmap, (Point[])shapeParams);
+                MaskShape.Polygon when shapeParams is Point[] points => ImageMask.ApplyPolygonMask(textureBitmap,
+                    points),
 
-                default:
-                    throw new ArgumentOutOfRangeException(nameof(shape), shape, null);
-            }
+                MaskShape.Polygon => throw new ArgumentException(ImagingResources.InvalidPolygonParams,
+                    nameof(shapeParams)),
+
+                _ => throw new ArgumentOutOfRangeException(nameof(shape), shape, ImagingResources.UnsupportedShape)
+            };
         }
     }
 }

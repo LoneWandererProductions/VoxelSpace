@@ -24,6 +24,7 @@ namespace Imaging
         {
             if (int.TryParse(parts[0], out var height) && int.TryParse(parts[1], out var width) &&
                 int.TryParse(parts[3], out var checkSum))
+            {
                 return new CifMetadata
                 {
                     Height = height,
@@ -31,6 +32,7 @@ namespace Imaging
                     Compressed = parts[2] == ImagingResources.CifCompressed,
                     CheckSum = checkSum
                 };
+            }
 
             return null;
         };

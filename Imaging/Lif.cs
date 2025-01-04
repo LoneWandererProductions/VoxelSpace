@@ -21,7 +21,10 @@ namespace Imaging
         // Merge all visible layers to create the final image
         public Bitmap MergeLayers()
         {
-            if (Layers.Count == 0) return null;
+            if (Layers.Count == 0)
+            {
+                return null;
+            }
 
             // Start with base layer (always visible)
             var finalImage = Layers[0];
@@ -57,9 +60,9 @@ namespace Imaging
 
         private Color ApplyAlpha(Color baseColor, Color deltaColor, float alpha)
         {
-            var r = (int)(deltaColor.R * alpha + baseColor.R * (1 - alpha));
-            var g = (int)(deltaColor.G * alpha + baseColor.G * (1 - alpha));
-            var b = (int)(deltaColor.B * alpha + baseColor.B * (1 - alpha));
+            var r = (int)((deltaColor.R * alpha) + (baseColor.R * (1 - alpha)));
+            var g = (int)((deltaColor.G * alpha) + (baseColor.G * (1 - alpha)));
+            var b = (int)((deltaColor.B * alpha) + (baseColor.B * (1 - alpha)));
             return Color.FromArgb(r, g, b);
         }
     }

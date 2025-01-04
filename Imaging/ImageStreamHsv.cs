@@ -66,7 +66,10 @@ namespace Imaging
         /// <exception cref="System.ArgumentOutOfRangeException">gamma - Gamma must be greater than 0.</exception>
         internal static Bitmap ApplyGammaCorrection(Bitmap image, double gamma)
         {
-            if (gamma <= 0) throw new ArgumentOutOfRangeException(nameof(gamma), "Gamma must be greater than 0.");
+            if (gamma <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(gamma), "Gamma must be greater than 0.");
+            }
 
             var gammaCorrection = 1.0 / gamma;
             return ProcessImage(image, colorHsv =>

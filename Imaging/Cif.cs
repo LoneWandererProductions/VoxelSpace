@@ -50,9 +50,14 @@ namespace Imaging
         public Cif(string path, ICustomImageFormat imageFormat)
         {
             if (imageFormat == null)
+            {
                 throw new ArgumentNullException(nameof(imageFormat), ImagingResources.ErrorInterface);
+            }
 
-            if (string.IsNullOrEmpty(path)) throw new ArgumentException(ImagingResources.ErrorPath, nameof(path));
+            if (string.IsNullOrEmpty(path))
+            {
+                throw new ArgumentException(ImagingResources.ErrorPath, nameof(path));
+            }
 
             var cif = imageFormat.GetCif(path);
 
@@ -72,9 +77,15 @@ namespace Imaging
         /// <exception cref="ArgumentNullException">Image was null. - image</exception>
         public Cif(Bitmap image, ICustomImageFormat imageFormat = null)
         {
-            if (image == null) throw new ArgumentNullException(nameof(image), ImagingResources.ErrorImage);
+            if (image == null)
+            {
+                throw new ArgumentNullException(nameof(image), ImagingResources.ErrorImage);
+            }
 
-            if (imageFormat != null) ImageFormat = imageFormat;
+            if (imageFormat != null)
+            {
+                ImageFormat = imageFormat;
+            }
 
             Height = image.Height;
             Width = image.Width;
@@ -101,7 +112,10 @@ namespace Imaging
         /// <param name="imageFormat">The custom image format.</param>
         public Cif(ICustomImageFormat imageFormat = null)
         {
-            if (imageFormat != null) ImageFormat = imageFormat;
+            if (imageFormat != null)
+            {
+                ImageFormat = imageFormat;
+            }
 
             Compressed = false;
         }
@@ -203,13 +217,22 @@ namespace Imaging
             var coordinate = new Coordinate2D(x, y, Width);
             var id = coordinate.Id;
 
-            if (id > CheckSum) return false;
+            if (id > CheckSum)
+            {
+                return false;
+            }
 
             foreach (var (key, value) in CifImage)
             {
-                if (!value.Contains(id)) continue;
+                if (!value.Contains(id))
+                {
+                    continue;
+                }
 
-                if (key == color) return false;
+                if (key == color)
+                {
+                    return false;
+                }
 
                 CifImage[key].Remove(id);
 
@@ -237,15 +260,22 @@ namespace Imaging
         /// <returns>Success Status</returns>
         public bool ChangeColor(Color oldColor, Color newColor)
         {
-            if (!CifImage.ContainsKey(oldColor)) return false;
+            if (!CifImage.ContainsKey(oldColor))
+            {
+                return false;
+            }
 
             var cache = CifImage[oldColor];
             CifImage.Remove(oldColor);
 
             if (CifImage.ContainsKey(newColor))
+            {
                 CifImage[newColor].UnionWith(cache);
+            }
             else
+            {
                 CifImage.Add(newColor, cache);
+            }
 
             return true;
         }
@@ -262,7 +292,9 @@ namespace Imaging
         public Color GetColor(int id)
         {
             if (id < 0 || id > Height * Width)
+            {
                 throw new ArgumentOutOfRangeException(nameof(id), ImagingResources.ErrorInterface);
+            }
 
             // Check if sorting is required and perform lazy loading
             if (_sortRequired)
@@ -272,8 +304,12 @@ namespace Imaging
             }
 
             foreach (var (color, value) in _cifSorted)
+            {
                 if (value.Contains(id))
+                {
                     return color;
+                }
+            }
 
             throw new KeyNotFoundException(nameof(id));
         }
@@ -285,14 +321,19 @@ namespace Imaging
         [return: MaybeNull]
         public Bitmap GetImage()
         {
-            if (CifImage == null) return null;
+            if (CifImage == null)
+            {
+                return null;
+            }
 
             var image = new Bitmap(Height, Width);
             var dbm = DirectBitmap.GetInstance(image);
 
             foreach (var (key, value) in CifImage)
             foreach (var coordinate in value.Select(id => Coordinate2D.GetInstance(id, Width)))
+            {
                 dbm.SetPixel(coordinate.X, coordinate.Y, key);
+            }
 
             return dbm.Bitmap;
         }
@@ -314,7 +355,9 @@ namespace Imaging
                 var sortedList = new List<int>(value);
 
                 for (var i = 0; i < value.Count - 1; i++)
+                {
                     info = string.Concat(info, sortedList[i], ImagingResources.Indexer);
+                }
 
                 info = string.Concat(info, sortedList[sortedList.Count], Environment.NewLine);
             }
@@ -341,7 +384,10 @@ namespace Imaging
         {
             var colorCount = new Dictionary<Color, int>(NumberOfColors);
 
-            foreach (var (color, sortedSet) in CifImage) colorCount.Add(color, sortedSet.Count);
+            foreach (var (color, sortedSet) in CifImage)
+            {
+                colorCount.Add(color, sortedSet.Count);
+            }
 
             // Sort the dictionary by value in descending order
             return colorCount.OrderByDescending(kv => kv.Value).ToDictionary(kv => kv.Key, kv => kv.Value);
@@ -356,7 +402,10 @@ namespace Imaging
         /// </param>
         private void Dispose(bool disposing)
         {
-            if (Disposed) return;
+            if (Disposed)
+            {
+                return;
+            }
 
             if (disposing)
             {

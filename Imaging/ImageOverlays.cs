@@ -98,9 +98,9 @@ namespace Imaging
         {
             return ProcessImages(imgOne, imgTwo, (color1, color2) =>
             {
-                var r = ImageHelper.Clamp((int)(color1.R * (1 - factor) + color2.R * factor));
-                var g = ImageHelper.Clamp((int)(color1.G * (1 - factor) + color2.G * factor));
-                var b = ImageHelper.Clamp((int)(color1.B * (1 - factor) + color2.B * factor));
+                var r = ImageHelper.Clamp((int)((color1.R * (1 - factor)) + (color2.R * factor)));
+                var g = ImageHelper.Clamp((int)((color1.G * (1 - factor)) + (color2.G * factor)));
+                var b = ImageHelper.Clamp((int)((color1.B * (1 - factor)) + (color2.B * factor)));
                 return Color.FromArgb(r, g, b);
             });
         }
@@ -149,9 +149,9 @@ namespace Imaging
         {
             return ProcessImages(imgOne, imgTwo, (color1, color2) =>
             {
-                var r = (int)Math.Sqrt(color1.R * color1.R + color2.R * color2.R);
-                var g = (int)Math.Sqrt(color1.G * color1.G + color2.G * color2.G);
-                var b = (int)Math.Sqrt(color1.B * color1.B + color2.B * color2.B);
+                var r = (int)Math.Sqrt((color1.R * color1.R) + (color2.R * color2.R));
+                var g = (int)Math.Sqrt((color1.G * color1.G) + (color2.G * color2.G));
+                var b = (int)Math.Sqrt((color1.B * color1.B) + (color2.B * color2.B));
                 return Color.FromArgb(ImageHelper.Clamp(r), ImageHelper.Clamp(g), ImageHelper.Clamp(b));
             });
         }
@@ -166,7 +166,9 @@ namespace Imaging
         private static Bitmap ProcessImages(Image imgOne, Image imgTwo, Func<Color, Color, Color> pixelOperation)
         {
             if (imgOne.Width != imgTwo.Width || imgOne.Height != imgTwo.Height)
+            {
                 throw new ArgumentException("All images must have the same dimensions.");
+            }
 
             var width = imgOne.Width;
             var height = imgOne.Height;
