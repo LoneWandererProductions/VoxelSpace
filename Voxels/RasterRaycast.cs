@@ -18,7 +18,7 @@ namespace Voxels
 
         public Bitmap Render(Key eKey)
         {
-            Camera = InputHelper.SimulateCameraMovementRay(eKey, Camera);
+            Camera = InputHelper.SimulateCameraMovementVoxel(eKey, Camera);
             return _ray.Render(Camera);
         }
 

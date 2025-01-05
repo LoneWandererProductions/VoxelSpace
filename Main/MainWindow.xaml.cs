@@ -59,24 +59,27 @@ namespace Main
                     if (_raycaster == null) return;
 
                     bmp = _raycaster.Render(e.Key);
-                    ImageView.Source = bmp.ToBitmapImage();
+                    ImageView.Bitmap = bmp;
                     var camera6 = _raycaster.Camera;
 
                     TxtBox.Text = string.Concat(TxtBox.Text, " Time Diff:", timer.Elapsed, Environment.NewLine);
                     TxtBox.Text = string.Concat(TxtBox.Text, camera6.ToString(),
                         Environment.NewLine);
+                    TxtBox.ScrollToEnd();
                     break;
                 case "Voxel":
                     if (_voxel == null) return;
 
                     bmp = _voxel.GetBitmapForKey(e.Key);
-                    ImageView.Source = bmp.ToBitmapImage();
+                    ImageView.Bitmap = bmp;
                     camera = _voxel.Camera;
 
 
                     TxtBox.Text = string.Concat(TxtBox.Text, " Time Diff:", timer.Elapsed, Environment.NewLine);
                     TxtBox.Text = string.Concat(TxtBox.Text, camera.ToString(),
                         Environment.NewLine);
+                    TxtBox.ScrollToEnd();
+
                     break;
                 case "Hybrid":
                     break;
@@ -141,7 +144,7 @@ namespace Main
             // Create Raycaster and render
             _raycaster = new RasterRaycast(map, camera, context);
             var bmp = _raycaster.Render();
-            ImageView.Source = bmp.ToBitmapImage();
+            ImageView.Bitmap = bmp;
         }
 
         /// <summary>
@@ -157,10 +160,11 @@ namespace Main
             _voxel = new VoxelRaster(100, 100, 0, 100, 120, 120, 300, colorMap, heightMap, 200, 300);
 
             var bmp = _voxel.StartEngine();
-            ImageView.Source = bmp.ToBitmapImage();
+            ImageView.Bitmap = bmp;
 
             TxtBox.Text = string.Concat(TxtBox.Text, " x: ", _voxel.Camera.X, " y: ", _voxel.Camera.Y,
                 Environment.NewLine);
+            TxtBox.ScrollToEnd();
         }
 
         private void InitiateHybrid()

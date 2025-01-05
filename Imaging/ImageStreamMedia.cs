@@ -12,7 +12,9 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
+using PixelFormat = System.Drawing.Imaging.PixelFormat;
 
 namespace Imaging
 {
@@ -41,7 +43,7 @@ namespace Imaging
             ImageHelper.ValidateFilePath(path);
             try
             {
-                var bmp = new BitmapImage { CreateOptions = BitmapCreateOptions.DelayCreation };
+                var bmp = new BitmapImage {CreateOptions = BitmapCreateOptions.DelayCreation};
                 bmp.BeginInit();
                 bmp.CacheOption = BitmapCacheOption.OnLoad;
                 bmp.UriSource = new Uri(path);
@@ -85,7 +87,7 @@ namespace Imaging
         {
             ImageHelper.ValidateFilePath(path);
 
-            var bmp = new BitmapImage { CreateOptions = BitmapCreateOptions.DelayCreation };
+            var bmp = new BitmapImage {CreateOptions = BitmapCreateOptions.DelayCreation};
 
             try
             {
@@ -151,35 +153,41 @@ namespace Imaging
         {
             ImageHelper.ValidateImage(nameof(BitmapToBitmapImage), image);
 
-            // Ensure the image has transparency support (e.g., Format32bppArgb)
+            Bitmap? tempImage = null;
+
+            // Convert the image to Format32bppArgb if necessary
             if (image.PixelFormat != PixelFormat.Format32bppArgb)
             {
-                var tempImage = new Bitmap(image.Width, image.Height, PixelFormat.Format32bppArgb);
+                tempImage = new Bitmap(image.Width, image.Height, PixelFormat.Format32bppArgb);
                 using (var g = Graphics.FromImage(tempImage))
                 {
                     g.DrawImage(image, 0, 0);
                 }
 
-                image = tempImage; // Reuse the converted image with proper alpha
+                image = tempImage;
             }
 
-            // Create an in-memory stream
-            using var memory = new MemoryStream();
+            try
+            {
+                // Create a memory stream and save the image in a compatible format (e.g., PNG)
+                using var memoryStream = new MemoryStream();
+                image.Save(memoryStream, ImageFormat.Png);
+                memoryStream.Position = 0;
 
-            // Save the Bitmap to memory stream in PNG format to retain transparency
-            image.Save(memory, ImageFormat.Png);
-            memory.Position = 0;
+                // Create a BitmapImage from the memory stream
+                var bitmapImage = new BitmapImage();
+                bitmapImage.BeginInit();
+                bitmapImage.StreamSource = memoryStream;
+                bitmapImage.CacheOption = BitmapCacheOption.OnLoad; // Ensures full load and availability
+                bitmapImage.EndInit();
+                bitmapImage.Freeze(); // Makes it thread-safe and ready for WPF usage
 
-            // Create the BitmapImage from the memory stream
-            var bitmapImage = new BitmapImage();
-            bitmapImage.BeginInit();
-            bitmapImage.StreamSource = memory;
-            bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-            bitmapImage.EndInit();
-            bitmapImage.Freeze();
-
-            return bitmapImage;
+                return bitmapImage;
+            }
+            finally
+            {
+                tempImage?.Dispose(); // Dispose of the temporary image if created
+            }
         }
-
     }
 }

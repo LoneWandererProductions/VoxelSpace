@@ -2,11 +2,17 @@
 using System.Diagnostics;
 using System.Windows.Input;
 using Mathematics;
+using System.Windows;
 
 namespace Voxels
 {
     public static class InputHelper
     {
+        /// <summary>
+        ///     Stopwatch for measuring elapsed time
+        /// </summary>
+        private static Stopwatch _stopwatch = new Stopwatch();
+
         /// <summary>
         ///     Time elapsed since the last frame
         /// </summary>
@@ -21,6 +27,11 @@ namespace Voxels
         /// </summary>
         public static DateTime LastUpdateTime { get; set; }
 
+        static InputHelper()
+        {
+            _stopwatch.Start(); // Start the stopwatch when the InputHelper is first used
+        }
+
         /// <summary>
         ///     Simulates the camera movement.
         /// </summary>
@@ -31,7 +42,7 @@ namespace Voxels
         {
             UpdateDeltaTime(); // Update deltaTime based on frame time
 
-            //the key
+            // the key
             Trace.WriteLine($"Key: {key}");
 
             // Log the old camera state
@@ -84,7 +95,7 @@ namespace Voxels
         {
             UpdateDeltaTime(); // Update deltaTime based on frame time
 
-            //the key
+            // the key
             Trace.WriteLine($"Key: {key}");
 
             // Log the old camera state
@@ -129,21 +140,22 @@ namespace Voxels
             return cam;
         }
 
-
         /// <summary>
         ///     Update method to calculate deltaTime
         /// </summary>
         public static void UpdateDeltaTime()
         {
-            var currentTime = DateTime.Now;
-            _elapsedTime = (float)(currentTime - LastUpdateTime).TotalSeconds;
+            // Get the elapsed time in seconds from the stopwatch
+            _elapsedTime = (float)_stopwatch.Elapsed.TotalSeconds;
 
             // If no time has elapsed, use a default small value to avoid zero movement on startup
             if (_elapsedTime == 0) _elapsedTime = 0.016f; // Assuming ~60 FPS, 1 frame = ~0.016 seconds
 
             // Optional: Cap delta time to avoid large jumps
             _elapsedTime = Math.Min(_elapsedTime, 0.1f); // 0.1s cap to prevent large frame gaps
-            LastUpdateTime = currentTime;
+
+            // Restart the stopwatch for the next frame
+            _stopwatch.Restart();
         }
     }
 }
