@@ -1,12 +1,12 @@
-﻿using NUnit.Framework;
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Threading;
 using System.Windows.Media.Imaging;
-using CommonViewer;
+using Imaging;
+using NUnit.Framework;
 
-namespace BitmapComparisonTests
+namespace SpeedTests
 {
     [TestFixture]
     public class BitmapRenderingTests
@@ -37,10 +37,60 @@ namespace BitmapComparisonTests
             // Measure time for NativeBitmapDisplay
             var nativeDisplayTime = MeasureNativeBitmapRendering();
 
-            Debug.WriteLine($"Media.Image Time: {mediaImageTime}ms");
-            Debug.WriteLine($"NativeBitmapDisplay Time: {nativeDisplayTime}ms");
+            TestContext.WriteLine($"Media.Image Time: {mediaImageTime}ms");
+            TestContext.WriteLine($"NativeBitmapDisplay Time: {nativeDisplayTime}ms");
 
             Assert.IsTrue(nativeDisplayTime <= mediaImageTime, "NativeBitmapDisplay should be as fast or faster than Media.Image rendering.");
+        }
+
+        [Test]
+        [Apartment(ApartmentState.STA)]
+        public void CompareRenderingSpeedsForMultipleUpdates()
+        {
+            // Number of updates to simulate a slideshow
+            int updateCount = 100;
+
+            // Measure time for Media.Image with conversion
+            var mediaImageTime = MeasureMediaImageRendering(updateCount);
+
+            // Measure time for NativeBitmapDisplay
+            var nativeDisplayTime = MeasureNativeBitmapRendering(updateCount);
+
+            TestContext.WriteLine($"Media.Image Time for {updateCount} updates: {mediaImageTime}ms");
+            TestContext.WriteLine($"NativeBitmapDisplay Time for {updateCount} updates: {nativeDisplayTime}ms");
+
+            Assert.IsTrue(nativeDisplayTime <= mediaImageTime, "NativeBitmapDisplay should be as fast or faster than Media.Image rendering.");
+        }
+
+        private long MeasureMediaImageRendering(int updateCount)
+        {
+            var stopwatch = Stopwatch.StartNew();
+
+            for (int i = 0; i < updateCount; i++)
+            {
+                // Convert Bitmap to BitmapSource
+                BitmapSource bitmapSource = BitmapToBitmapSource(_testBitmap);
+
+                // Simulate rendering in Media.Image
+                var imageControl = new System.Windows.Controls.Image { Source = bitmapSource };
+            }
+
+            stopwatch.Stop();
+            return stopwatch.ElapsedMilliseconds;
+        }
+
+        private long MeasureNativeBitmapRendering(int updateCount)
+        {
+            var stopwatch = Stopwatch.StartNew();
+
+            for (int i = 0; i < updateCount; i++)
+            {
+                // Simulate rendering in NativeBitmapDisplay
+                var nativeControl = new NativeBitmapDisplay { Bitmap = _testBitmap };
+            }
+
+            stopwatch.Stop();
+            return stopwatch.ElapsedMilliseconds;
         }
 
         private long MeasureMediaImageRendering()

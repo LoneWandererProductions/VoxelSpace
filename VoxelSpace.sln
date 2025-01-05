@@ -27,8 +27,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RenderEngine", "RenderEngin
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SpeedTests", "SpeedTests\SpeedTests.csproj", "{A75E2941-678A-41B7-A855-7FFE8495D960}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CommonViewer", "CommonViewer\CommonViewer.csproj", "{272B9CE2-E826-4FAB-9015-DF3F38B522E3}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -71,10 +69,6 @@ Global
 		{A75E2941-678A-41B7-A855-7FFE8495D960}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A75E2941-678A-41B7-A855-7FFE8495D960}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A75E2941-678A-41B7-A855-7FFE8495D960}.Release|Any CPU.Build.0 = Release|Any CPU
-		{272B9CE2-E826-4FAB-9015-DF3F38B522E3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{272B9CE2-E826-4FAB-9015-DF3F38B522E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{272B9CE2-E826-4FAB-9015-DF3F38B522E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{272B9CE2-E826-4FAB-9015-DF3F38B522E3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

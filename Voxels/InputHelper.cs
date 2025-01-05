@@ -2,17 +2,13 @@
 using System.Diagnostics;
 using System.Windows.Input;
 using Mathematics;
-using System.Windows;
 
 namespace Voxels
 {
+
+    //TODO Performance Bottleneck is here
     public static class InputHelper
     {
-        /// <summary>
-        ///     Stopwatch for measuring elapsed time
-        /// </summary>
-        private static Stopwatch _stopwatch = new Stopwatch();
-
         /// <summary>
         ///     Time elapsed since the last frame
         /// </summary>
@@ -27,11 +23,6 @@ namespace Voxels
         /// </summary>
         public static DateTime LastUpdateTime { get; set; }
 
-        static InputHelper()
-        {
-            _stopwatch.Start(); // Start the stopwatch when the InputHelper is first used
-        }
-
         /// <summary>
         ///     Simulates the camera movement.
         /// </summary>
@@ -42,13 +33,14 @@ namespace Voxels
         {
             UpdateDeltaTime(); // Update deltaTime based on frame time
 
-            // the key
+            //the key
             Trace.WriteLine($"Key: {key}");
 
             // Log the old camera state
             Trace.WriteLine($"Before: {cam}");
 
             // Update the actual camera object directly
+            float angle;
             switch (key)
             {
                 case Key.W:
@@ -60,10 +52,12 @@ namespace Voxels
                     cam.Y += (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcCos(cam.Angle));
                     break;
                 case Key.A:
-                    cam.Angle += (int)(RotationSpeed * _elapsedTime); // Turn left
+                    angle = RotationSpeed * _elapsedTime;
+                    cam.Angle += NormalizeAngle(angle);// Turn left
                     break;
                 case Key.D:
-                    cam.Angle -= (int)(RotationSpeed * _elapsedTime); // Turn right
+                    angle = RotationSpeed * _elapsedTime;
+                    cam.Angle -= NormalizeAngle(angle); // Turn right
                     break;
                 case Key.O:
                     cam.Horizon += (int)(RotationSpeed * _elapsedTime); // Move up
@@ -95,13 +89,14 @@ namespace Voxels
         {
             UpdateDeltaTime(); // Update deltaTime based on frame time
 
-            // the key
+            //the key
             Trace.WriteLine($"Key: {key}");
 
             // Log the old camera state
             Trace.WriteLine($"Before: {cam}");
 
             // Update the actual camera object directly
+            float angle;
             switch (key)
             {
                 case Key.W:
@@ -115,10 +110,12 @@ namespace Voxels
                     cam.Y -= (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcSin(cam.Angle));
                     break;
                 case Key.A:
-                    cam.Angle -= (int)(RotationSpeed * _elapsedTime); // Turn left
+                    angle = RotationSpeed * _elapsedTime;
+                    cam.Angle -= NormalizeAngle(angle); // Turn left
                     break;
                 case Key.D:
-                    cam.Angle += (int)(RotationSpeed * _elapsedTime); // Turn right
+                    angle = RotationSpeed * _elapsedTime;
+                    cam.Angle += NormalizeAngle(angle); // Turn right
                     break;
                 case Key.O:
                     cam.Horizon += (int)(RotationSpeed * _elapsedTime); // Move up
@@ -141,21 +138,28 @@ namespace Voxels
         }
 
         /// <summary>
+        /// Normalizes an angle to the range [0, 360).
+        /// </summary>
+        private static int NormalizeAngle(float angle)
+        {
+            return (int) ((angle % 360 + 360) % 360);
+        }
+
+
+        /// <summary>
         ///     Update method to calculate deltaTime
         /// </summary>
         public static void UpdateDeltaTime()
         {
-            // Get the elapsed time in seconds from the stopwatch
-            _elapsedTime = (float)_stopwatch.Elapsed.TotalSeconds;
+            var currentTime = DateTime.Now;
+            _elapsedTime = (float)(currentTime - LastUpdateTime).TotalSeconds;
 
             // If no time has elapsed, use a default small value to avoid zero movement on startup
             if (_elapsedTime == 0) _elapsedTime = 0.016f; // Assuming ~60 FPS, 1 frame = ~0.016 seconds
 
             // Optional: Cap delta time to avoid large jumps
             _elapsedTime = Math.Min(_elapsedTime, 0.1f); // 0.1s cap to prevent large frame gaps
-
-            // Restart the stopwatch for the next frame
-            _stopwatch.Restart();
+            LastUpdateTime = currentTime;
         }
     }
 }

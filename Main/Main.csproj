@@ -21,7 +21,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\CommonViewer\CommonViewer.csproj" />
     <ProjectReference Include="..\Voxels\Voxels.csproj" />
   </ItemGroup>
 

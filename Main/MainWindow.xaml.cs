@@ -7,12 +7,14 @@
  */
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Threading;
 using Imaging;
 using Voxels;
 using Image = System.Drawing.Image;
@@ -29,90 +31,133 @@ namespace Main
         private RasterRaycast _raycaster;
         private VoxelRaster _voxel;
 
+        private readonly HashSet<Key> _pressedKeys = new();
+        private readonly Stopwatch _timer = new();
+        private readonly DispatcherTimer _keyRepeatTimer;
+
+        /// <inheritdoc />
         /// <summary>
-        ///     Initializes a new instance of the <see cref="MainWindow" /> class.
+        ///     Initializes a new instance of the <see cref="T:Main.MainWindow" /> class.
         /// </summary>
         public MainWindow()
         {
             InitializeComponent();
+            _keyRepeatTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(100) };
+            _keyRepeatTimer.Tick += KeyRepeatTimer_Tick;
         }
 
-        /// <summary>
-        ///     Handles the PreviewKeyDown event of the Window control.
-        /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="KeyEventArgs" /> instance containing the event data.</param>
         private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
         {
-            var timer = new Stopwatch();
+            if (_pressedKeys.Contains(e.Key)) return; // Ignore if already pressed
+            _pressedKeys.Add(e.Key);
 
-            timer.Start();
+            HandleKeyAction(e.Key);  // Handle the action when key is first pressed
 
-            Bitmap bmp;
-            RvCamera camera;
+            if (_pressedKeys.Count == 1) // Start the timer once any key is pressed
+            {
+                _timer.Start();
+                _keyRepeatTimer.Start();
+            }
+        }
+
+        private void Window_PreviewKeyUp(object sender, KeyEventArgs e)
+        {
+            _pressedKeys.Remove(e.Key);
+            if (_pressedKeys.Count == 0) // Stop the timer when no keys are pressed
+            {
+                _keyRepeatTimer.Stop();
+                _timer.Stop();
+            }
+        }
+
+        private void KeyRepeatTimer_Tick(object sender, EventArgs e)
+        {
+            // Handle repeated actions when a key is held down
+            foreach (var key in _pressedKeys)
+            {
+                HandleKeyAction(key);
+            }
+        }
+
+        private void HandleKeyAction(Key key)
+        {
+            Bitmap bmp = null;
+            RvCamera camera = null;
+
+            // Measure full execution time
+            var stopwatchFull = Stopwatch.StartNew();
+            var stopwatchImage = new Stopwatch();
 
             switch (_active)
             {
                 case "Raycast":
-                    // Add logic for Raycaster
-                    _active = "Raycast";
                     if (_raycaster == null) return;
 
-                    bmp = _raycaster.Render(e.Key);
-                    ImageView.Bitmap = bmp;
-                    var camera6 = _raycaster.Camera;
+                    // Measure image rendering time
+                    stopwatchImage.Start();
+                    bmp = _raycaster.Render(key);
+                    stopwatchImage.Stop();
 
-                    TxtBox.Text = string.Concat(TxtBox.Text, " Time Diff:", timer.Elapsed, Environment.NewLine);
-                    TxtBox.Text = string.Concat(TxtBox.Text, camera6.ToString(),
-                        Environment.NewLine);
-                    TxtBox.ScrollToEnd();
+                    camera = _raycaster.Camera;
                     break;
+
                 case "Voxel":
                     if (_voxel == null) return;
 
-                    bmp = _voxel.GetBitmapForKey(e.Key);
-                    ImageView.Bitmap = bmp;
+                    stopwatchImage.Start();
+                    bmp = _voxel.GetBitmapForKey(key);
+                    stopwatchImage.Stop();
+
                     camera = _voxel.Camera;
-
-
-                    TxtBox.Text = string.Concat(TxtBox.Text, " Time Diff:", timer.Elapsed, Environment.NewLine);
-                    TxtBox.Text = string.Concat(TxtBox.Text, camera.ToString(),
-                        Environment.NewLine);
-                    TxtBox.ScrollToEnd();
-
                     break;
+
                 case "Hybrid":
+                    // Handle hybrid logic
                     break;
+
                 default:
-                    // Handle unexpected cases if needed
                     return;
             }
 
-            timer.Stop();
+            stopwatchFull.Stop();
+
+            // Update UI with timing details
+            UpdateTextBox(camera?.ToString(), stopwatchFull.ElapsedMilliseconds, stopwatchImage.ElapsedMilliseconds);
+            ImageView.Bitmap = bmp ?? new Bitmap(1, 1); // Use placeholder if bmp is null
         }
 
         /// <summary>
-        ///     Handles the SelectionChanged event of the comboBoxRender control.
+        /// Updates the TextBox with the specified content and elapsed times.
         /// </summary>
-        /// <param name="sender">The source of the event.</param>
-        /// <param name="e">The <see cref="SelectionChangedEventArgs" /> instance containing the event data.</param>
+        /// <param name="message">The message to append to the TextBox.</param>
+        /// <param name="stopwatchFullElapsedMilliseconds">The total elapsed time in milliseconds.</param>
+        /// <param name="stopwatchElapsedMilliseconds">The rendering elapsed time in milliseconds.</param>
+        private void UpdateTextBox(string message, long stopwatchFullElapsedMilliseconds, long stopwatchElapsedMilliseconds)
+        {
+            var formattedMessage = $"{message}{Environment.NewLine}" +
+                                   $"Total Time: {stopwatchFullElapsedMilliseconds} ms{Environment.NewLine}" +
+                                   $"Render Time: {stopwatchElapsedMilliseconds} ms{Environment.NewLine}";
+
+            TxtBox.Text = string.Concat(TxtBox.Text, formattedMessage);
+            TxtBox.ScrollToEnd();
+        }
+
         private void comboBoxRender_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (comboBoxRender.SelectedItem is ComboBoxItem selectedItem)
                 switch (selectedItem.Content.ToString())
                 {
                     case "Raycast":
-                        // Add logic for Raycaster
                         _active = "Raycast";
                         InitiateVRaycaster();
                         break;
+
                     case "Voxel":
-                        // Add logic for Voxel
                         _active = "Voxel";
                         InitiateVoxel();
                         break;
+
                     case "Hybrid":
-                        // Add logic for Voxel
                         _active = "Hybrid";
                         InitiateHybrid();
                         break;
