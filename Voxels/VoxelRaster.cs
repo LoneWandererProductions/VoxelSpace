@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using Imaging;
 
@@ -62,6 +64,8 @@ namespace Voxels
 
         private int _topographyHeight;
         private int _topographyWidth;
+
+        public long CameraTime { get; set; }
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="VoxelRaster" /> class.
@@ -126,6 +130,14 @@ namespace Voxels
         /// </value>
         public RvCamera Camera { get; set; }
 
+        /// <summary>
+        /// Gets the image render.
+        /// </summary>
+        /// <value>
+        /// The image render.
+        /// </value>
+        public long ImageRender { get; private set; }
+
         public void Dispose()
         {
             Dispose(true);
@@ -142,24 +154,35 @@ namespace Voxels
             if (!_directionKey.Contains(key)) return _currentImage;
 
             // Always update the camera position first.
+            var stopwatch = Stopwatch.StartNew();
             Camera = InputHelper.SimulateCameraMovementVoxel(key, Camera);
+            stopwatch.Stop();
+
+            CameraTime = stopwatch.ElapsedMilliseconds;
+            stopwatch.Start();
+            _currentImage = _raster.RenderWithContainer(Camera);
+            stopwatch.Stop();
+            ImageRender = stopwatch.ElapsedMilliseconds;
+
+            return _currentImage;
 
             // Check if the bitmap is already cached.
             if (_lazyCache.TryGetValue(key, out var cachedBitmap))
             {
-                // After returning the cached bitmap, rebuild the cache.
-                RebuildCache();
+                // After returning the cached bitmap, rebuild the cache asynchronously.
+                Task.Run(() => RebuildCache());
                 _currentImage = cachedBitmap;
                 return cachedBitmap; // Return the cached bitmap if it exists.
             }
 
-            // After each movement, rebuild the cache
-            RebuildCache();
+            // Rebuild the cache asynchronously if needed.
+            Task.Run(() => RebuildCache());
 
-            // initiate new instance
-            //_raster = new VoxelRaster3D(_context);
-
-            _currentImage = _raster.RenderWithContainer(Camera);
+            // Start rendering asynchronously and return the current image.
+            Task.Run(() =>
+            {
+                _currentImage = _raster.RenderWithContainer(Camera);
+            });
 
             return _currentImage;
         }

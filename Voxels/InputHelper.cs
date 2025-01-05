@@ -44,12 +44,12 @@ namespace Voxels
             switch (key)
             {
                 case Key.W:
-                    cam.X -= (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcSin(cam.Angle));
+                    cam.X -= (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcSinF(cam.Angle));
                     cam.Y -= (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcCos(cam.Angle));
                     break;
                 case Key.S:
-                    cam.X += (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcSin(cam.Angle));
-                    cam.Y += (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcCos(cam.Angle));
+                    cam.X += (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcSinF(cam.Angle));
+                    cam.Y += (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcCosF(cam.Angle));
                     break;
                 case Key.A:
                     angle = RotationSpeed * _elapsedTime;
@@ -101,13 +101,13 @@ namespace Voxels
             {
                 case Key.W:
                     // Move forward along the camera's angle direction
-                    cam.X += (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcCos(cam.Angle));
-                    cam.Y += (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcSin(cam.Angle));
+                    cam.X += (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcCosF(cam.Angle));
+                    cam.Y += (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcSinF(cam.Angle));
                     break;
                 case Key.S:
                     // Move backward opposite to the camera's angle direction
-                    cam.X -= (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcCos(cam.Angle));
-                    cam.Y -= (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcSin(cam.Angle));
+                    cam.X -= (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcCosF(cam.Angle));
+                    cam.Y -= (int)Math.Round(MovementSpeed * _elapsedTime * ExtendedMath.CalcSinF(cam.Angle));
                     break;
                 case Key.A:
                     angle = RotationSpeed * _elapsedTime;

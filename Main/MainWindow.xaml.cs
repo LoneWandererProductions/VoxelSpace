@@ -86,7 +86,6 @@ namespace Main
 
             // Measure full execution time
             var stopwatchFull = Stopwatch.StartNew();
-            var stopwatchImage = new Stopwatch();
 
             switch (_active)
             {
@@ -94,9 +93,7 @@ namespace Main
                     if (_raycaster == null) return;
 
                     // Measure image rendering time
-                    stopwatchImage.Start();
                     bmp = _raycaster.Render(key);
-                    stopwatchImage.Stop();
 
                     camera = _raycaster.Camera;
                     break;
@@ -104,9 +101,7 @@ namespace Main
                 case "Voxel":
                     if (_voxel == null) return;
 
-                    stopwatchImage.Start();
                     bmp = _voxel.GetBitmapForKey(key);
-                    stopwatchImage.Stop();
 
                     camera = _voxel.Camera;
                     break;
@@ -122,7 +117,7 @@ namespace Main
             stopwatchFull.Stop();
 
             // Update UI with timing details
-            UpdateTextBox(camera?.ToString(), stopwatchFull.ElapsedMilliseconds, stopwatchImage.ElapsedMilliseconds);
+            UpdateTextBox(camera?.ToString(), stopwatchFull.ElapsedMilliseconds);
             ImageView.Bitmap = bmp ?? new Bitmap(1, 1); // Use placeholder if bmp is null
         }
 
@@ -131,13 +126,12 @@ namespace Main
         /// </summary>
         /// <param name="message">The message to append to the TextBox.</param>
         /// <param name="stopwatchFullElapsedMilliseconds">The total elapsed time in milliseconds.</param>
-        /// <param name="stopwatchElapsedMilliseconds">The rendering elapsed time in milliseconds.</param>
-        private void UpdateTextBox(string message, long stopwatchFullElapsedMilliseconds, long stopwatchElapsedMilliseconds)
+        private void UpdateTextBox(string message, long stopwatchFullElapsedMilliseconds)
         {
             var formattedMessage = $"{message}{Environment.NewLine}" +
                                    $"Total Time: {stopwatchFullElapsedMilliseconds} ms{Environment.NewLine}" +
-                                   $"Render Time: {stopwatchElapsedMilliseconds} ms{Environment.NewLine}";
-
+                                   $"Render Time: {_voxel.ImageRender} ms{Environment.NewLine}" +
+                                   $"Camera Time: {_voxel.CameraTime} ms{Environment.NewLine}";
             TxtBox.Text = string.Concat(TxtBox.Text, formattedMessage);
             TxtBox.ScrollToEnd();
         }
