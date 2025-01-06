@@ -78,6 +78,8 @@ namespace Voxels
             for (var y = 0; y < colorHeight; y++)
             for (var x = 0; x < colorWidth; x++)
                 _flatColorMap[y * colorWidth + x] = colorMap[x, y];
+
+            //TODO load Color list
         }
 
         /// <summary>
@@ -244,7 +246,7 @@ namespace Voxels
                     }
                     else
                     {
-                        Trace.WriteLine($"Warning: Color ID {colorId} not found in the dictionary.");
+                        //Trace.WriteLine($"Warning: Color ID {colorId} not found in the dictionary.");
                     }
 
                     lastKnownColorId = 0;
@@ -282,8 +284,8 @@ namespace Voxels
 
                     if (colorDictionary.TryGetValue(colorId, out var color))
                         filledPixelTuples.Add((x, y, color));
-                    else
-                        Trace.WriteLine($"Warning: Color ID {colorId} not found in the dictionary.");
+                    else continue;
+                    //Trace.WriteLine($"Warning: Color ID {colorId} not found in the dictionary.");
                 }
             });
 

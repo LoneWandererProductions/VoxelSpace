@@ -113,8 +113,12 @@ namespace Imaging
         {
             if (ReferenceEquals(control._pictureBox.Image, newBitmap)) return;
 
-            control._pictureBox.Image?.Dispose();
-            control._pictureBox.Image = newBitmap;
+            if (control._pictureBox.Image is Bitmap oldBitmap)
+            {
+                oldBitmap.Dispose();
+            }
+
+            control._pictureBox.Image = newBitmap?.Clone() as Bitmap; // Clone to ensure safe assignment
         }
 
         /// <inheritdoc />

@@ -144,6 +144,9 @@ namespace Voxels
             GC.SuppressFinalize(this);
         }
 
+        private static SemaphoreSlim _semaphore = new SemaphoreSlim(4); // Limit to 4 concurrent tasks
+        private static List<Task> _pendingTasks = new List<Task>(); // To track pending tasks
+
         /// <summary>
         ///     Gets the bitmap for key.
         /// </summary>
@@ -151,41 +154,59 @@ namespace Voxels
         /// <returns>new Bitmap</returns>
         public Bitmap GetBitmapForKey(Key key)
         {
-            if (!_directionKey.Contains(key)) return _currentImage;
+            // Check if the direction key is valid; otherwise, return the current image.
+            if (!_directionKey.Contains(key))
+                return _currentImage;
 
-            // Always update the camera position first.
+            // Update the camera position.
             var stopwatch = Stopwatch.StartNew();
             Camera = InputHelper.SimulateCameraMovementVoxel(key, Camera);
             stopwatch.Stop();
-
             CameraTime = stopwatch.ElapsedMilliseconds;
-            stopwatch.Start();
-            _currentImage = _raster.RenderWithContainer(Camera);
+
+            // Check if the bitmap is already cached.
+            //if (_lazyCache.TryGetValue(key, out var cachedBitmap))
+            //{
+            //    // Trigger cache rebuilding asynchronously, if needed.
+            //    Task.Run(RebuildCache);
+            //    _currentImage = cachedBitmap;
+            //    return cachedBitmap;
+            //}
+
+            // Render synchronously for the requested key (to avoid freezes).
+            stopwatch.Restart();
+            var renderedImage = _raster.RenderWithContainer(Camera);
             stopwatch.Stop();
             ImageRender = stopwatch.ElapsedMilliseconds;
 
-            return _currentImage;
+            return renderedImage;
 
-            // Check if the bitmap is already cached.
-            if (_lazyCache.TryGetValue(key, out var cachedBitmap))
+            //TODO make threadsafe
+
+            // Update the current image and cache.
+            lock (_lock)
             {
-                // After returning the cached bitmap, rebuild the cache asynchronously.
-                Task.Run(() => RebuildCache());
-                _currentImage = cachedBitmap;
-                return cachedBitmap; // Return the cached bitmap if it exists.
+                _currentImage = renderedImage;
+                _lazyCache[key] = renderedImage;
             }
 
-            // Rebuild the cache asynchronously if needed.
-            Task.Run(() => RebuildCache());
-
-            // Start rendering asynchronously and return the current image.
-            Task.Run(() =>
+            // Add cache rebuilding to pending tasks
+            lock (_pendingTasks)
             {
-                _currentImage = _raster.RenderWithContainer(Camera);
-            });
+                var cacheRebuildTask = Task.Run(RebuildCache);
+                _pendingTasks.Add(cacheRebuildTask);
 
-            return _currentImage;
+                // If too many tasks are pending, wait for one to complete before adding another
+                if (_pendingTasks.Count >= 4)
+                {
+                    var completedTask = Task.WhenAny(_pendingTasks).Result; // Wait for any task to complete
+                    _pendingTasks.Remove(completedTask); // Remove the completed task from the queue
+                }
+            }
+
+            return renderedImage;
         }
+
 
         /// <summary>
         ///     Starts the engine.
