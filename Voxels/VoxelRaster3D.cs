@@ -31,7 +31,7 @@ namespace Voxels
 
         private Color[] _flatColorMap;
         private int[] _flatHeightMap;
-        private IReadOnlyDictionary<int, Color> _colorDictionary;
+        private ImmutableDictionary<int, Color> _colorDictionary;
 
         /// <summary>
         ///     The y buffer
