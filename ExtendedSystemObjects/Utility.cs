@@ -42,7 +42,10 @@ namespace ExtendedSystemObjects
         /// <returns>Next Element</returns>
         public static int GetNextElement(int position, List<int> lst)
         {
-            if (position == lst.Max()) return lst.Min();
+            if (position == lst.Max())
+            {
+                return lst.Min();
+            }
 
             var index = lst.IndexOf(position);
 
@@ -57,7 +60,10 @@ namespace ExtendedSystemObjects
         /// <returns>Previous Element</returns>
         public static int GetPreviousElement(int position, List<int> lst)
         {
-            if (position == lst.Min()) return lst.Max();
+            if (position == lst.Min())
+            {
+                return lst.Max();
+            }
 
             var index = lst.IndexOf(position);
 
@@ -75,8 +81,10 @@ namespace ExtendedSystemObjects
         public static List<int> GetAvailableIndexes(List<int> lst, int count)
         {
             if (count < 0)
+            {
                 throw new ArgumentOutOfRangeException(nameof(count),
                     ExtendedSystemObjectsResources.ErrorValueNotAllowed);
+            }
 
             var keys = new List<int>();
             for (var i = 0; i < count; i++)
@@ -110,13 +118,19 @@ namespace ExtendedSystemObjects
                 if (Math.Abs(sortedList[i - 1] + 1) == cache)
                 {
                     //should be only the first case
-                    if (!currentSequence.Contains(i - 1)) currentSequence.Add(i - 1);
+                    if (!currentSequence.Contains(i - 1))
+                    {
+                        currentSequence.Add(i - 1);
+                    }
 
                     currentSequence.Add(i);
                 }
                 else
                 {
-                    if (currentSequence.Count == 0) continue;
+                    if (currentSequence.Count == 0)
+                    {
+                        continue;
+                    }
 
                     sequenceGroups.Add(currentSequence);
                     currentSequence = new List<int>();
@@ -132,33 +146,38 @@ namespace ExtendedSystemObjects
                     select new KeyValuePair<int, int>(start, end)).ToList();
         }
 
-
         /// <summary>
         ///     Sequencers the specified List.
         /// </summary>
-        /// <param name="lst">The input list.</param>
-        /// <param name="sequence">The min count of the sequence.</param>
+        /// <param name="numbers">The input list.</param>
+        /// <param name="sequenceLength">The min count of the sequence.</param>
         /// <returns>List of Sequences, with start and end index, null if none were found.</returns>
         [return: MaybeNull]
-        public static List<KeyValuePair<int, int>> Sequencer(List<int> lst, int sequence)
+        public static List<KeyValuePair<int, int>> Sequencer(List<int> numbers, int sequenceLength)
         {
             var sequenceGroups = new List<List<int>>();
             var currentSequence = new List<int>();
 
-            for (var i = 1; i < lst.Count; i++)
+            for (var i = 1; i < numbers.Count; i++)
             {
-                var cache = Math.Abs(lst[i]);
+                var cache = Math.Abs(numbers[i]);
 
-                if (Math.Abs(lst[i - 1] + 1) == cache)
+                if (Math.Abs(numbers[i - 1] + 1) == cache)
                 {
                     //should be only the first case
-                    if (!currentSequence.Contains(i - 1)) currentSequence.Add(i - 1);
+                    if (!currentSequence.Contains(i - 1))
+                    {
+                        currentSequence.Add(i - 1);
+                    }
 
                     currentSequence.Add(i);
                 }
                 else
                 {
-                    if (currentSequence.Count == 0) continue;
+                    if (currentSequence.Count == 0)
+                    {
+                        continue;
+                    }
 
                     sequenceGroups.Add(currentSequence);
                     currentSequence = new List<int>();
@@ -168,7 +187,7 @@ namespace ExtendedSystemObjects
             return sequenceGroups.Count == 0
                 ? null
                 : (from stack in sequenceGroups
-                    where stack.Count >= sequence
+                    where stack.Count >= sequenceLength
                     let start = stack[0]
                     let end = stack[^1]
                     select new KeyValuePair<int, int>(start, end)).ToList();
@@ -177,39 +196,51 @@ namespace ExtendedSystemObjects
         /// <summary>
         ///     Sequences the specified list.
         /// </summary>
-        /// <param name="lst">The list.</param>
-        /// <param name="width">The width.</param>
-        /// <param name="sequence">The sequence.</param>
+        /// <param name="numbers">The list.</param>
+        /// <param name="stepWidth">The step width.</param>
+        /// <param name="sequenceLength">The sequence.</param>
         /// <returns>List of Sequences, with start and end index, null if none were found.</returns>
-        public static List<KeyValuePair<int, int>> Sequencer(List<int> lst, int width, int sequence)
+        public static List<KeyValuePair<int, int>> Sequencer(List<int> numbers, int stepWidth, int sequenceLength)
         {
-            lst.Sort();
-            var max = lst.Max();
+            numbers.Sort();
+            var max = numbers.Max();
 
             var sequenceGroups = new List<List<int>>();
             var currentSequence = new List<int>();
-            var visitedIndexes = new List<int>();
+            var observer = new List<int>();
 
-            foreach (var element in lst)
+            foreach (var element in numbers)
             {
                 var cache = Math.Abs(element);
                 var count = cache;
 
                 do
                 {
-                    if (currentSequence.Contains(cache)) break;
+                    if (currentSequence.Contains(cache))
+                    {
+                        break;
+                    }
 
-                    count += sequence;
+                    count += stepWidth;
 
-                    if (visitedIndexes.Contains(count)) continue;
+                    if (observer.Contains(count))
+                    {
+                        continue;
+                    }
 
-                    if (!lst.Contains(count)) break;
+                    if (!numbers.Contains(count))
+                    {
+                        break;
+                    }
 
                     currentSequence.Add(count);
-                    visitedIndexes.Add(count);
+                    observer.Add(count);
                 } while (count < max);
 
-                if (currentSequence.Count == 0) continue;
+                if (currentSequence.Count == 0)
+                {
+                    continue;
+                }
 
                 currentSequence.AddFirst(cache);
                 sequenceGroups.Add(currentSequence);
@@ -219,7 +250,7 @@ namespace ExtendedSystemObjects
             return sequenceGroups.Count == 0
                 ? null
                 : (from stack in sequenceGroups
-                    where stack.Count >= sequence
+                    where stack.Count >= sequenceLength
                     let start = stack[0]
                     let end = stack[^1]
                     select new KeyValuePair<int, int>(start, end)).ToList();

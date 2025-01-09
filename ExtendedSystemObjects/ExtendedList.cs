@@ -29,7 +29,10 @@ namespace ExtendedSystemObjects
         /// <returns>Empty or not</returns>
         public static bool IsNullOrEmpty<TValue>(this List<TValue> lst)
         {
-            if (lst == null) return true;
+            if (lst == null)
+            {
+                return true;
+            }
 
             return lst.Count == 0;
         }
@@ -42,7 +45,10 @@ namespace ExtendedSystemObjects
         /// <param name="item">item we will replace or add</param>
         public static void AddFirst<TValue>(this List<TValue> lst, TValue item)
         {
-            if (lst == null) throw new ArgumentNullException(nameof(lst));
+            if (lst == null)
+            {
+                throw new ArgumentNullException(nameof(lst));
+            }
 
             lst.Insert(0, item);
         }
@@ -59,7 +65,10 @@ namespace ExtendedSystemObjects
             var hashSet = new HashSet<TValue>(lst);
 
             // Check if the item already exists in the HashSet
-            if (hashSet.Contains(item)) return false; // Item already exists, no need to add
+            if (hashSet.Contains(item))
+            {
+                return false; // Item already exists, no need to add
+            }
 
             // Add the item to the list since it doesn't already exist
             lst.Add(item);
@@ -80,15 +89,102 @@ namespace ExtendedSystemObjects
         }
 
         /// <summary>
-        ///     Remove Contents of a List from ancurrentSequence
+        ///     Add contents of another sequence to the base list, ensuring no duplicates
         /// </summary>
         /// <typeparam name="TValue">Generic Object Type</typeparam>
-        /// <param name="lst">Base list we remove from</param>
-        /// <param name="range">List with elements we want to remove</param>
-        public static void RemoveListRange<TValue>(this List<TValue> lst, IEnumerable<TValue> range)
+        /// <param name="lst">Base list we add to</param>
+        /// <param name="range">Sequence with elements we want to add</param>
+        /// <param name="invert">optional parameter invert result</param>
+        public static void Union<TValue>(this List<TValue> lst, IEnumerable<TValue> range, bool invert = false)
         {
-            foreach (var element in range.Where(lst.Contains)) _ = lst.Remove(element);
+            if (invert)
+            {
+                lst.Difference(range);
+            }
+            else
+            {
+                var set = new HashSet<TValue>(lst);
+                set.UnionWith(range);
+                lst.Clear();
+                lst.AddRange(set);
+            }
         }
+
+        /// <summary>
+        ///     Add contents of another sequence to the base list, ensuring no duplicates
+        /// </summary>
+        /// <typeparam name="TValue">Generic Object Type</typeparam>
+        /// <param name="lst">Base list we add to</param>
+        /// <param name="range">Sequence with elements we want to add</param>
+        /// <param name="invert">If true, removes elements instead of adding them</param>
+        public static void Difference<TValue>(this List<TValue> lst, IEnumerable<TValue> range, bool invert = false)
+        {
+            if (invert)
+            {
+                var set = new HashSet<TValue>(lst);
+                set.UnionWith(range);
+                lst.Clear();
+                lst.AddRange(set);
+            }
+            else
+            {
+                var newList = lst.Except(range).ToList();
+                lst.Clear();
+                lst.AddRange(newList);
+            }
+        }
+
+        /// <summary>
+        ///     Keep only elements present in both the base list and another sequence
+        /// </summary>
+        /// <typeparam name="TValue">Generic Object Type</typeparam>
+        /// <param name="lst">Base list to filter</param>
+        /// <param name="range">Sequence with elements to retain</param>
+        /// <param name="invert">If true, keeps elements not present in both sequences</param>
+        public static void Intersection<TValue>(this List<TValue> lst, IEnumerable<TValue> range, bool invert = false)
+        {
+            if (invert)
+            {
+                var lstExceptRange = lst.Except(range);
+                var rangeExceptLst = range.Except(lst);
+                var newList = lstExceptRange.Union(rangeExceptLst).ToList();
+                lst.Clear();
+                lst.AddRange(newList);
+            }
+            else
+            {
+                var newList = lst.Intersect(range).ToList();
+                lst.Clear();
+                lst.AddRange(newList);
+            }
+        }
+
+        /// <summary>
+        ///     Keep only elements that are in either the base list or another sequence but not in both
+        /// </summary>
+        /// <typeparam name="TValue">Generic Object Type</typeparam>
+        /// <param name="lst">Base list to modify</param>
+        /// <param name="range">Sequence with elements to compare</param>
+        /// <param name="invert">If true, keeps elements that are in both sequences</param>
+        public static void SymmetricDifference<TValue>(this List<TValue> lst, IEnumerable<TValue> range,
+            bool invert = false)
+        {
+            if (invert)
+            {
+                var newList = lst.Intersect(range).ToList();
+                lst.Clear();
+                lst.AddRange(newList);
+            }
+            else
+            {
+                var lstExceptRange = lst.Except(range);
+                var rangeExceptLst = range.Except(lst);
+                var newList = lstExceptRange.Union(rangeExceptLst).ToList();
+                lst.Clear();
+                lst.AddRange(newList);
+            }
+        }
+
 
         /// <summary>
         ///     Try to Clone a List
@@ -135,7 +231,10 @@ namespace ExtendedSystemObjects
                 case EnumerableCompare.IgnoreOrder:
                     return lst.Count == compare.Count && lst.Equal(compare);
                 case EnumerableCompare.AllEqual:
-                    if (lst.Count != compare.Count) return false;
+                    if (lst.Count != compare.Count)
+                    {
+                        return false;
+                    }
 
                     return !lst.Where((t, i) => !t.Equals(compare[i])).Any();
                 default:
@@ -181,14 +280,17 @@ namespace ExtendedSystemObjects
         /// <typeparam name="TId">The type of the identifier.</typeparam>
         /// <param name="lst">List of generic Objects.</param>
         /// <returns>
-        ///     Dicitionary with an conversion from the attribute Id as Key
+        ///     Dictionary with an conversion from the attribute Id as Key
         /// </returns>
         public static Dictionary<TId, TValue> ToDictionaryId<TValue, TId>(this IList<TValue> lst)
             where TValue : IIdHandling<TId>
         {
             var dct = new Dictionary<TId, TValue>();
 
-            foreach (var item in lst) dct.Add(item.Id, item);
+            foreach (var item in lst)
+            {
+                dct.Add(item.Id, item);
+            }
 
             return dct;
         }

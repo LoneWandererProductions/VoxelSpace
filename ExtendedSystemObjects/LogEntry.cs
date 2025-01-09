@@ -43,7 +43,7 @@ namespace ExtendedSystemObjects
         ///     Gets a value indicating whether [start data].
         /// </summary>
         /// <value>
-        ///     <c>true</c> if [start data]; currentSequencewise, <c>false</c>.
+        ///     <c>true</c> if [start data]; currentSequence-wise, <c>false</c>.
         /// </value>
         public bool StartData { get; init; }
     }

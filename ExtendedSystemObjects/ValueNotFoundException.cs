@@ -1,4 +1,4 @@
-/*
+﻿/*
  * COPYRIGHT:   See COPYING in the top level directory
  * PROJECT:     ExtendedSystemObjects
  * FILE:        ExtendedSystemObjects/ValueNotFoundException.cs
@@ -50,10 +50,10 @@ namespace ExtendedSystemObjects
         /// <summary>
         ///     Initializes a new instance of the <see cref="T:ExtendedSystemObjects.ValueNotFoundException" /> class.
         /// </summary>
-        /// <param name="message">The message we declarte</param>
+        /// <param name="message">The message we declare</param>
         /// <param name="innerException">
         ///     The Exception that caused the Exception or a null reference <see langword="Nothing" /> in
-        ///     Visual�Basic), if there is no inner Exception.
+        ///     Visual Basic), if there is no inner Exception.
         /// </param>
         public ValueNotFoundException(string message, Exception innerException) : base(message, innerException)
         {

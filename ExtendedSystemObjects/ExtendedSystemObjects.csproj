@@ -15,4 +15,10 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
+  <ItemGroup>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleTo">
+      <_Parameter1>CommonLibraryTests</_Parameter1>
+    </AssemblyAttribute>
+  </ItemGroup>
+
 </Project>

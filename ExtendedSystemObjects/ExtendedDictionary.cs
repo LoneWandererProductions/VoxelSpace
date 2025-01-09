@@ -85,7 +85,10 @@ namespace ExtendedSystemObjects
 
             var cache = dic[key];
 
-            if (cache.Contains(value)) return false;
+            if (cache.Contains(value))
+            {
+                return false;
+            }
 
             cache.Add(value);
             dic[key] = cache;
@@ -119,12 +122,16 @@ namespace ExtendedSystemObjects
         public static void AddDistinctKeyValue<TKey, TValue>(this Dictionary<TKey, TValue> dic, TKey key, TValue value)
         {
             if (dic.ContainsKey(key))
+            {
                 throw new ArgumentException(string.Concat(ExtendedSystemObjectsResources.ErrorKeyExists,
                     nameof(value)));
+            }
 
             if (dic.ContainsValue(value))
+            {
                 throw new ArgumentException(string.Concat(ExtendedSystemObjectsResources.ErrorValueExists,
                     nameof(value)));
+            }
 
             dic.Add(key, value);
         }
@@ -142,7 +149,10 @@ namespace ExtendedSystemObjects
 
             var sortedDictionary = new Dictionary<TKey, TValue>();
 
-            foreach (var pair in sortedPairs) sortedDictionary.Add(pair.Key, pair.Value);
+            foreach (var pair in sortedPairs)
+            {
+                sortedDictionary.Add(pair.Key, pair.Value);
+            }
 
             return sortedDictionary;
         }
@@ -156,7 +166,10 @@ namespace ExtendedSystemObjects
         /// <returns>If Dictionary is Null or has zero Elements</returns>
         public static bool IsNullOrEmpty<TKey, TValue>(this Dictionary<TKey, TValue> dic)
         {
-            if (dic == null) return true;
+            if (dic == null)
+            {
+                return true;
+            }
 
             return dic.Count == 0;
         }
@@ -186,8 +199,12 @@ namespace ExtendedSystemObjects
             var uniqueValues = new HashSet<TValue>();
 
             foreach (var value in dic.Values)
+            {
                 if (!uniqueValues.Add(value))
+                {
                     return false; // Non-unique value found
+                }
+            }
 
             return true; // All values are distinct
         }
@@ -205,7 +222,10 @@ namespace ExtendedSystemObjects
         /// <exception cref="ValueNotFoundException"><paramref name="value" /> not found.</exception>
         public static TKey GetFirstKeyByValue<TKey, TValue>(this IDictionary<TKey, TValue> dic, TValue value)
         {
-            foreach (var pair in dic.Where(pair => value.Equals(pair.Value))) return pair.Key;
+            foreach (var pair in dic.Where(pair => value.Equals(pair.Value)))
+            {
+                return pair.Key;
+            }
 
             throw new ValueNotFoundException(ExtendedSystemObjectsResources.ErrorValueNotFound);
         }
@@ -224,7 +244,9 @@ namespace ExtendedSystemObjects
             var collection = (from pair in dic where value.Equals(pair.Value) select pair.Key).ToList();
 
             if (collection.Count == 0)
+            {
                 throw new ValueNotFoundException(ExtendedSystemObjectsResources.ErrorValueNotFound);
+            }
 
             return collection;
         }
@@ -246,7 +268,9 @@ namespace ExtendedSystemObjects
             var collection = value.Where(dic.ContainsKey).ToDictionary(key => key, key => dic[key]);
 
             if (collection.Count == 0)
+            {
                 throw new ValueNotFoundException(ExtendedSystemObjectsResources.ErrorNoValueFound);
+            }
 
             return collection;
         }
