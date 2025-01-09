@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
@@ -30,6 +31,7 @@ namespace Voxels
 
         private Color[] _flatColorMap;
         private int[] _flatHeightMap;
+        private IReadOnlyDictionary<int, Color> _colorDictionary;
 
         /// <summary>
         ///     The y buffer
@@ -79,7 +81,16 @@ namespace Voxels
             for (var x = 0; x < colorWidth; x++)
                 _flatColorMap[y * colorWidth + x] = colorMap[x, y];
 
-            //TODO load Color list
+            // Populate the ImmutableDictionary
+            var dictionaryBuilder = ImmutableDictionary.CreateBuilder<int, Color>();
+            for (var y = 0; y < colorHeight; y++)
+                for (var x = 0; x < colorWidth; x++)
+                {
+                    var color = colorMap[x, y];
+                    dictionaryBuilder[color.ToArgb()] = color; // Add ARGB as key and Color as value
+                }
+
+            _colorDictionary = dictionaryBuilder.ToImmutable();
         }
 
         /// <summary>
@@ -161,9 +172,9 @@ namespace Voxels
                 dz += DzIncrement;
             }
 
-            var lines = FillMissingColorsWithVerticalLines(colorDictionary);
-            var points = ConvertColumnSlicesToSinglePixels(colorDictionary);
-            var all = FillMissingColorsOld(colorDictionary);
+            var lines = FillMissingColorsWithVerticalLines();
+            var points = ConvertColumnSlicesToSinglePixels();
+            var all = FillMissingColorsOld();
 
             _directBitmap = new DirectBitmap(_context.ScreenWidth, _context.ScreenHeight);
 
@@ -176,7 +187,7 @@ namespace Voxels
             return _directBitmap.Bitmap;
         }
 
-        private IEnumerable<(int x, int y, Color color)> ConvertColumnSlicesToSinglePixels(IReadOnlyDictionary<int, Color> colorDictionary)
+        private IEnumerable<(int x, int y, Color color)> ConvertColumnSlicesToSinglePixels()
         {
             var singlePixels = new List<(int x, int y, Color color)>();
 
@@ -193,7 +204,7 @@ namespace Voxels
                     // Skip zero values (no color assigned)
                     if (colorId == 0) continue;
 
-                    if (colorDictionary.TryGetValue(colorId, out var color))
+                    if (_colorDictionary.TryGetValue(colorId, out var color))
                     {
                         // Add pixel to the list of single pixels
                         singlePixels.Add((x, y, color));
@@ -209,8 +220,7 @@ namespace Voxels
             return singlePixels;
         }
 
-        private List<(int x, int y, int finalY, Color color)> FillMissingColorsWithVerticalLines(
-            IReadOnlyDictionary<int, Color> colorDictionary)
+        private List<(int x, int y, int finalY, Color color)> FillMissingColorsWithVerticalLines()
         {
             var verticalLines = new ConcurrentBag<(int x, int y, int finalY, Color color)>();
 
@@ -236,9 +246,9 @@ namespace Voxels
 
                     count++;
                     if (colorId == 0) continue;
-                    if(count < 1) continue;
+                    if (count < 1) continue;
 
-                    if (colorDictionary.TryGetValue(colorId, out var color))
+                    if (_colorDictionary.TryGetValue(colorId, out var color))
                     {
                         var start = y - count;
                         verticalLines.Add((x, start, y, color));
@@ -257,8 +267,7 @@ namespace Voxels
             return verticalLines.ToList();
         }
 
-        private IEnumerable<(int x, int y, Color color)> FillMissingColorsOld(
-            IReadOnlyDictionary<int, Color> colorDictionary)
+        private IEnumerable<(int x, int y, Color color)> FillMissingColorsOld()
         {
             var filledPixelTuples = new ConcurrentBag<(int x, int y, Color color)>();
 
@@ -282,7 +291,7 @@ namespace Voxels
 
                     if (colorId == 0) continue;
 
-                    if (colorDictionary.TryGetValue(colorId, out var color))
+                    if (_colorDictionary.TryGetValue(colorId, out var color))
                         filledPixelTuples.Add((x, y, color));
                     else continue;
                     //Trace.WriteLine($"Warning: Color ID {colorId} not found in the dictionary.");
@@ -291,7 +300,6 @@ namespace Voxels
 
             return filledPixelTuples;
         }
-
 
         /// <summary>
         ///     Releases unmanaged and - optionally - managed resources.
