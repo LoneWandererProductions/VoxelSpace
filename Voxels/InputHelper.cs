@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using Mathematics;
 
@@ -140,15 +141,18 @@ namespace Voxels
         /// <summary>
         /// Normalizes an angle to the range [0, 360).
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static int NormalizeAngle(float angle)
         {
-            return (int) ((angle % 360 + 360) % 360);
+            var normalizedAngle = (int)(angle % 360);
+            return normalizedAngle < 0 ? normalizedAngle + 360 : normalizedAngle;
         }
 
 
         /// <summary>
         ///     Update method to calculate deltaTime
         /// </summary>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void UpdateDeltaTime()
         {
             var currentTime = DateTime.Now;
