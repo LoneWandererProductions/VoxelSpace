@@ -11,6 +11,7 @@
 
 #nullable enable
 using System.Drawing;
+using System.Reflection;
 using System.Windows;
 using System.Windows.Forms;
 using System.Windows.Forms.Integration;
@@ -19,41 +20,13 @@ namespace Imaging
 {
     /// <inheritdoc />
     /// <summary>
-    /// Fast Bitmap Viewer for Wpf applications.
+    ///     Fast Bitmap Viewer for Wpf applications.
     /// </summary>
     /// <seealso cref="T:System.Windows.Forms.Integration.WindowsFormsHost" />
     public sealed class NativeBitmapDisplay : WindowsFormsHost
     {
-        private readonly PictureBox _pictureBox;
-
-        /// <inheritdoc />
         /// <summary>
-        /// Initializes a new instance of the <see cref="T:Imaging.NativeBitmapDisplay" /> class.
-        /// </summary>
-        public NativeBitmapDisplay()
-        {
-            _pictureBox = new PictureBox
-            {
-                Dock = DockStyle.Fill,
-                SizeMode = PictureBoxSizeMode.Zoom,
-                BackColor = Color.Transparent,
-            };
-            EnableDoubleBuffering(_pictureBox);
-            Child = _pictureBox;
-        }
-
-        /// <summary>
-        /// Enables the double buffering.
-        /// </summary>
-        /// <param name="pictureBox">The picture box.</param>
-        private static void EnableDoubleBuffering(PictureBox pictureBox)
-        {
-            var doubleBufferProperty = typeof(Control).GetProperty("DoubleBuffered", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-            doubleBufferProperty?.SetValue(pictureBox, true, null);
-        }
-
-        /// <summary>
-        /// The bitmap property
+        ///     The bitmap property
         /// </summary>
         public static readonly DependencyProperty BitmapProperty =
             DependencyProperty.Register(
@@ -62,11 +35,27 @@ namespace Imaging
                 typeof(NativeBitmapDisplay),
                 new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender, OnBitmapChanged));
 
+        private readonly PictureBox _pictureBox;
+
+        /// <inheritdoc />
         /// <summary>
-        /// Gets or sets the bitmap.
+        ///     Initializes a new instance of the <see cref="T:Imaging.NativeBitmapDisplay" /> class.
+        /// </summary>
+        public NativeBitmapDisplay()
+        {
+            _pictureBox = new PictureBox
+            {
+                Dock = DockStyle.Fill, SizeMode = PictureBoxSizeMode.Zoom, BackColor = Color.Transparent
+            };
+            EnableDoubleBuffering(_pictureBox);
+            Child = _pictureBox;
+        }
+
+        /// <summary>
+        ///     Gets or sets the bitmap.
         /// </summary>
         /// <value>
-        /// The bitmap.
+        ///     The bitmap.
         /// </value>
         public Bitmap? Bitmap
         {
@@ -75,7 +64,18 @@ namespace Imaging
         }
 
         /// <summary>
-        /// Refreshes the bitmap.
+        ///     Enables the double buffering.
+        /// </summary>
+        /// <param name="pictureBox">The picture box.</param>
+        private static void EnableDoubleBuffering(PictureBox pictureBox)
+        {
+            var doubleBufferProperty =
+                typeof(Control).GetProperty("DoubleBuffered", BindingFlags.NonPublic | BindingFlags.Instance);
+            doubleBufferProperty?.SetValue(pictureBox, true, null);
+        }
+
+        /// <summary>
+        ///     Refreshes the bitmap.
         /// </summary>
         /// <param name="bitmap">The bitmap.</param>
         public void RefreshBitmap(Bitmap bitmap)
@@ -85,13 +85,16 @@ namespace Imaging
         }
 
         /// <summary>
-        /// Called when [bitmap changed].
+        ///     Called when [bitmap changed].
         /// </summary>
         /// <param name="d">The d.</param>
-        /// <param name="e">The <see cref="DependencyPropertyChangedEventArgs"/> instance containing the event data.</param>
+        /// <param name="e">The <see cref="DependencyPropertyChangedEventArgs" /> instance containing the event data.</param>
         private static void OnBitmapChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            if (d is not NativeBitmapDisplay control || e.NewValue is not Bitmap newBitmap) return;
+            if (d is not NativeBitmapDisplay control || e.NewValue is not Bitmap newBitmap)
+            {
+                return;
+            }
 
             // Ensure we are on the UI thread before updating the image
             if (control.Dispatcher.CheckAccess())
@@ -118,12 +121,12 @@ namespace Imaging
                 oldBitmap.Dispose();
             }
 
-            control._pictureBox.Image = newBitmap?.Clone() as Bitmap; // Clone to ensure safe assignment
+            control._pictureBox.Image = newBitmap.Clone() as Bitmap; // Clone to ensure safe assignment
         }
 
         /// <inheritdoc />
         /// <summary>
-        /// Immediately frees any system resources that the object might hold.
+        ///     Immediately frees any system resources that the object might hold.
         /// </summary>
         protected override void Dispose(bool disposing)
         {

@@ -12,9 +12,7 @@ using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
-using System.Windows.Media;
 using System.Windows.Media.Imaging;
-using PixelFormat = System.Drawing.Imaging.PixelFormat;
 
 namespace Imaging
 {
@@ -43,7 +41,7 @@ namespace Imaging
             ImageHelper.ValidateFilePath(path);
             try
             {
-                var bmp = new BitmapImage {CreateOptions = BitmapCreateOptions.DelayCreation};
+                var bmp = new BitmapImage { CreateOptions = BitmapCreateOptions.DelayCreation };
                 bmp.BeginInit();
                 bmp.CacheOption = BitmapCacheOption.OnLoad;
                 bmp.UriSource = new Uri(path);
@@ -87,7 +85,7 @@ namespace Imaging
         {
             ImageHelper.ValidateFilePath(path);
 
-            var bmp = new BitmapImage {CreateOptions = BitmapCreateOptions.DelayCreation};
+            var bmp = new BitmapImage { CreateOptions = BitmapCreateOptions.DelayCreation };
 
             try
             {

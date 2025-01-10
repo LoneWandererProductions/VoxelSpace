@@ -8,6 +8,7 @@
 
 using System.Drawing;
 using System.Windows.Media.Imaging;
+using Color = System.Windows.Media.Color;
 
 namespace Imaging
 {
@@ -57,11 +58,11 @@ namespace Imaging
         }
 
         /// <summary>
-        /// Converts to argb.
+        ///     Converts to argb.
         /// </summary>
         /// <param name="color">The color.</param>
         /// <returns>Id of the color</returns>
-        public static int ToArgb(this System.Windows.Media.Color color)
+        public static int ToArgb(this Color color)
         {
             // ARGB format: (Alpha << 24) | (Red << 16) | (Green << 8) | Blue
             return (color.A << 24) | (color.R << 16) | (color.G << 8) | color.B;

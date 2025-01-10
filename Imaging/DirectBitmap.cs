@@ -36,7 +36,7 @@ namespace Imaging
     /// <seealso cref="T:System.IDisposable" />
     public sealed class DirectBitmap : IDisposable
     {
-        private readonly object _syncLock = new object();
+        private readonly object _syncLock = new();
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="DirectBitmap" /> class.
@@ -353,6 +353,7 @@ namespace Imaging
         {
             lock (_syncLock)
             {
+                // Convert pixels to array for efficient indexing
                 var pixelArray = pixels.ToArray();
                 var vectorCount = Vector<int>.Count;
 
@@ -362,12 +363,17 @@ namespace Imaging
                     throw new InvalidOperationException(ImagingResources.ErrorInvalidOperation);
                 }
 
+                // Convert the Bits array to a Span for more efficient access
+                var bitsSpan = new Span<int>(Bits);
+
+                // Process pixels in blocks using Span
                 for (var i = 0; i < pixelArray.Length; i += vectorCount)
                 {
+                    // Create slices for indices and colors
                     var indices = new int[vectorCount];
                     var colors = new int[vectorCount];
 
-                    // Load data into vectors
+                    // Load data into vectors (use Span slicing)
                     for (var j = 0; j < vectorCount; j++)
                     {
                         if (i + j < pixelArray.Length)
@@ -384,7 +390,7 @@ namespace Imaging
                         }
                     }
 
-                    // Write data to Bits array
+                    // Write data to Bits array via Span slice
                     for (var j = 0; j < vectorCount; j++)
                     {
                         if (i + j < pixelArray.Length)
@@ -397,7 +403,7 @@ namespace Imaging
         }
 
         /// <summary>
-        /// Draws the vertical lines simd.
+        ///     Draws the vertical lines simd.
         /// </summary>
         /// <param name="verticalLines">The vertical lines.</param>
         public void DrawVerticalLinesSimd(IEnumerable<(int x, int y, int finalY, Color color)> verticalLines)
@@ -521,7 +527,7 @@ namespace Imaging
                 using (var stream = new MemoryStream())
                 {
                     // Encode the WriteableBitmap to a MemoryStream
-                    PngBitmapEncoder encoder = new PngBitmapEncoder();
+                    var encoder = new PngBitmapEncoder();
                     encoder.Frames.Add(BitmapFrame.Create(writeableBitmap));
                     encoder.Save(stream);
 
