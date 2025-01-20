@@ -54,7 +54,7 @@ namespace SpeedTests
             var (singlePixels, verticalLines) = RasterHelper.Raster(0, columnSlice, colorDictionary);
 
             // Debug Output
-            Console.WriteLine("TestRasterWithColorSequence - Column Slice: ");
+            Trace.WriteLine("TestRasterWithColorSequence - Column Slice: ");
             foreach (var pixel in columnSlice)
             {
                 Trace.WriteLine(pixel);
@@ -184,17 +184,17 @@ namespace SpeedTests
             var (singlePixels, verticalLines) = RasterHelper.Raster(0, columnSlice, colorDictionary);
 
             // Debug Output
-            Console.WriteLine("TestRasterWithSameColorPixels - Column Slice: ");
+            Trace.WriteLine("TestRasterWithSameColorPixels - Column Slice: ");
             foreach (var pixel in columnSlice)
             {
                 Trace.WriteLine(pixel);
             }
-            Console.WriteLine("Single Pixels: ");
+            Trace.WriteLine("Single Pixels: ");
             foreach (var pixel in singlePixels)
             {
                 Trace.WriteLine($"X: {pixel.x}, Y: {pixel.y}, Color: {pixel.color}");
             }
-            Console.WriteLine("Vertical Lines: ");
+            Trace.WriteLine("Vertical Lines: ");
             foreach (var line in verticalLines)
             {
                 Trace.WriteLine($"X: {line.x}, Y: {line.y}, Final Y: {line.finalY}, Color: {line.color}");

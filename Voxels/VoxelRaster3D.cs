@@ -175,12 +175,13 @@ namespace Voxels
             var lines = FillMissingColorsWithVerticalLines();
             var points = ConvertColumnSlicesToSinglePixels();
             var all = FillMissingColorsOld();
+            var news = Raster();
 
             _directBitmap = new DirectBitmap(_context.ScreenWidth, _context.ScreenHeight);
 
-            //_directBitmap.DrawVerticalLinesSimd(lines);
-            //_directBitmap.SetPixelsSimd(points);
-            _directBitmap.SetPixelsSimd(all);
+            _directBitmap.DrawVerticalLinesSimd(news.allVerticalLines);
+            //_directBitmap.SetPixelsSimd(news.allSinglePixels);
+            //_directBitmap.SetPixelsSimd(all);
 
             Array.Clear(_yBuffer, 0, _yBuffer.Length);
 
@@ -300,6 +301,32 @@ namespace Voxels
 
             return filledPixelTuples;
         }
+
+        private (List<(int x, int y, Color color)> allSinglePixels, List<(int x, int y, int finalY, Color color)> allVerticalLines) Raster()
+        {
+            var allSinglePixels = new ConcurrentBag<(int x, int y, Color color)>();
+            var allVerticalLines = new ConcurrentBag<(int x, int y, int finalY, Color color)>();
+
+            // Parallel execution
+            Parallel.For(0, _columnSlices.Count, x =>
+            {
+                var (singlePixels, verticalLines) = RasterHelper.Raster(x, _columnSlices[x], _colorDictionary);
+
+                // Combine results
+                foreach (var pixel in singlePixels)
+                {
+                    allSinglePixels.Add(pixel);
+                }
+                foreach (var line in verticalLines)
+                {
+                    allVerticalLines.Add(line);
+                }
+            });
+
+            // Convert ConcurrentBag to List for return
+            return (allSinglePixels.ToList(), allVerticalLines.ToList());
+        }
+
 
         /// <summary>
         ///     Releases unmanaged and - optionally - managed resources.
