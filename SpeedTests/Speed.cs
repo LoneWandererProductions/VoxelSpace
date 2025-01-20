@@ -5,7 +5,6 @@ using System.IO;
 using Imaging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using Voxels;
-using PixelData = SpeedTests.PixelData;
 
 namespace SpeedTests
 {
