@@ -271,7 +271,6 @@ namespace Imaging
             }
         }
 
-
         /// <summary>
         ///     Sets the area.
         /// </summary>
@@ -406,56 +405,58 @@ namespace Imaging
         ///     Draws the vertical lines simd.
         /// </summary>
         /// <param name="verticalLines">The vertical lines.</param>
-        public unsafe void DrawVerticalLinesSimd(IEnumerable<(int x, int y, int finalY, Color color)> verticalLines)
+        public void DrawVerticalLinesSimd(IEnumerable<(int x, int y, int finalY, Color color)> verticalLines)
         {
-            foreach (var (x, y, finalY, color) in verticalLines)
+            lock (_syncLock)
             {
-                // Skip invalid or out-of-bounds lines
-                if (x < 0 || x >= Width || y < 0 || y >= Height || finalY < 0 || finalY >= Height)
+                foreach (var (x, y, finalY, color) in verticalLines)
                 {
-                    continue;
-                }
+                    // Skip invalid or out-of-bounds lines
+                    if (x < 0 || x >= Width || y < 0 || y >= Height || finalY < 0 || finalY >= Height)
+                    {
+                        continue;
+                    }
 
-                // Precompute the ARGB color
-                var colorArgb = color.ToArgb();
+                    // Precompute the ARGB color
+                    var colorArgb = color.ToArgb();
 
-                // Starting position in the Bits array
-                var position = x + y * Width;
+                    // Starting position in the Bits array
+                    var position = x + y * Width;
 
-                // Calculate the number of rows in the vertical line
-                var rowCount = finalY - y + 1;
+                    // Calculate the number of rows in the vertical line
+                    var rowCount = finalY - y + 1;
 
-                // Create a span over the Bits array
-                var bitsSpan = new Span<int>(Bits);
+                    // Create a span over the Bits array
+                    var bitsSpan = new Span<int>(Bits);
 
-                // Use SIMD to process multiple pixels in one go
-                var vectorSize = Vector<int>.Count; // Number of elements that can be processed in parallel
-                var alignedRowCount = rowCount / vectorSize * vectorSize; // Align to the vector size for bulk processing
+                    // Use SIMD to process multiple pixels in one go
+                    var vectorSize = Vector<int>.Count; // Number of elements that can be processed in parallel
+                    var alignedRowCount =
+                        rowCount / vectorSize * vectorSize; // Align to the vector size for bulk processing
 
-                var colorVector = new Vector<int>(colorArgb); // Load the color into a SIMD vector
+                    var colorVector = new Vector<int>(colorArgb); // Load the color into a SIMD vector
 
-                // SIMD processing
-                for (var i = 0; i < alignedRowCount; i += vectorSize)
-                {
-                    // Calculate the start of the current segment
-                    var currentPosition = position + i * Width;
+                    // SIMD processing
+                    for (var i = 0; i < alignedRowCount; i += vectorSize)
+                    {
+                        // Calculate the start of the current segment
+                        var currentPosition = position + i * Width;
 
-                    // Get a slice of the span for SIMD processing
-                    var segment = bitsSpan.Slice(currentPosition, vectorSize);
+                        // Get a slice of the span for SIMD processing
+                        var segment = bitsSpan.Slice(currentPosition, vectorSize);
 
-                    // Store the color vector into the span
-                    colorVector.CopyTo(segment);
-                }
+                        // Store the color vector into the span
+                        colorVector.CopyTo(segment);
+                    }
 
-                // Handle the remaining pixels
-                for (var i = alignedRowCount; i < rowCount; i++)
-                {
-                    bitsSpan[position + i * Width] = colorArgb;
+                    // Handle the remaining pixels
+                    for (var i = alignedRowCount; i < rowCount; i++)
+                    {
+                        bitsSpan[position + i * Width] = colorArgb;
+                    }
                 }
             }
         }
-
-
 
         /// <summary>
         ///     Gets the pixel.
@@ -517,20 +518,18 @@ namespace Imaging
 
                 // Create a BitmapImage and set the WriteableBitmap's pixel data
                 bitmapImage = new BitmapImage();
-                using (var stream = new MemoryStream())
-                {
-                    // Encode the WriteableBitmap to a MemoryStream
-                    var encoder = new PngBitmapEncoder();
-                    encoder.Frames.Add(BitmapFrame.Create(writeableBitmap));
-                    encoder.Save(stream);
+                using var stream = new MemoryStream();
+                // Encode the WriteableBitmap to a MemoryStream
+                var encoder = new PngBitmapEncoder();
+                encoder.Frames.Add(BitmapFrame.Create(writeableBitmap));
+                encoder.Save(stream);
 
-                    // Set the stream as the source for the BitmapImage
-                    stream.Seek(0, SeekOrigin.Begin);
-                    bitmapImage.BeginInit();
-                    bitmapImage.StreamSource = stream;
-                    bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                    bitmapImage.EndInit();
-                }
+                // Set the stream as the source for the BitmapImage
+                stream.Seek(0, SeekOrigin.Begin);
+                bitmapImage.BeginInit();
+                bitmapImage.StreamSource = stream;
+                bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+                bitmapImage.EndInit();
             });
 
             return bitmapImage;

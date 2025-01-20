@@ -322,6 +322,7 @@ namespace Voxels
                 {
                     allSinglePixels.Add(pixel);
                 }
+
                 foreach (var line in verticalLines)
                 {
                     allVerticalLines.Add(line);
