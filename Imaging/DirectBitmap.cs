@@ -406,63 +406,56 @@ namespace Imaging
         ///     Draws the vertical lines simd.
         /// </summary>
         /// <param name="verticalLines">The vertical lines.</param>
-        public void DrawVerticalLinesSimd(IEnumerable<(int x, int y, int finalY, Color color)> verticalLines)
+        public unsafe void DrawVerticalLinesSimd(IEnumerable<(int x, int y, int finalY, Color color)> verticalLines)
         {
-            lock (_syncLock)
+            foreach (var (x, y, finalY, color) in verticalLines)
             {
-                foreach (var (x, y, finalY, color) in verticalLines)
+                // Skip invalid or out-of-bounds lines
+                if (x < 0 || x >= Width || y < 0 || y >= Height || finalY < 0 || finalY >= Height)
                 {
-                    // Skip if the line is outside bounds or invalid
-                    if (x < 0 || x >= Width || y >= Height || finalY <= y)
-                    {
-                        continue;
-                    }
+                    continue;
+                }
 
-                    // Ensure the starting and ending points are within bounds
-                    var startY = Math.Max(0, y);
-                    var endY = Math.Min(Height, finalY);
+                // Precompute the ARGB color
+                var colorArgb = color.ToArgb();
 
-                    var colorArgb = color.ToArgb();
-                    var colorVector = new Vector<int>(colorArgb);
+                // Starting position in the Bits array
+                var position = x + y * Width;
 
-                    for (var i = startY; i < endY;)
-                    {
-                        var currentOffset = x + (i * Width);
+                // Calculate the number of rows in the vertical line
+                var rowCount = finalY - y + 1;
 
-                        // Process as many pixels as Vector<int> can handle
-                        var remaining = endY - i;
-                        var vectorLength = Vector<int>.Count;
-                        var count = Math.Min(remaining, vectorLength);
+                // Create a span over the Bits array
+                var bitsSpan = new Span<int>(Bits);
 
-                        // Write vectorized color values to memory
-                        unsafe
-                        {
-                            fixed (int* bitsPtr = Bits)
-                            {
-                                // Write the vectorized color to the memory block
-                                var bitsSpan = new Span<int>(bitsPtr + currentOffset, count);
+                // Use SIMD to process multiple pixels in one go
+                var vectorSize = Vector<int>.Count; // Number of elements that can be processed in parallel
+                var alignedRowCount = rowCount / vectorSize * vectorSize; // Align to the vector size for bulk processing
 
-                                if (bitsSpan.Length >= vectorLength)
-                                {
-                                    // Only copy a full vector when the span is large enough
-                                    colorVector.CopyTo(bitsSpan);
-                                }
-                                else
-                                {
-                                    // Fill remaining pixels one by one
-                                    for (var j = 0; j < bitsSpan.Length; j++)
-                                    {
-                                        bitsSpan[j] = colorArgb;
-                                    }
-                                }
-                            }
-                        }
+                var colorVector = new Vector<int>(colorArgb); // Load the color into a SIMD vector
 
-                        i += count; // Advance by the number of elements processed
-                    }
+                // SIMD processing
+                for (var i = 0; i < alignedRowCount; i += vectorSize)
+                {
+                    // Calculate the start of the current segment
+                    var currentPosition = position + i * Width;
+
+                    // Get a slice of the span for SIMD processing
+                    var segment = bitsSpan.Slice(currentPosition, vectorSize);
+
+                    // Store the color vector into the span
+                    colorVector.CopyTo(segment);
+                }
+
+                // Handle the remaining pixels
+                for (var i = alignedRowCount; i < rowCount; i++)
+                {
+                    bitsSpan[position + i * Width] = colorArgb;
                 }
             }
         }
+
+
 
         /// <summary>
         ///     Gets the pixel.

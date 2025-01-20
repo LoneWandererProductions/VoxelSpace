@@ -180,7 +180,7 @@ namespace Voxels
             _directBitmap = new DirectBitmap(_context.ScreenWidth, _context.ScreenHeight);
 
             _directBitmap.DrawVerticalLinesSimd(news.allVerticalLines);
-            //_directBitmap.SetPixelsSimd(news.allSinglePixels);
+            _directBitmap.SetPixelsSimd(news.allSinglePixels);
             //_directBitmap.SetPixelsSimd(all);
 
             Array.Clear(_yBuffer, 0, _yBuffer.Length);
@@ -228,39 +228,44 @@ namespace Voxels
             _ = Parallel.For(0, _columnSlices.Count, x =>
             {
                 Span<int> columnSlice = _columnSlices[x]; // Span used for performance
-                var lastKnownColorId = 0;
-                var count = 0;
+                int? gapStart = null;
+                int lastKnownColorId = 0;
 
                 for (var y = 0; y < columnSlice.Length; y++)
                 {
-                    var colorId = columnSlice[y]; // Local variable to store the value
+                    var colorId = columnSlice[y];
 
-                    if (colorId != 0)
+                    if (colorId == 0) // If there's a gap
                     {
-                        lastKnownColorId = colorId;
-                        count = 0;
+                        if (gapStart == null)
+                        {
+                            gapStart = y; // Start of the gap
+                        }
                     }
-                    else if (lastKnownColorId != 0)
+                    else // If the current value is not a gap
                     {
-                        colorId = lastKnownColorId; // Continue using the last known color
-                    }
+                        if (gapStart != null)
+                        {
+                            // Process the gap
+                            if (lastKnownColorId != 0 && _colorDictionary.TryGetValue(lastKnownColorId, out var color))
+                            {
+                                verticalLines.Add((x, gapStart.Value, y - 1, color));
+                            }
 
-                    count++;
-                    if (colorId == 0) continue;
-                    if (count < 1) continue;
+                            gapStart = null; // Reset the gap tracking
+                        }
 
-                    if (_colorDictionary.TryGetValue(colorId, out var color))
-                    {
-                        var start = y - count;
-                        verticalLines.Add((x, start, y, color));
-                        count = 0;
+                        lastKnownColorId = colorId; // Update last known color
                     }
-                    else
-                    {
-                        //Trace.WriteLine($"Warning: Color ID {colorId} not found in the dictionary.");
-                    }
+                }
 
-                    lastKnownColorId = 0;
+                // If the column ends with a gap
+                if (gapStart != null && lastKnownColorId != 0)
+                {
+                    if (_colorDictionary.TryGetValue(lastKnownColorId, out var color))
+                    {
+                        verticalLines.Add((x, gapStart.Value, columnSlice.Length - 1, color));
+                    }
                 }
             });
 
