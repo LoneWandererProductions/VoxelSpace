@@ -107,36 +107,31 @@ namespace Voxels
             var verticalLines = new ConcurrentBag<(int x, int y, int finalY, Color color)>();
 
             // Step 1: Fill the gaps (zeros) with the previous color
-            var filledColumnSlice = new int[columnSlice.Length];
             var previousColor = 0; // Start with no color
+            var colorYList = new List<int>(); // To store Y positions of pixels of the same color
+            var currentColor = 0;
 
             for (int y = 0; y < columnSlice.Length; y++)
             {
-                if (columnSlice[y] != 0)
-                {
-                    previousColor = columnSlice[y]; // Update the previous color if it's not zero
-                }
-                filledColumnSlice[y] = previousColor; // Fill the current pixel with the previous color
-            }
-
-            // Step 2: Iterate over the filled column slice to identify points and vertical lines
-            var currentColor = 0;
-            var colorYList = new List<int>(); // List to store Y values for the same color
-
-            for (int y = 0; y < filledColumnSlice.Length; y++)
-            {
-                var color = filledColumnSlice[y];
+                int color = columnSlice[y];
                 Color mappedColor = colorDictionary.GetValueOrDefault(color, Color.Empty);
 
-                // Detect if we're in a new color sequence
+                // Handle gap filling for zero values (fill with the last known color)
+                if (color == 0 && previousColor != 0)
+                {
+                    color = previousColor; // Continue with the last known color
+                    mappedColor = colorDictionary.GetValueOrDefault(color, Color.Empty); // Get the mapped color
+                }
+
+                // Detect color change
                 if (color != currentColor)
                 {
-                    // If a sequence exists, handle the previous one
+                    // If the current sequence has any Y-values, process it
                     if (currentColor != 0 && colorYList.Count > 0)
                     {
                         if (colorYList.Count == 1) // Single pixel
                         {
-                            singlePixels.Add((x, colorYList[0], mappedColor)); // Add as single point
+                            singlePixels.Add((x, colorYList[0], mappedColor)); // Add as a single pixel
                         }
                         else // Vertical line (more than 1 pixel)
                         {
@@ -146,11 +141,20 @@ namespace Voxels
 
                     // Start a new sequence with the current color
                     currentColor = color;
-                    colorYList.Clear(); // Reset the Y list for the new color
+                    colorYList.Clear(); // Reset Y-list for the new color
                 }
 
-                // Add the current Y value to the list of Y's for the current color
+                // Add the current Y to the list
                 colorYList.Add(y);
+
+                // Update the previous color
+                if (color != 0)
+                {
+                    previousColor = color;
+                }
+
+                // Debugging: Track the current state
+                Console.WriteLine($"y={y}, color={color}, previousColor={previousColor}, currentColor={currentColor}, filledColor={mappedColor}");
             }
 
             // Handle the last sequence after the loop ends
@@ -159,7 +163,7 @@ namespace Voxels
                 Color lastColor = colorDictionary.GetValueOrDefault(currentColor, Color.Empty);
                 if (colorYList.Count == 1) // Single pixel
                 {
-                    singlePixels.Add((x, colorYList[0], lastColor)); // Add as single point
+                    singlePixels.Add((x, colorYList[0], lastColor)); // Add as a single pixel
                 }
                 else // Vertical line (more than 1 pixel)
                 {
