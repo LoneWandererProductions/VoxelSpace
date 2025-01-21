@@ -179,6 +179,7 @@ namespace Voxels
             stopwatch.Stop();
             ImageRender = stopwatch.ElapsedMilliseconds;
 
+            return renderedImage;
 
             //TODO make threadsafe
 

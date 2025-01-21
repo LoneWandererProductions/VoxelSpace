@@ -61,15 +61,6 @@ namespace Voxels
             GC.SuppressFinalize(this);
         }
 
-        /// <summary>
-        /// Initializes the buffers.
-        /// </summary>
-        /// <param name="colorMap">The color map.</param>
-        /// <param name="heightMap">The height map.</param>
-        /// <param name="topographyWidth">Width of the topography.</param>
-        /// <param name="topographyHeight">Height of the topography.</param>
-        /// <param name="colorWidth">Width of the color.</param>
-        /// <param name="colorHeight">Height of the color.</param>
         private void InitializeBuffers(Color[,] colorMap, int[,] heightMap, int topographyWidth, int topographyHeight,
             int colorWidth, int colorHeight)
         {
@@ -181,24 +172,15 @@ namespace Voxels
                 dz += DzIncrement;
             }
 
-            //var lines = FillMissingColorsWithVerticalLines();
-            //var points = ConvertColumnSlicesToSinglePixels();
-            //var all = FillMissingColorsOld();
-            //var news = Raster();
-
-            var points = RasterHelper.FillMissingColorsPoints(_columnSlices, _colorDictionary);
-            var lines  = RasterHelper.FillMissingColorsLines(_columnSlices,_colorDictionary);
+            var lines = FillMissingColorsWithVerticalLines();
+            var points = ConvertColumnSlicesToSinglePixels();
+            var all = FillMissingColorsOld();
+            var news = Raster();
 
             _directBitmap = new DirectBitmap(_context.ScreenWidth, _context.ScreenHeight);
 
-<<<<<<< HEAD
-
-            _directBitmap.SetPixelsSimd(points);
-            //_directBitmap.DrawVerticalLinesSimd(lines);
-=======
             _directBitmap.DrawVerticalLinesSimd(news.allVerticalLines);
             _directBitmap.SetPixelsSimd(news.allSinglePixels);
->>>>>>> 91575aab8f9579eb20506704ca4c5cefc545c9db
             //_directBitmap.SetPixelsSimd(all);
 
             Array.Clear(_yBuffer, 0, _yBuffer.Length);

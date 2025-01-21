@@ -36,9 +36,6 @@ namespace Imaging
     /// <seealso cref="T:System.IDisposable" />
     public sealed class DirectBitmap : IDisposable
     {
-        /// <summary>
-        /// The synchronize lock
-        /// </summary>
         private readonly object _syncLock = new();
 
         /// <summary>
@@ -286,6 +283,7 @@ namespace Imaging
                 var colorArgb = color.ToArgb();
                 var indices = idList.ToArray();
                 var vectorCount = Vector<int>.Count;
+                var colorVector = new Vector<int>(colorArgb);
 
                 // Process the indices in chunks that fit within a Vector<int>
                 for (var i = 0; i < indices.Length; i += vectorCount)
@@ -364,6 +362,9 @@ namespace Imaging
                     throw new InvalidOperationException(ImagingResources.ErrorInvalidOperation);
                 }
 
+                // Convert the Bits array to a Span for more efficient access
+                var bitsSpan = new Span<int>(Bits);
+
                 // Process pixels in blocks using Span
                 for (var i = 0; i < pixelArray.Length; i += vectorCount)
                 {
@@ -420,11 +421,7 @@ namespace Imaging
                     var colorArgb = color.ToArgb();
 
                     // Starting position in the Bits array
-<<<<<<< HEAD
-                    var position = x + (y * Width);
-=======
                     var position = x + y * Width;
->>>>>>> 91575aab8f9579eb20506704ca4c5cefc545c9db
 
                     // Calculate the number of rows in the vertical line
                     var rowCount = finalY - y + 1;
@@ -443,11 +440,7 @@ namespace Imaging
                     for (var i = 0; i < alignedRowCount; i += vectorSize)
                     {
                         // Calculate the start of the current segment
-<<<<<<< HEAD
-                        var currentPosition = position + (i * Width);
-=======
                         var currentPosition = position + i * Width;
->>>>>>> 91575aab8f9579eb20506704ca4c5cefc545c9db
 
                         // Get a slice of the span for SIMD processing
                         var segment = bitsSpan.Slice(currentPosition, vectorSize);
@@ -459,11 +452,7 @@ namespace Imaging
                     // Handle the remaining pixels
                     for (var i = alignedRowCount; i < rowCount; i++)
                     {
-<<<<<<< HEAD
-                        bitsSpan[position + (i * Width)] = colorArgb;
-=======
                         bitsSpan[position + i * Width] = colorArgb;
->>>>>>> 91575aab8f9579eb20506704ca4c5cefc545c9db
                     }
                 }
             }

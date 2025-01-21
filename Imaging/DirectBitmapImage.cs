@@ -34,7 +34,7 @@ namespace Imaging
         /// <summary>
         ///     GCHandle to manage the memory of the bits array
         /// </summary>
-        private GCHandle _bitsHandle;
+        private readonly GCHandle _bitsHandle;
 
         /// <summary>
         ///     Indicates if the instance has been disposed
