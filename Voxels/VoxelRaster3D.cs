@@ -172,167 +172,20 @@ namespace Voxels
                 dz += DzIncrement;
             }
 
-            var lines = FillMissingColorsWithVerticalLines();
-            var points = ConvertColumnSlicesToSinglePixels();
-            var all = FillMissingColorsOld();
-            var news = Raster();
+            var lines = RasterHelper.FillMissingColorsLines(_columnSlices, _colorDictionary);
+            var points = RasterHelper.FillMissingColorsPoints(_columnSlices, _colorDictionary);
+            var all = RasterHelper.FillMissingColorsOld(_columnSlices, _colorDictionary);
 
             _directBitmap = new DirectBitmap(_context.ScreenWidth, _context.ScreenHeight);
 
-            _directBitmap.DrawVerticalLinesSimd(news.allVerticalLines);
-            _directBitmap.SetPixelsSimd(news.allSinglePixels);
+            _directBitmap.DrawVerticalLines(lines);
+            //_directBitmap.SetPixelsSimd(points);
             //_directBitmap.SetPixelsSimd(all);
 
             Array.Clear(_yBuffer, 0, _yBuffer.Length);
 
             return _directBitmap.Bitmap;
         }
-
-        private IEnumerable<(int x, int y, Color color)> ConvertColumnSlicesToSinglePixels()
-        {
-            var singlePixels = new List<(int x, int y, Color color)>();
-
-            // Iterate through each column slice
-            for (int x = 0; x < _columnSlices.Count; x++)
-            {
-                Span<int> columnSlice = _columnSlices[x]; // Span used for performance
-
-                // Iterate through each pixel in the column slice
-                for (int y = 0; y < columnSlice.Length; y++)
-                {
-                    var colorId = columnSlice[y];
-
-                    // Skip zero values (no color assigned)
-                    if (colorId == 0) continue;
-
-                    if (_colorDictionary.TryGetValue(colorId, out var color))
-                    {
-                        // Add pixel to the list of single pixels
-                        singlePixels.Add((x, y, color));
-                    }
-                    else
-                    {
-                        Trace.WriteLine($"Warning: Color ID {colorId} not found in the dictionary.");
-                    }
-                }
-            }
-
-            // Return the list of single pixels
-            return singlePixels;
-        }
-
-        private List<(int x, int y, int finalY, Color color)> FillMissingColorsWithVerticalLines()
-        {
-            var verticalLines = new ConcurrentBag<(int x, int y, int finalY, Color color)>();
-
-            _ = Parallel.For(0, _columnSlices.Count, x =>
-            {
-                Span<int> columnSlice = _columnSlices[x]; // Span used for performance
-                int? gapStart = null;
-                int lastKnownColorId = 0;
-
-                for (var y = 0; y < columnSlice.Length; y++)
-                {
-                    var colorId = columnSlice[y];
-
-                    if (colorId == 0) // If there's a gap
-                    {
-                        if (gapStart == null)
-                        {
-                            gapStart = y; // Start of the gap
-                        }
-                    }
-                    else // If the current value is not a gap
-                    {
-                        if (gapStart != null)
-                        {
-                            // Process the gap
-                            if (lastKnownColorId != 0 && _colorDictionary.TryGetValue(lastKnownColorId, out var color))
-                            {
-                                verticalLines.Add((x, gapStart.Value, y - 1, color));
-                            }
-
-                            gapStart = null; // Reset the gap tracking
-                        }
-
-                        lastKnownColorId = colorId; // Update last known color
-                    }
-                }
-
-                // If the column ends with a gap
-                if (gapStart != null && lastKnownColorId != 0)
-                {
-                    if (_colorDictionary.TryGetValue(lastKnownColorId, out var color))
-                    {
-                        verticalLines.Add((x, gapStart.Value, columnSlice.Length - 1, color));
-                    }
-                }
-            });
-
-            // Convert ConcurrentBag to List if necessary for further processing
-            return verticalLines.ToList();
-        }
-
-        private IEnumerable<(int x, int y, Color color)> FillMissingColorsOld()
-        {
-            var filledPixelTuples = new ConcurrentBag<(int x, int y, Color color)>();
-
-            _ = Parallel.For(0, _columnSlices.Count, x =>
-            {
-                Span<int> columnSlice = _columnSlices[x]; // Span used for performance
-                var lastKnownColorId = 0;
-
-                for (var y = 0; y < columnSlice.Length; y++)
-                {
-                    var colorId = columnSlice[y]; // Local variable to store the value
-
-                    if (colorId != 0)
-                    {
-                        lastKnownColorId = colorId;
-                    }
-                    else if (lastKnownColorId != 0)
-                    {
-                        colorId = lastKnownColorId; // Continue using the last known color
-                    }
-
-                    if (colorId == 0) continue;
-
-                    if (_colorDictionary.TryGetValue(colorId, out var color))
-                        filledPixelTuples.Add((x, y, color));
-                    else continue;
-                    //Trace.WriteLine($"Warning: Color ID {colorId} not found in the dictionary.");
-                }
-            });
-
-            return filledPixelTuples;
-        }
-
-        private (List<(int x, int y, Color color)> allSinglePixels, List<(int x, int y, int finalY, Color color)> allVerticalLines) Raster()
-        {
-            var allSinglePixels = new ConcurrentBag<(int x, int y, Color color)>();
-            var allVerticalLines = new ConcurrentBag<(int x, int y, int finalY, Color color)>();
-
-            // Parallel execution
-            Parallel.For(0, _columnSlices.Count, x =>
-            {
-                var (singlePixels, verticalLines) = RasterHelper.Raster(x, _columnSlices[x], _colorDictionary);
-
-                // Combine results
-                foreach (var pixel in singlePixels)
-                {
-                    allSinglePixels.Add(pixel);
-                }
-
-                foreach (var line in verticalLines)
-                {
-                    allVerticalLines.Add(line);
-                }
-            });
-
-            // Convert ConcurrentBag to List for return
-            return (allSinglePixels.ToList(), allVerticalLines.ToList());
-        }
-
 
         /// <summary>
         ///     Releases unmanaged and - optionally - managed resources.

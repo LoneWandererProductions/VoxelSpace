@@ -21,6 +21,7 @@ using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
@@ -402,60 +403,31 @@ namespace Imaging
         }
 
         /// <summary>
-        ///     Draws the vertical lines simd.
+        /// Draws the vertical lines.
         /// </summary>
         /// <param name="verticalLines">The vertical lines.</param>
-        public void DrawVerticalLinesSimd(IEnumerable<(int x, int y, int finalY, Color color)> verticalLines)
+        public void DrawVerticalLines(IEnumerable<(int x, int y, int finalY, Color color)> verticalLines)
         {
-            lock (_syncLock)
-            {
-                foreach (var (x, y, finalY, color) in verticalLines)
-                {
-                    // Skip invalid or out-of-bounds lines
-                    if (x < 0 || x >= Width || y < 0 || y >= Height || finalY < 0 || finalY >= Height)
-                    {
-                        continue;
-                    }
+            _ = Parallel.ForEach(verticalLines, (line) =>
+              {
+                  var (x, y, finalY, color) = line;
+                  var colorArgb = color.ToArgb();
 
-                    // Precompute the ARGB color
-                    var colorArgb = color.ToArgb();
+                // Starting position in the Bits array
+                var position = x + y * Width;
 
-                    // Starting position in the Bits array
-                    var position = x + y * Width;
+                // Calculate the number of rows in the vertical line
+                var rowCount = finalY - y + 1;
 
-                    // Calculate the number of rows in the vertical line
-                    var rowCount = finalY - y + 1;
+                // Create a span over the Bits array
+                var bitsSpan = new Span<int>(Bits);
 
-                    // Create a span over the Bits array
-                    var bitsSpan = new Span<int>(Bits);
-
-                    // Use SIMD to process multiple pixels in one go
-                    var vectorSize = Vector<int>.Count; // Number of elements that can be processed in parallel
-                    var alignedRowCount =
-                        rowCount / vectorSize * vectorSize; // Align to the vector size for bulk processing
-
-                    var colorVector = new Vector<int>(colorArgb); // Load the color into a SIMD vector
-
-                    // SIMD processing
-                    for (var i = 0; i < alignedRowCount; i += vectorSize)
-                    {
-                        // Calculate the start of the current segment
-                        var currentPosition = position + i * Width;
-
-                        // Get a slice of the span for SIMD processing
-                        var segment = bitsSpan.Slice(currentPosition, vectorSize);
-
-                        // Store the color vector into the span
-                        colorVector.CopyTo(segment);
-                    }
-
-                    // Handle the remaining pixels
-                    for (var i = alignedRowCount; i < rowCount; i++)
-                    {
-                        bitsSpan[position + i * Width] = colorArgb;
-                    }
-                }
-            }
+                // Set the color for each pixel in the vertical line
+                for (var i = 0; i < rowCount; i++)
+                  {
+                      bitsSpan[position + i * Width] = colorArgb;
+                  }
+              });
         }
 
         /// <summary>

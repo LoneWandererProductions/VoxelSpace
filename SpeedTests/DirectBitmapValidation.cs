@@ -21,7 +21,7 @@ namespace SpeedTests
             };
 
             // Act
-            target.DrawVerticalLinesSimd(verticalLines);
+            target.DrawVerticalLines(verticalLines);
 
             // Assert
             for (var y = 2; y <= 8; y++) // Include the pixel at finalY
@@ -44,7 +44,7 @@ namespace SpeedTests
             };
 
             // Act
-            target.DrawVerticalLinesSimd(verticalLines);
+            target.DrawVerticalLines(verticalLines);
 
             // Assert
             for (var y = 2; y <= 8; y++) // Ensure all expected pixels are tested
@@ -80,7 +80,7 @@ namespace SpeedTests
             };
 
             // Act
-            target.DrawVerticalLinesSimd(verticalLines);
+            target.DrawVerticalLines(verticalLines);
 
             // Assert
             for (var y = 1; y < 5; y++) Assert.AreEqual(red, target.Bits[1 + (y * width)]);

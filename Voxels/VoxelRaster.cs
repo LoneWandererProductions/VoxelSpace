@@ -144,7 +144,6 @@ namespace Voxels
             GC.SuppressFinalize(this);
         }
 
-        private static SemaphoreSlim _semaphore = new SemaphoreSlim(4); // Limit to 4 concurrent tasks
         private static List<Task> _pendingTasks = new List<Task>(); // To track pending tasks
 
         /// <summary>
