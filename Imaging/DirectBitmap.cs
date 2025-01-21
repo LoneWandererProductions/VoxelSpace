@@ -36,6 +36,9 @@ namespace Imaging
     /// <seealso cref="T:System.IDisposable" />
     public sealed class DirectBitmap : IDisposable
     {
+        /// <summary>
+        /// The synchronize lock
+        /// </summary>
         private readonly object _syncLock = new();
 
         /// <summary>
@@ -271,7 +274,6 @@ namespace Imaging
             }
         }
 
-
         /// <summary>
         ///     Sets the area.
         /// </summary>
@@ -284,7 +286,6 @@ namespace Imaging
                 var colorArgb = color.ToArgb();
                 var indices = idList.ToArray();
                 var vectorCount = Vector<int>.Count;
-                var colorVector = new Vector<int>(colorArgb);
 
                 // Process the indices in chunks that fit within a Vector<int>
                 for (var i = 0; i < indices.Length; i += vectorCount)
@@ -363,9 +364,6 @@ namespace Imaging
                     throw new InvalidOperationException(ImagingResources.ErrorInvalidOperation);
                 }
 
-                // Convert the Bits array to a Span for more efficient access
-                var bitsSpan = new Span<int>(Bits);
-
                 // Process pixels in blocks using Span
                 for (var i = 0; i < pixelArray.Length; i += vectorCount)
                 {
@@ -412,53 +410,48 @@ namespace Imaging
             {
                 foreach (var (x, y, finalY, color) in verticalLines)
                 {
-                    // Skip if the line is outside bounds or invalid
-                    if (x < 0 || x >= Width || y >= Height || finalY <= y)
+                    // Skip invalid or out-of-bounds lines
+                    if (x < 0 || x >= Width || y < 0 || y >= Height || finalY < 0 || finalY >= Height)
                     {
                         continue;
                     }
 
-                    // Ensure the starting and ending points are within bounds
-                    var startY = Math.Max(0, y);
-                    var endY = Math.Min(Height, finalY);
-
+                    // Precompute the ARGB color
                     var colorArgb = color.ToArgb();
-                    var colorVector = new Vector<int>(colorArgb);
 
-                    for (var i = startY; i < endY;)
+                    // Starting position in the Bits array
+                    var position = x + (y * Width);
+
+                    // Calculate the number of rows in the vertical line
+                    var rowCount = finalY - y + 1;
+
+                    // Create a span over the Bits array
+                    var bitsSpan = new Span<int>(Bits);
+
+                    // Use SIMD to process multiple pixels in one go
+                    var vectorSize = Vector<int>.Count; // Number of elements that can be processed in parallel
+                    var alignedRowCount =
+                        rowCount / vectorSize * vectorSize; // Align to the vector size for bulk processing
+
+                    var colorVector = new Vector<int>(colorArgb); // Load the color into a SIMD vector
+
+                    // SIMD processing
+                    for (var i = 0; i < alignedRowCount; i += vectorSize)
                     {
-                        var currentOffset = x + (i * Width);
+                        // Calculate the start of the current segment
+                        var currentPosition = position + (i * Width);
 
-                        // Process as many pixels as Vector<int> can handle
-                        var remaining = endY - i;
-                        var vectorLength = Vector<int>.Count;
-                        var count = Math.Min(remaining, vectorLength);
+                        // Get a slice of the span for SIMD processing
+                        var segment = bitsSpan.Slice(currentPosition, vectorSize);
 
-                        // Write vectorized color values to memory
-                        unsafe
-                        {
-                            fixed (int* bitsPtr = Bits)
-                            {
-                                // Write the vectorized color to the memory block
-                                var bitsSpan = new Span<int>(bitsPtr + currentOffset, count);
+                        // Store the color vector into the span
+                        colorVector.CopyTo(segment);
+                    }
 
-                                if (bitsSpan.Length >= vectorLength)
-                                {
-                                    // Only copy a full vector when the span is large enough
-                                    colorVector.CopyTo(bitsSpan);
-                                }
-                                else
-                                {
-                                    // Fill remaining pixels one by one
-                                    for (var j = 0; j < bitsSpan.Length; j++)
-                                    {
-                                        bitsSpan[j] = colorArgb;
-                                    }
-                                }
-                            }
-                        }
-
-                        i += count; // Advance by the number of elements processed
+                    // Handle the remaining pixels
+                    for (var i = alignedRowCount; i < rowCount; i++)
+                    {
+                        bitsSpan[position + (i * Width)] = colorArgb;
                     }
                 }
             }
@@ -524,20 +517,18 @@ namespace Imaging
 
                 // Create a BitmapImage and set the WriteableBitmap's pixel data
                 bitmapImage = new BitmapImage();
-                using (var stream = new MemoryStream())
-                {
-                    // Encode the WriteableBitmap to a MemoryStream
-                    var encoder = new PngBitmapEncoder();
-                    encoder.Frames.Add(BitmapFrame.Create(writeableBitmap));
-                    encoder.Save(stream);
+                using var stream = new MemoryStream();
+                // Encode the WriteableBitmap to a MemoryStream
+                var encoder = new PngBitmapEncoder();
+                encoder.Frames.Add(BitmapFrame.Create(writeableBitmap));
+                encoder.Save(stream);
 
-                    // Set the stream as the source for the BitmapImage
-                    stream.Seek(0, SeekOrigin.Begin);
-                    bitmapImage.BeginInit();
-                    bitmapImage.StreamSource = stream;
-                    bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
-                    bitmapImage.EndInit();
-                }
+                // Set the stream as the source for the BitmapImage
+                stream.Seek(0, SeekOrigin.Begin);
+                bitmapImage.BeginInit();
+                bitmapImage.StreamSource = stream;
+                bitmapImage.CacheOption = BitmapCacheOption.OnLoad;
+                bitmapImage.EndInit();
             });
 
             return bitmapImage;

@@ -446,19 +446,15 @@ namespace Imaging
                 // Draw vertical fibers
                 for (var x = 0; x < width; x += lineSpacing)
                 {
-                    using (var fiberBrush = new SolidBrush(Color.FromArgb(alpha, lineColor)))
-                    {
-                        g.FillRectangle(fiberBrush, x, 0, lineThickness, height);
-                    }
+                    using var fiberBrush = new SolidBrush(Color.FromArgb(alpha, lineColor));
+                    g.FillRectangle(fiberBrush, x, 0, lineThickness, height);
                 }
 
                 // Draw horizontal fibers
                 for (var y = 0; y < height; y += lineSpacing)
                 {
-                    using (var fiberBrush = new SolidBrush(Color.FromArgb(alpha, lineColor)))
-                    {
-                        g.FillRectangle(fiberBrush, 0, y, width, lineThickness);
-                    }
+                    using var fiberBrush = new SolidBrush(Color.FromArgb(alpha, lineColor));
+                    g.FillRectangle(fiberBrush, 0, y, width, lineThickness);
                 }
             }
 

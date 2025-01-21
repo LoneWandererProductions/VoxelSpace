@@ -1,66 +1,100 @@
-﻿using Imaging;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿/*
+ * COPYRIGHT:   See COPYING in the top level directory
+ * PROJECT:     CommonLibraryTests
+ * FILE:        CommonLibraryTests/DirectBitmapValidation.cs
+ * PURPOSE:     Validate some functions in my   DirectBitmap
+ * PROGRAMER:   Peter Geinitz (Wayfarer)
+ */
+
+
 using System.Collections.Generic;
 using System.Drawing;
+using Imaging;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace SpeedTests
 {
+    /// <summary>
+    ///     Validate Vertical lines mostly
+    /// </summary>
     [TestClass]
     public class DirectBitmapValidation
     {
+        /// <summary>
+        ///     Draws the single vertical line should modify bits correctly.
+        /// </summary>
         [TestMethod]
-        public void DrawSingleVerticalLine_WithinBounds_ShouldModifyBitsCorrectly()
+        public void DrawSingleVerticalLineShouldModifyBitsCorrectly()
         {
             // Arrange
-            int width = 10, height = 10;
+            const int width = 1, height = 10;
             var target = new DirectBitmap(width, height);
             var color = Color.Red;
             var verticalLines = new List<(int x, int y, int finalY, Color color)>
             {
-                (5, 2, 8, color) // Line from (5, 2) to (5, 8)
+                (0, 2, 8, color) // Line from (5, 2) to (5, 8)
             };
 
             // Act
             target.DrawVerticalLinesSimd(verticalLines);
 
             // Assert
-            for (int y = 2; y < 8; y++)
+            for (var y = 2; y <= 8; y++) // Include the pixel at finalY
             {
-                Assert.AreEqual(color.ToArgb(), target.Bits[5 + (y * width)]);
+                Assert.AreEqual(color.ToArgb(), target.Bits[0 + y * width]);
             }
         }
 
+
+        /// <summary>
+        ///     Draws the single vertical line within bounds should modify bits correctly.
+        /// </summary>
         [TestMethod]
-        public void DrawVerticalLine_PartiallyOutOfBounds_ShouldModifyValidPixelsOnly()
+        public void DrawSingleVerticalLineWithinBoundsShouldModifyBitsCorrectly()
         {
             // Arrange
-            int width = 10, height = 10;
-            var target = new DirectBitmap(width, height);
-            var color = Color.Green;
+            const int width = 10, height = 10; // Adjusted to reflect valid indices from 0 to 8
+            var target = new DirectBitmap(width + 1, height + 1); // Create bitmap with size 10x10
+            var color = Color.Red;
             var verticalLines = new List<(int x, int y, int finalY, Color color)>
             {
-                (5, -3, 8, color) // Line starting out of bounds
+                (5, 2, 8, color) // Line from (5, 2) to (5, 8) inclusive
             };
 
             // Act
             target.DrawVerticalLinesSimd(verticalLines);
 
             // Assert
-            // Assert that only in-bounds pixels are updated
-            for (int y = 0; y < 8; y++) // Only the in-bounds part
+            for (var y = 2; y <= 8; y++) // Ensure all expected pixels are tested
             {
-                if (y >= 0) // Ensure only in-bounds part is modified
+                var bitIndex = 5 + y * (width + 1); // Correct bit index calculation for the given coordinates
+                Assert.AreEqual(color.ToArgb(), target.Bits[bitIndex], $"Pixel at ({5}, {y}) was not drawn correctly.");
+            }
+
+            // Verify no unexpected modifications
+            for (var x = 0; x <= width; x++)
+            {
+                for (var y = 0; y <= height; y++)
                 {
-                    Assert.AreEqual(color.ToArgb(), target.Bits[5 + (y * width)]);
+                    if (x == 5 && y >= 2 && y <= 8)
+                    {
+                        continue; // Skip the drawn vertical line
+                    }
+
+                    Assert.AreEqual(0, target.Bits[x + y * (width + 1)],
+                        $"Pixel at ({x}, {y}) was unexpectedly modified.");
                 }
             }
         }
 
+        /// <summary>
+        ///     Draws the vertical lines simd multiple lines should handle correctly.
+        /// </summary>
         [TestMethod]
-        public void DrawVerticalLinesSimd_MultipleLines_ShouldHandleCorrectly()
+        public void DrawVerticalLinesSimdMultipleLinesShouldHandleCorrectly()
         {
             // Arrange
-            int width = 10, height = 10;
+            const int width = 10, height = 10;
             var target = new DirectBitmap(width, height);
             var red = Color.Red.ToArgb();
             var blue = Color.Blue.ToArgb();
@@ -75,8 +109,15 @@ namespace SpeedTests
             target.DrawVerticalLinesSimd(verticalLines);
 
             // Assert
-            for (int y = 1; y < 5; y++) Assert.AreEqual(red, target.Bits[1 + (y * width)]);
-            for (int y = 3; y < 8; y++) Assert.AreEqual(blue, target.Bits[2 + (y * width)]);
+            for (var y = 1; y < 5; y++)
+            {
+                Assert.AreEqual(red, target.Bits[1 + y * width]);
+            }
+
+            for (var y = 3; y < 8; y++)
+            {
+                Assert.AreEqual(blue, target.Bits[2 + y * width]);
+            }
         }
     }
 }
