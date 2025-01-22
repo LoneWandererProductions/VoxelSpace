@@ -173,15 +173,15 @@ namespace Voxels
             }
 
             var lines = RasterHelper.FillMissingColorsLines(_columnSlices, _colorDictionary);
-            var points = RasterHelper.FillMissingColorsPoints(_columnSlices, _colorDictionary);
-            var all = RasterHelper.FillMissingColorsOld(_columnSlices, _colorDictionary);
+            //var points = RasterHelper.FillMissingColorsPoints(_columnSlices, _colorDictionary);
+            //var all = RasterHelper.FillMissingColorsOld(_columnSlices, _colorDictionary);
+
+            //var both = RasterHelper.GetPointsAndLines(_columnSlices, _colorDictionary);
 
             _directBitmap = new DirectBitmap(_context.ScreenWidth, _context.ScreenHeight);
 
             _directBitmap.DrawVerticalLines(lines);
-            //_directBitmap.SetPixelsSimd(points);
-            //_directBitmap.SetPixelsSimd(all);
-
+            //_directBitmap.SetPixelsSimd(both.points);
             Array.Clear(_yBuffer, 0, _yBuffer.Length);
 
             return _directBitmap.Bitmap;
