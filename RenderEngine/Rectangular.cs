@@ -57,7 +57,10 @@ namespace RenderEngine
             var path = new List<Coordinate2D> { c1, c2, c3 };
             var skPath = RenderHelper.CreatePath(Start, path);
 
-            if (RenderRegister.Debug) Trace.WriteLine(ToString());
+            if (RenderRegister.Debug)
+            {
+                Trace.WriteLine(ToString());
+            }
 
             // Fill or stroke the Rectangle
             switch (style)
@@ -73,7 +76,10 @@ namespace RenderEngine
                 }
                     break;
                 case GraphicStyle.Plot:
-                    foreach (var plot in path) RenderHelper.DrawPoint(canvas, plot, paint);
+                    foreach (var plot in path)
+                    {
+                        RenderHelper.DrawPoint(canvas, plot, paint);
+                    }
 
                     break;
                 default:

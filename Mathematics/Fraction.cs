@@ -28,7 +28,10 @@ namespace Mathematics
         /// <exception cref="DivideByZeroException">Math Exception division by zero</exception>
         public Fraction(int numerator, int denominator)
         {
-            if (denominator == 0) throw new DivideByZeroException();
+            if (denominator == 0)
+            {
+                throw new DivideByZeroException();
+            }
 
             Numerator = numerator;
             Denominator = denominator;
@@ -45,7 +48,10 @@ namespace Mathematics
         /// <exception cref="DivideByZeroException">Math Exception division by zero</exception>
         public Fraction(int numerator, int denominator, int exponent)
         {
-            if (denominator == 0) throw new DivideByZeroException();
+            if (denominator == 0)
+            {
+                throw new DivideByZeroException();
+            }
 
             Denominator = denominator;
             Numerator = numerator;
@@ -88,15 +94,27 @@ namespace Mathematics
         {
             get
             {
-                if (Exponent == 0) return Numerator;
+                if (Exponent == 0)
+                {
+                    return Numerator;
+                }
 
-                if (Math.Abs(Denominator) == 1) return Exponent * Numerator;
+                if (Math.Abs(Denominator) == 1)
+                {
+                    return Exponent * Numerator;
+                }
 
-                if (Exponent == 0) return Numerator;
+                if (Exponent == 0)
+                {
+                    return Numerator;
+                }
 
                 //catch negative exponent
                 var exponentNumerator = Math.Abs(Exponent * Denominator) + Numerator;
-                if (Exponent < 0) return exponentNumerator * -1;
+                if (Exponent < 0)
+                {
+                    return exponentNumerator * -1;
+                }
 
                 return exponentNumerator;
             }
@@ -171,8 +189,8 @@ namespace Mathematics
         /// </returns>
         public static Fraction operator +(Fraction first, Fraction second)
         {
-            return new Fraction(first.ExponentNumerator * second.Denominator +
-                                first.Denominator * second.ExponentNumerator,
+            return new Fraction((first.ExponentNumerator * second.Denominator) +
+                                (first.Denominator * second.ExponentNumerator),
                 first.Denominator * second.Denominator);
         }
 
@@ -186,8 +204,8 @@ namespace Mathematics
         /// </returns>
         public static Fraction operator -(Fraction first, Fraction second)
         {
-            return new Fraction(first.ExponentNumerator * second.Denominator -
-                                first.Denominator * second.ExponentNumerator,
+            return new Fraction((first.ExponentNumerator * second.Denominator) -
+                                (first.Denominator * second.ExponentNumerator),
                 first.Denominator * second.Denominator);
         }
 
@@ -240,13 +258,19 @@ namespace Mathematics
                 return;
             }
 
-            if (Numerator <= Denominator) return;
+            if (Numerator <= Denominator)
+            {
+                return;
+            }
 
             var modulo = Numerator % Denominator;
             Exponent = (Numerator - modulo) / Denominator;
             Numerator = modulo;
 
-            if (Numerator != 0) return;
+            if (Numerator != 0)
+            {
+                return;
+            }
 
             Denominator = 1;
             Numerator = 1;
@@ -263,7 +287,10 @@ namespace Mathematics
         {
             while (true)
             {
-                if (a == b || b == 0) return a;
+                if (a == b || b == 0)
+                {
+                    return a;
+                }
 
                 var a1 = a;
                 a = b;

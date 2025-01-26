@@ -202,7 +202,7 @@ namespace Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static int CalculateId(int x, int y, int width)
         {
-            return y * width + x;
+            return (y * width) + x;
         }
 
         /// <summary>

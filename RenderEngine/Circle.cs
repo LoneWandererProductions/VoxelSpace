@@ -42,7 +42,10 @@ namespace RenderEngine
         {
             canvas.DrawCircle(Start.X, Start.Y, Radius, paint);
 
-            if (RenderRegister.Debug) Trace.WriteLine(ToString());
+            if (RenderRegister.Debug)
+            {
+                Trace.WriteLine(ToString());
+            }
 
             return true;
         }

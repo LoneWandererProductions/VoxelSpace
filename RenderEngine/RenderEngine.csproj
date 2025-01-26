@@ -3,14 +3,19 @@
   <PropertyGroup>
     <TargetFramework>net5.0-windows</TargetFramework>
     <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="OpenTK" Version="4.9.3" />
+    <PackageReference Include="OpenTK.GLControl" Version="4.0.2" />
     <PackageReference Include="SkiaSharp.Views.Desktop.Common" Version="3.116.1" />
     <PackageReference Include="SkiaSharp.Views.WPF" Version="2.88.7" />
+    <PackageReference Include="System.Drawing.Common" Version="6.0.0" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Imaging\Imaging.csproj" />
     <ProjectReference Include="..\Mathematics\Mathematics.csproj" />
   </ItemGroup>
 

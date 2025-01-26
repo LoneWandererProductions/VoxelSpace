@@ -40,7 +40,10 @@ namespace RenderEngine
 
             skPath.MoveTo(start.X, start.Y); // Move to the starting point
 
-            foreach (var line in path) skPath.LineTo(line.X, line.Y); // Line to the points
+            foreach (var line in path)
+            {
+                skPath.LineTo(line.X, line.Y); // Line to the points
+            }
 
             skPath.Close(); // Close the path to complete the polygon
 

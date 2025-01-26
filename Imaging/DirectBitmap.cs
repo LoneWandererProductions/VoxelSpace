@@ -12,6 +12,7 @@
 // ReSharper disable MemberCanBeInternal
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable MemberCanBeInternal
+// ReSharper disable UnusedMember.Global
 
 using System;
 using System.Collections.Generic;
@@ -37,6 +38,9 @@ namespace Imaging
     /// <seealso cref="T:System.IDisposable" />
     public sealed class DirectBitmap : IDisposable
     {
+        /// <summary>
+        /// The synchronize lock
+        /// </summary>
         private readonly object _syncLock = new();
 
         /// <summary>
@@ -75,12 +79,76 @@ namespace Imaging
         }
 
         /// <summary>
+        ///     Initializes a new instance of the <see cref="DirectBitmap" /> class from a file path.
+        ///     Loads an image from the specified file path and initializes the DirectBitmap instance.
+        /// </summary>
+        /// <param name="filePath">The file path to the image.</param>
+        /// <exception cref="ArgumentException">Thrown if the file path is null or empty.</exception>
+        /// <exception cref="FileNotFoundException">Thrown if the file does not exist.</exception>
+        /// <exception cref="Exception">Thrown if the file could not be loaded as an image.</exception>
+        public DirectBitmap(string filePath)
+        {
+            if (string.IsNullOrEmpty(filePath))
+            {
+                throw new ArgumentException(ImagingResources.ErrorPath, nameof(filePath));
+            }
+
+            if (!File.Exists(filePath))
+            {
+                throw new FileNotFoundException(ImagingResources.ErrorFileNotFound, filePath);
+            }
+
+            try
+            {
+                using var image = Image.FromFile(filePath);
+                Width = image.Width;
+                Height = image.Height;
+                Initiate();
+
+                using var graphics = Graphics.FromImage(Bitmap);
+                graphics.DrawImage(image, new Rectangle(0, 0, Width, Height), 0, 0, Width, Height, GraphicsUnit.Pixel);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ImagingResources.ErrorWrongParameters, ex);
+            }
+        }
+
+        /// <summary>
         ///     Gets the bits.
         /// </summary>
         /// <value>
         ///     The bits.
         /// </value>
         public int[] Bits { get; private set; }
+
+        /// <summary>
+        /// Byte data for this instance.
+        /// </summary>
+        /// <returns>Image data as Bytes</returns>
+        public byte[] Bytes()
+        {
+            lock (_syncLock)
+            {
+                if (Bits == null) return null;
+
+                // The resulting byte array will have 4 bytes per int (32-bit)
+                var byteArray = new byte[Bits.Length * 4];
+
+                for (int i = 0; i < Bits.Length; i++)
+                {
+                    int color = Bits[i];
+
+                    // Extract the ARGB components from the int and pack them as RGBA
+                    byteArray[i * 4 + 0] = (byte)((color >> 16) & 0xFF); // Red
+                    byteArray[i * 4 + 1] = (byte)((color >> 8) & 0xFF); // Green
+                    byteArray[i * 4 + 2] = (byte)(color & 0xFF); // Blue
+                    byteArray[i * 4 + 3] = (byte)((color >> 24) & 0xFF); // Alpha
+                }
+
+                return byteArray;
+            }
+        }
 
         /// <summary>
         ///     Gets the bitmap.
@@ -284,7 +352,6 @@ namespace Imaging
                 var colorArgb = color.ToArgb();
                 var indices = idList.ToArray();
                 var vectorCount = Vector<int>.Count;
-                var colorVector = new Vector<int>(colorArgb);
 
                 // Process the indices in chunks that fit within a Vector<int>
                 for (var i = 0; i < indices.Length; i += vectorCount)
@@ -403,18 +470,18 @@ namespace Imaging
         }
 
         /// <summary>
-        /// Draws the vertical lines.
+        ///     Draws the vertical lines.
         /// </summary>
         /// <param name="verticalLines">The vertical lines.</param>
         public void DrawVerticalLines(IEnumerable<(int x, int y, int finalY, Color color)> verticalLines)
         {
-            _ = Parallel.ForEach(verticalLines, (line) =>
-              {
-                  var (x, y, finalY, color) = line;
-                  var colorArgb = color.ToArgb();
+            _ = Parallel.ForEach(verticalLines, line =>
+            {
+                var (x, y, finalY, color) = line;
+                var colorArgb = color.ToArgb();
 
                 // Starting position in the Bits array
-                var position = x + y * Width;
+                var position = x + (y * Width);
 
                 // Calculate the number of rows in the vertical line
                 var rowCount = finalY - y + 1;
@@ -424,10 +491,10 @@ namespace Imaging
 
                 // Set the color for each pixel in the vertical line
                 for (var i = 0; i < rowCount; i++)
-                  {
-                      bitsSpan[position + i * Width] = colorArgb;
-                  }
-              });
+                {
+                    bitsSpan[position + (i * Width)] = colorArgb;
+                }
+            });
         }
 
         /// <summary>

@@ -76,14 +76,20 @@ namespace RenderEngine
                     return true; // No need to draw the stroke in the Fill style
                 }
                 case GraphicStyle.Plot:
-                    foreach (var plot in Path) RenderHelper.DrawPoint(canvas, plot, paint);
+                    foreach (var plot in Path)
+                    {
+                        RenderHelper.DrawPoint(canvas, plot, paint);
+                    }
 
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(style), style, null);
             }
 
-            if (RenderRegister.Debug) Trace.WriteLine(ToString());
+            if (RenderRegister.Debug)
+            {
+                Trace.WriteLine(ToString());
+            }
 
             return true;
         }

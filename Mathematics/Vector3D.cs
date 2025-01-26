@@ -275,7 +275,7 @@ namespace Mathematics
         /// </returns>
         public static double operator *(Vector3D first, Vector3D second)
         {
-            return first.X * second.X + first.Y * second.Y + first.Z * second.Z;
+            return (first.X * second.X) + (first.Y * second.Y) + (first.Z * second.Z);
         }
 
         /// <summary>
@@ -330,9 +330,9 @@ namespace Mathematics
         {
             return new Vector3D
             {
-                X = Y * second.Z - Z * second.Y,
-                Y = Z * second.X - X * second.Z,
-                Z = X * second.Y - Y * second.X
+                X = (Y * second.Z) - (Z * second.Y),
+                Y = (Z * second.X) - (X * second.Z),
+                Z = (X * second.Y) - (Y * second.X)
             };
         }
 

@@ -87,7 +87,10 @@ namespace RenderEngine
         /// </summary>
         public void Clear()
         {
-            if (_bitmap == null) return;
+            if (_bitmap == null)
+            {
+                return;
+            }
 
             using var canvas = new SKCanvas(_bitmap);
             canvas.Clear(SKColors.White);
@@ -106,6 +109,7 @@ namespace RenderEngine
             Clear();
 
             foreach (var item in objects)
+            {
                 switch (item)
                 {
                     case Polygons polygons:
@@ -121,6 +125,7 @@ namespace RenderEngine
                         DrawShape(circle, style, clear);
                         break;
                 }
+            }
         }
 
         /// <summary>
@@ -135,7 +140,10 @@ namespace RenderEngine
             using var paint = new SKPaint { Color = shape.Color };
             using var canvas = new SKCanvas(_bitmap);
 
-            if (clear) canvas.Clear(SKColors.White);
+            if (clear)
+            {
+                canvas.Clear(SKColors.White);
+            }
 
             paint.Color = shape.Color;
 
@@ -153,7 +161,10 @@ namespace RenderEngine
                     break;
             }
 
-            if (style != GraphicStyle.Plot) shape.Draw(canvas, paint, style);
+            if (style != GraphicStyle.Plot)
+            {
+                shape.Draw(canvas, paint, style);
+            }
 
             SkiaElement.InvalidateVisual();
         }
@@ -168,7 +179,10 @@ namespace RenderEngine
             using var paint = new SKPaint();
             using var canvas = new SKCanvas(_bitmap);
 
-            if (clear) canvas.Clear(SKColors.White);
+            if (clear)
+            {
+                canvas.Clear(SKColors.White);
+            }
 
             RenderHelper.DrawPoint(canvas, point, paint);
 
@@ -185,7 +199,10 @@ namespace RenderEngine
             using var paint = new SKPaint { Color = line.Color };
             using var canvas = new SKCanvas(_bitmap);
 
-            if (clear) canvas.Clear(SKColors.White);
+            if (clear)
+            {
+                canvas.Clear(SKColors.White);
+            }
 
             using var fillPaint = new SKPaint { Style = SKPaintStyle.Fill };
 
@@ -243,7 +260,10 @@ namespace RenderEngine
         public void CheckGpuUsage(SKSurface surface)
         {
             var gpuUsed = surface.Handle != IntPtr.Zero; // Simple GPU check
-            if (gpuUsed) System.Diagnostics.Debug.WriteLine("GPU is being used!");
+            if (gpuUsed)
+            {
+                System.Diagnostics.Debug.WriteLine("GPU is being used!");
+            }
         }
     }
 }
