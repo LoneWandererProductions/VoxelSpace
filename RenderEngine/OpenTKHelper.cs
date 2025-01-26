@@ -7,13 +7,15 @@
  */
 
 using System;
+using System.Diagnostics;
+using System.IO;
 using Imaging; // For Marshal.Copy and memory management
 using OpenTK.Graphics.OpenGL4; // For GL methods, ShaderType, TextureTarget, etc.
 using PixelFormat = OpenTK.Graphics.OpenGL4.PixelFormat;
 
 namespace RenderEngine
 {
-    internal static class TkHelper
+    internal static class OpenTKHelper
     {
         internal static int CompileShader(ShaderType type, string source)
         {
@@ -100,6 +102,13 @@ namespace RenderEngine
 
         public static int LoadTexture(string filePath)
         {
+            // Check if the file exists
+            if (!File.Exists(filePath))
+            {
+                Trace.WriteLine($"File not found: {filePath}");
+                return -1;
+            }
+
             var textureId = GL.GenTexture();
             GL.BindTexture(TextureTarget.Texture2D, textureId);
 

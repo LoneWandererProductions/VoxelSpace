@@ -1,4 +1,4 @@
-﻿<Window x:Name="Main" x:Class="Main.MainWindow"
+﻿<Window xmlns:RenderEngine="clr-namespace:RenderEngine;assembly=RenderEngine"  x:Name="Main" x:Class="Main.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
@@ -14,15 +14,17 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="150" />
             <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
-        <imaging:NativeBitmapDisplay Name="ImageView" Grid.Column="1" Grid.RowSpan="2" />
+        <imaging:NativeBitmapDisplay Name="ImageView" Grid.Column="1" Grid.RowSpan="2" Grid.ColumnSpan="2" />
         <TextBox Grid.Column="0" x:Name="TxtBox" VerticalContentAlignment="Stretch"
                  TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" IsReadOnly="True" Grid.Row="1" />
-        <ComboBox Grid.Row="0" Grid.Column="0" x:Name="comboBoxRender"
-                  SelectionChanged="comboBoxRender_SelectionChanged">
+        <ComboBox Grid.Row="1" Grid.Column="2" x:Name="comboBoxRender"
+                  SelectionChanged="comboBoxRender_SelectionChanged" Margin="10,10,0,10">
             <ComboBoxItem Content="Voxel" />
             <ComboBoxItem Content="Raycast" />
             <ComboBoxItem Content="Hybrid" />
         </ComboBox>
+        <RenderEngine:OpenTkControl Grid.Row="1" Grid.Column="2"  />
     </Grid>
 </Window>

@@ -21,6 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\RenderEngine\RenderEngine.csproj" />
     <ProjectReference Include="..\Voxels\Voxels.csproj" />
   </ItemGroup>
 
