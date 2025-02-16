@@ -255,6 +255,8 @@ namespace Voxels
             PreloadCache(_cancellationTokenSource.Token);
         }
 
+        private readonly ConcurrentDictionary<Key, bool> _isImageBeingGenerated = new ConcurrentDictionary<Key, bool>();
+
         /// <summary>
         ///     Generates the and cache bitmap for key.
         /// </summary>
@@ -264,16 +266,24 @@ namespace Voxels
             lock (_lock)
             {
                 // Check if the bitmap is already being generated in another thread
-                if (_lazyCache.ContainsKey(key)) return;
+                if (_lazyCache.ContainsKey(key) || _isImageBeingGenerated.ContainsKey(key) && _isImageBeingGenerated[key])
+                    return;
 
-                var simulatedCamera = Camera.Clone();
+                // Mark that we are generating the image for this key
+                _isImageBeingGenerated[key] = true;
+
                 // Simulate camera movement for the requested direction
+                var simulatedCamera = Camera.Clone();
                 simulatedCamera = InputHelper.SimulateCameraMovementVoxel(key, simulatedCamera);
 
-                // new instance needed to avoid conflicts
-                //var raster = new VoxelRaster3D(_context);
+                // Generate the bitmap
+                var generatedBitmap = _raster.RenderWithContainer(simulatedCamera);
+
                 // Cache the bitmap
-                _lazyCache[key] = _raster.RenderWithContainer(simulatedCamera);
+                _lazyCache[key] = generatedBitmap;
+
+                // Mark the image generation as complete
+                _isImageBeingGenerated[key] = false;
             }
         }
 

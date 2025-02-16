@@ -3,7 +3,7 @@ using System.Drawing;
 
 namespace Voxels
 {
-    public class Raycaster
+    public sealed class Raycaster
     {
         private readonly CameraContext _context;
         private readonly int[,] _map;
