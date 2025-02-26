@@ -2,7 +2,7 @@
  * COPYRIGHT:   See COPYING in the top level directory
  * PROJECT:     ExtendedSystemObjects
  * FILE:        ExtendedSystemObjects/DictionaryExtensions.cs
- * PURPOSE:     Helper class that extends the already versatile Dictionary
+ * PURPOSE:     Helper class that extends the already versatile Dictionary, most operations are not thread safe, so beware.
  * PROGRAMER:   Peter Geinitz (Wayfarer)
  */
 
@@ -11,6 +11,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace ExtendedSystemObjects
 {
@@ -24,6 +25,7 @@ namespace ExtendedSystemObjects
         ///     Adds the specified key to the Value, that is a list.
         ///     I know it is not recommended to use List and Dictionary together but in case you do,
         ///     this extension should avoid ugly null reference Exceptions and make the code more readable.
+        ///     List handling.
         /// </summary>
         /// <typeparam name="TKey">The type of the key.</typeparam>
         /// <typeparam name="TValue">The type of the value.</typeparam>
@@ -46,6 +48,7 @@ namespace ExtendedSystemObjects
 
         /// <summary>
         ///     Adds the specified key and adds a new initialized SortedList.
+        ///     List handling.
         /// </summary>
         /// <typeparam name="TKey">The type of the key.</typeparam>
         /// <typeparam name="TValue">The type of the value.</typeparam>
@@ -68,6 +71,7 @@ namespace ExtendedSystemObjects
 
         /// <summary>
         ///     Add or Replace Key Value Pair
+        ///     List handling.
         /// </summary>
         /// <typeparam name="TKey">Internal Key</typeparam>
         /// <typeparam name="TValue">Internal Value</typeparam>
@@ -104,6 +108,7 @@ namespace ExtendedSystemObjects
         /// <param name="dic">Internal Target Dictionary</param>
         /// <param name="key">Unique Key</param>
         /// <param name="value">Value to add</param>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void AddDistinct<TKey, TValue>(this Dictionary<TKey, TValue> dic, TKey key, TValue value)
         {
             dic[key] = value;
@@ -164,6 +169,7 @@ namespace ExtendedSystemObjects
         /// <typeparam name="TValue">Internal Value</typeparam>
         /// <param name="dic">Internal Target Dictionary</param>
         /// <returns>If Dictionary is Null or has zero Elements</returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsNullOrEmpty<TKey, TValue>(this Dictionary<TKey, TValue> dic)
         {
             if (dic == null)
