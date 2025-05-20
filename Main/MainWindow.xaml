@@ -19,12 +19,11 @@
         <imaging:NativeBitmapDisplay Name="ImageView" Grid.Column="1" Grid.RowSpan="2" Grid.ColumnSpan="2" />
         <TextBox Grid.Column="0" x:Name="TxtBox" VerticalContentAlignment="Stretch"
                  TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" IsReadOnly="True" Grid.Row="1" />
-        <ComboBox Grid.Row="1" Grid.Column="2" x:Name="comboBoxRender"
-                  SelectionChanged="comboBoxRender_SelectionChanged" Margin="10,10,0,10">
+        <ComboBox x:Name="comboBoxRender"
+                  SelectionChanged="comboBoxRender_SelectionChanged">
             <ComboBoxItem Content="Voxel" />
             <ComboBoxItem Content="Raycast" />
             <ComboBoxItem Content="Hybrid" />
         </ComboBox>
-        <RenderEngine:OpenTkControl Grid.Row="1" Grid.Column="2"  />
     </Grid>
 </Window>

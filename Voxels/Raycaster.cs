@@ -55,6 +55,28 @@ namespace Voxels
             return bitmap;
         }
 
+        public byte[] RenderToByteArray(RvCamera camera)
+        {
+            var bitmap = Render(camera); // your current rendering logic
+            var data = new byte[_context.ScreenWidth * _context.ScreenHeight * 4]; // RGBA
+
+            int index = 0;
+            for (int y = 0; y < bitmap.Height; y++)
+            {
+                for (int x = 0; x < bitmap.Width; x++)
+                {
+                    Color color = bitmap.GetPixel(x, y); // Consider locking for performance
+                    data[index++] = color.R;
+                    data[index++] = color.G;
+                    data[index++] = color.B;
+                    data[index++] = 255;
+                }
+            }
+
+            return data;
+        }
+
+
         public double CastRay(double startX, double startY, double rayDirX, double rayDirY)
         {
             var x = startX;

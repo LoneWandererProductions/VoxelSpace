@@ -1,9 +1,11 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Drawing;
+using System.Linq;
 using System.Threading.Tasks;
-using ExtendedSystemObjects;
 using Imaging;
 using Mathematics;
 
@@ -59,15 +61,6 @@ namespace Voxels
             GC.SuppressFinalize(this);
         }
 
-        /// <summary>
-        /// Initializes the buffers.
-        /// </summary>
-        /// <param name="colorMap">The color map.</param>
-        /// <param name="heightMap">The height map.</param>
-        /// <param name="topographyWidth">Width of the topography.</param>
-        /// <param name="topographyHeight">Height of the topography.</param>
-        /// <param name="colorWidth">Width of the color.</param>
-        /// <param name="colorHeight">Height of the color.</param>
         private void InitializeBuffers(Color[,] colorMap, int[,] heightMap, int topographyWidth, int topographyHeight,
             int colorWidth, int colorHeight)
         {
@@ -139,10 +132,10 @@ namespace Voxels
 
                 for (var i = 0; i < _context.ScreenWidth; i++)
                 {
-                    var diffuseX = pLeftX.RoundToInt();
-                    var diffuseY = pLeftY.RoundToInt();
-                    var heightX = pLeftX.RoundToInt();
-                    var heightY = pLeftY.RoundToInt();
+                    var diffuseX = (int)pLeftX;
+                    var diffuseY = (int)pLeftY;
+                    var heightX = (int)pLeftX;
+                    var heightY = (int)pLeftY;
 
                     //access via Indexing
                     var wrappedHeightX = heightX & (_topographyWidth - 1);
@@ -157,7 +150,7 @@ namespace Voxels
                     var heightOnScreen = (_context.Height - heightOfHeightMap) / z * _context.Scale + camera.Horizon -
                                          ExtendedMath.CalcTanF(camera.Pitch) * _context.Scale;
 
-                    var y1 = heightOnScreen.RoundToInt();
+                    var y1 = (int)heightOnScreen;
 
                     if (y1 < _yBuffer[i] && y1 >= 0 && y1 < _context.ScreenHeight)
                     {

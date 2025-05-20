@@ -2,7 +2,7 @@
  * COPYRIGHT:   See COPYING in the top level directory
  * PROJECT:     Mathematics
  * FILE:        Mathematics/Constants.cs
- * PURPOSE:     Some Basic Math Constants to increase the correct values.
+ * PURPOSE:     Some Basic Math Constants to ease the pain for the processor
  * PROGRAMER:   Peter Geinitz (Wayfarer)
  */
 
