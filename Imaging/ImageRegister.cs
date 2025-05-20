@@ -129,19 +129,24 @@ namespace Imaging
                 TextureType.Crosshatch,
                 new HashSet<string>
                 {
+                    nameof(TextureConfiguration.Alpha),
                     nameof(TextureConfiguration.LineSpacing),
                     nameof(TextureConfiguration.LineColor),
                     nameof(TextureConfiguration.LineThickness),
-                    nameof(TextureConfiguration.Angle1),
-                    nameof(TextureConfiguration.Angle2)
+                    nameof(TextureConfiguration.AnglePrimary),
+                    nameof(TextureConfiguration.AngleSecondary)
                 }
             },
             {
                 TextureType.Concrete,
                 new HashSet<string>
                 {
+                    nameof(TextureConfiguration.Alpha),
                     nameof(TextureConfiguration.MinValue),
                     nameof(TextureConfiguration.MaxValue),
+                    nameof(TextureConfiguration.YPeriod),
+                    nameof(TextureConfiguration.XPeriod),
+                    nameof(TextureConfiguration.TurbulencePower),
                     nameof(TextureConfiguration.TurbulenceSize)
                 }
             },
@@ -149,6 +154,7 @@ namespace Imaging
                 TextureType.Canvas,
                 new HashSet<string>
                 {
+                    nameof(TextureConfiguration.Alpha),
                     nameof(TextureConfiguration.LineSpacing),
                     nameof(TextureConfiguration.LineColor),
                     nameof(TextureConfiguration.LineThickness)
@@ -411,18 +417,30 @@ namespace Imaging
                 LineSpacing = 2,
                 LineColor = Color.Black,
                 LineThickness = 1,
-                Angle1 = 45.0f,
-                Angle2 = 135.0f
+                AnglePrimary = 45.0f,
+                AngleSecondary = 135.0f
             };
 
             TextureSetting[TextureType.Concrete] = new TextureConfiguration
             {
-                MinValue = 50, MaxValue = 200, TurbulenceSize = 16
+                MinValue = 50,
+                MaxValue = 200,
+                TurbulenceSize = 16,
+                XPeriod = 5.0,
+                YPeriod = 10.0,
+                TurbulencePower = 5.0
             };
 
             TextureSetting[TextureType.Canvas] = new TextureConfiguration
             {
-                LineSpacing = 8, LineColor = Color.FromArgb(210, 180, 140), LineThickness = 1
+                LineSpacing = 8,
+                LineColor = Color.FromArgb(210, 180, 140),
+                LineThickness = 1,
+                WaveFrequency = 0.021,
+                WaveAmplitude = 3,
+                RandomizationFactor = 1.5,
+                EdgeJaggednessLimit = 20,
+                JaggednessThreshold = 10
             };
 
             // Add more default settings as needed

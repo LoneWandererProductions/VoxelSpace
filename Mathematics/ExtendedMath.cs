@@ -8,6 +8,7 @@
  */
 
 // ReSharper disable UnusedMember.Global
+// ReSharper disable MemberCanBeInternal
 
 using System;
 using System.Runtime.CompilerServices;
@@ -20,6 +21,91 @@ namespace Mathematics
     public static class ExtendedMath
     {
         /// <summary>
+        ///     The sin f lookup
+        /// </summary>
+        private static readonly float[] SinFLookup = new float[360];
+
+        /// <summary>
+        ///     The sin d lookup
+        /// </summary>
+        private static readonly double[] SinDLookup = new double[360];
+
+        /// <summary>
+        ///     The cos f lookup
+        /// </summary>
+        private static readonly float[] CosFLookup = new float[360];
+
+        /// <summary>
+        ///     The cos d lookup
+        /// </summary>
+        private static readonly double[] CosDLookup = new double[360];
+
+        /// <summary>
+        ///     The tan f lookup
+        /// </summary>
+        private static readonly float[] TanFLookup = new float[360];
+
+        /// <summary>
+        ///     The tan d lookup
+        /// </summary>
+        private static readonly double[] TanDLookup = new double[360];
+
+        /// <summary>
+        ///     Initializes the <see cref="ExtendedMath" /> class.
+        ///     Precalculate all necessary values.
+        /// </summary>
+        static ExtendedMath()
+        {
+            for (var degree = 0; degree < 360; degree++)
+            {
+                // SIN Lookup
+                if (Constants.Sinus.TryGetValue(degree, out var sinValue))
+                {
+                    SinDLookup[degree] = sinValue;
+                    SinFLookup[degree] = (float)sinValue;
+                }
+                else
+                {
+                    SinDLookup[degree] = Math.Sin(degree * Math.PI / 180.0);
+                    SinFLookup[degree] = (float)SinDLookup[degree];
+                }
+
+                // COS Lookup
+                if (Constants.CoSinus.TryGetValue(degree, out var cosValue))
+                {
+                    CosDLookup[degree] = cosValue;
+                    CosFLookup[degree] = (float)cosValue;
+                }
+                else
+                {
+                    CosDLookup[degree] = Math.Cos(degree * Math.PI / 180.0);
+                    CosFLookup[degree] = (float)CosDLookup[degree];
+                }
+
+                // TAN Lookup
+                if (Constants.Tangents.TryGetValue(degree, out var tanValue))
+                {
+                    TanDLookup[degree] = tanValue;
+                    TanFLookup[degree] = (float)tanValue;
+                }
+                else
+                {
+                    // Handle TAN for undefined values (90° and 270°)
+                    if (degree % 180 == 90)
+                    {
+                        TanDLookup[degree] = double.PositiveInfinity;
+                        TanFLookup[degree] = float.PositiveInfinity;
+                    }
+                    else
+                    {
+                        TanDLookup[degree] = Math.Tan(degree * Math.PI / 180.0);
+                        TanFLookup[degree] = (float)TanDLookup[degree];
+                    }
+                }
+            }
+        }
+
+        /// <summary>
         ///     Calculate cos.
         ///     https://de.wikipedia.org/wiki/Radiant_(Einheit)
         /// </summary>
@@ -28,18 +114,7 @@ namespace Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double CalcCos(int degree)
         {
-            // Use the absolute value of the degree for cosine lookup.
-            var lookupDegree = Math.Abs(degree);
-
-            // Look up the cosine value in the dictionary for the positive angle.
-            if (Constants.CoSinus.ContainsKey(lookupDegree))
-            {
-                return Constants.CoSinus[lookupDegree];
-            }
-
-            // If the value is not found, calculate it normally.
-            const double rad = Math.PI / 180.0;
-            return Math.Cos(degree * rad);
+            return CosDLookup[NormalizeAngle(degree)];
         }
 
         /// <summary>
@@ -51,25 +126,7 @@ namespace Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double CalcSin(int degree)
         {
-            double sin;
-
-            if (Constants.Sinus.ContainsKey(degree))
-            {
-                sin = Constants.Sinus[Math.Abs(degree)];
-
-                //catch negative degrees
-                if (degree < 0)
-                {
-                    sin *= -1;
-                }
-            }
-            else
-            {
-                const double rad = Math.PI / 180.0;
-                sin = Math.Sin(degree * rad);
-            }
-
-            return sin;
+            return SinDLookup[NormalizeAngle(degree)];
         }
 
         /// <summary>
@@ -82,24 +139,7 @@ namespace Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static double CalcTan(int degree)
         {
-            // Normalize degree to [0, 360)
-            var normalizedDegree = ((degree % 360) + 360) % 360;
-
-            // Check if the angle is predefined in the lookup table
-            if (Constants.Tangents.ContainsKey(normalizedDegree))
-            {
-                var tangent = Constants.Tangents[normalizedDegree];
-                if (double.IsNaN(tangent))
-                {
-                    throw new DivideByZeroException($"Tangent is undefined for {degree} degrees.");
-                }
-
-                return tangent;
-            }
-
-            // Calculate tangent for other angles
-            const double rad = Math.PI / 180.0;
-            return Math.Tan(normalizedDegree * rad);
+            return TanDLookup[NormalizeAngle(degree)];
         }
 
         /// <summary>
@@ -110,7 +150,7 @@ namespace Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float CalcCosF(int degree)
         {
-            return (float)CalcCos(degree);
+            return CosFLookup[NormalizeAngle(degree)];
         }
 
         /// <summary>
@@ -121,7 +161,7 @@ namespace Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float CalcSinF(int degree)
         {
-            return (float)CalcSin(degree);
+            return SinFLookup[NormalizeAngle(degree)];
         }
 
         /// <summary>
@@ -132,7 +172,14 @@ namespace Mathematics
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float CalcTanF(int degree)
         {
-            return (float)CalcTan(degree);
+            return TanFLookup[NormalizeAngle(degree)];
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static int NormalizeAngle(int degrees)
+        {
+            degrees %= 360;
+            return degrees < 0 ? degrees + 360 : degrees;
         }
     }
 }

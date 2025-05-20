@@ -1,10 +1,10 @@
 ﻿/*
- * COPYRIGHT:   See COPYING in the top level directory
- * PROJECT:     FileHandler
- * FILE:        FileHandler/FileHandleDelete.cs
- * PURPOSE:     Does all types of File Operations, delete Files
- * PROGRAMER:   Peter Geinitz (Wayfarer)
- */
+* COPYRIGHT:   See COPYING in the top level directory
+* PROJECT:     FileHandler
+* FILE:        FileHandler/FileHandleDelete.cs
+* PURPOSE:     Does all types of File Operations, delete Files
+* PROGRAMER:   Peter Geinitz (Wayfarer)
+*/
 
 // ReSharper disable MemberCanBePrivate.Global, Config item, leave it be
 // ReSharper disable UnusedMethodReturnValue.Global
@@ -12,11 +12,12 @@
 // ReSharper disable MemberCanBeInternal
 
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Threading;
+using System.Threading.Tasks;
 
 namespace FileHandler
 {
@@ -33,52 +34,53 @@ namespace FileHandler
         ///     Status if we encountered any problems
         /// </returns>
         /// <exception cref="FileHandlerException">No Correct Path was provided</exception>
-        public static bool DeleteFile(string path)
+        public static async Task<bool> DeleteFile(string path)
         {
-            if (string.IsNullOrEmpty(path)) throw new FileHandlerException(FileHandlerResources.ErrorEmptyString);
+            // Validate the input path
+            if (string.IsNullOrEmpty(path))
+            {
+                throw new FileHandlerException(FileHandlerResources.ErrorEmptyString);
+            }
 
-            if (!File.Exists(path)) return false;
+            // Check if the file exists
+            if (!File.Exists(path))
+            {
+                return false;
+            }
 
             var count = 0;
 
-            //Handle the fact that file is in Use
-            for (var i = 0; IsFileLocked(path) && i < FileHandlerRegister.Tries + 1; i++)
+            // Handle the fact that the file might be in use
+            while (IsFileLocked(path) && count < FileHandlerRegister.Tries)
             {
                 count++;
-                Trace.WriteLine(string.Concat(FileHandlerResources.Tries, count));
-                Thread.Sleep(1000);
+                Trace.WriteLine($"{FileHandlerResources.Tries} {count} {path}");
+                await Task.Delay(1000); // Use Task.Delay instead of Thread.Sleep for async context
             }
 
-            //well we tried the max of tries so no need to go further
+            // If the max number of tries is reached, log the error and return false
             if (count == FileHandlerRegister.Tries)
             {
-                var ex = new Exception(string.Concat(FileHandlerResources.ErrorLock, path));
+                var ex = new Exception($"{FileHandlerResources.ErrorLock} {path}");
                 Trace.WriteLine(ex);
                 FileHandlerRegister.AddError(nameof(DeleteFile), path, ex);
                 return false;
             }
 
-            //no locks so let's do it
+            // No locks, proceed to delete the file
             try
             {
-                File.Delete(path);
+                await Task.Run(() => File.Delete(path)).ConfigureAwait(false);
                 FileHandlerRegister.SendStatus?.Invoke(nameof(DeleteFile), path);
             }
-            catch (UnauthorizedAccessException ex)
+            catch (Exception ex) when (ex is UnauthorizedAccessException or IOException)
             {
-                Trace.WriteLine(ex);
                 FileHandlerRegister.AddError(nameof(DeleteFile), path, ex);
-                return false;
-            }
-            catch (IOException ex)
-            {
-                //well something went wrong, unlucky Access
                 Trace.WriteLine(ex);
-                FileHandlerRegister.AddError(nameof(DeleteFile), path, ex);
                 return false;
             }
 
-            return true;
+            return true; // File deleted successfully
         }
 
         /// <summary>
@@ -91,13 +93,21 @@ namespace FileHandler
         /// <exception cref="FileHandlerException">No Correct Path was provided</exception>
         public static bool DeleteFiles(List<string> paths)
         {
-            if (paths == null || paths.Count == 0) throw new FileHandlerException(FileHandlerResources.ErrorEmptyList);
+            if (paths == null || paths.Count == 0)
+            {
+                throw new FileHandlerException(FileHandlerResources.ErrorEmptyList);
+            }
 
-            var check = true;
+            var results = new ConcurrentBag<bool>();
 
-            foreach (var path in paths) check = DeleteFile(path);
+            Parallel.ForEach(paths, async path =>
+            {
+                var result = await DeleteFile(path);
+                results.Add(result);
+            });
 
-            return check;
+            // Determine overall success: true only if all deletions were successful
+            return results.All(success => success);
         }
 
         /// <summary>
@@ -109,9 +119,12 @@ namespace FileHandler
         /// <exception cref="FileHandlerException">No Correct Path was provided</exception>
         public static bool DeleteCompleteFolder(string path)
         {
-            if (string.IsNullOrEmpty(path)) throw new FileHandlerException(FileHandlerResources.ErrorEmptyString);
+            if (string.IsNullOrEmpty(path))
+            {
+                throw new FileHandlerException(FileHandlerResources.ErrorEmptyString);
+            }
 
-            _ = DeleteAllContents(path, true);
+            _ = DeleteAllContents(path);
 
             _ = DeleteFolder(path);
 
@@ -122,14 +135,20 @@ namespace FileHandler
         ///     Deletes the contents of a Folder, (optional) includes sub folder
         /// </summary>
         /// <param name="path">Target Folder</param>
-        /// <param name="subdirectories">Include Sub-folders</param>
+        /// <param name="subdirectories">Include Sub-folders, optional as default true</param>
         /// <returns>Status if we encountered any problems</returns>
         /// <exception cref="FileHandlerException">No Correct Path was provided</exception>
-        public static bool DeleteAllContents(string path, bool subdirectories)
+        public static bool DeleteAllContents(string path, bool subdirectories = true)
         {
-            if (string.IsNullOrEmpty(path)) throw new FileHandlerException(FileHandlerResources.ErrorEmptyString);
+            if (string.IsNullOrEmpty(path))
+            {
+                throw new FileHandlerException(FileHandlerResources.ErrorEmptyString);
+            }
 
-            if (!Directory.Exists(path)) return false;
+            if (!Directory.Exists(path))
+            {
+                return false;
+            }
 
             var check = true;
 
@@ -147,21 +166,21 @@ namespace FileHandler
 
                 FileHandlerRegister.SendOverview?.Invoke(nameof(DeleteAllContents), itm);
 
-                if (myFiles.Length == 0) return false;
+                if (myFiles.Length == 0)
+                {
+                    return false;
+                }
 
-                foreach (var file in myFiles) _ = DeleteFile(file);
+                foreach (var file in myFiles)
+                {
+                    _ = DeleteFile(file);
+                }
             }
-            catch (UnauthorizedAccessException ex)
+            catch (Exception ex) when (ex is UnauthorizedAccessException or IOException)
             {
-                check = false;
                 FileHandlerRegister.AddError(nameof(DeleteAllContents), string.Empty, ex);
                 Trace.WriteLine(ex);
-            }
-            catch (IOException ex)
-            {
                 check = false;
-                FileHandlerRegister.AddError(nameof(DeleteAllContents), string.Empty, ex);
-                Trace.WriteLine(ex);
             }
 
             return check;
@@ -172,20 +191,29 @@ namespace FileHandler
         /// </summary>
         /// <param name="path">Target Folder</param>
         /// <param name="fileExtList">List of file Extensions</param>
-        /// <param name="subdirectories">Include Sub-folders</param>
+        /// <param name="subdirectories">Include Sub-folders, optional, default true</param>
         /// <returns>Status if we encountered any problems</returns>
         /// <exception cref="FileHandlerException">No Correct Path was provided</exception>
-        public static bool DeleteFolderContentsByExtension(string path, List<string> fileExtList, bool subdirectories)
+        public static async Task<bool> DeleteFolderContentsByExtension(string path, List<string> fileExtList,
+            bool subdirectories = true)
         {
-            if (string.IsNullOrEmpty(path)) throw new FileHandlerException(FileHandlerResources.ErrorEmptyString);
+            if (string.IsNullOrEmpty(path))
+            {
+                throw new FileHandlerException(FileHandlerResources.ErrorEmptyString);
+            }
 
-            if (!Directory.Exists(path)) return false;
+            if (!Directory.Exists(path))
+            {
+                return false;
+            }
 
-            if (fileExtList == null) return false;
+            if (fileExtList == null)
+            {
+                return false;
+            }
 
             fileExtList = FileHandlerProcessing.CleanUpExtensionList(fileExtList);
 
-            var check = true;
             var myFiles = new List<string>();
 
             foreach (var files
@@ -194,7 +222,10 @@ namespace FileHandler
                          appendix => FileHandleSearch.GetFilesByExtensionFullPath(path, appendix, subdirectories))
                     )
             {
-                if (files == null) return false;
+                if (files == null)
+                {
+                    return false;
+                }
 
                 myFiles.AddRange(files);
 
@@ -207,11 +238,19 @@ namespace FileHandler
                 FileHandlerRegister.SendOverview?.Invoke(nameof(DeleteFolderContentsByExtension), itm);
             }
 
-            if (myFiles.Count == 0) return false;
+            if (myFiles.Count == 0)
+            {
+                return false;
+            }
 
-            foreach (var unused in myFiles.Select(DeleteFile).Where(cache => !cache)) check = false;
+            // Asynchronously delete files
+            var deletionTasks = myFiles.Select(DeleteFile).ToList();
 
-            return check;
+            // Await all deletion tasks to complete
+            var results = await Task.WhenAll(deletionTasks);
+
+            // Return true if all deletions were successful
+            return results.All(result => result);
         }
 
         /// <summary>
@@ -221,22 +260,22 @@ namespace FileHandler
         /// <exception cref="FileHandlerException">No Correct Path was provided</exception>
         public static bool DeleteFolder(string path)
         {
-            if (string.IsNullOrEmpty(path)) throw new FileHandlerException(FileHandlerResources.ErrorEmptyString);
+            if (string.IsNullOrEmpty(path))
+            {
+                throw new FileHandlerException(FileHandlerResources.ErrorEmptyString);
+            }
 
-            if (!Directory.Exists(path)) return true;
+            if (!Directory.Exists(path))
+            {
+                return true;
+            }
 
             try
             {
                 Directory.Delete(path, true);
             }
-            catch (UnauthorizedAccessException ex)
+            catch (Exception ex) when (ex is UnauthorizedAccessException or IOException)
             {
-                Trace.WriteLine(ex);
-                return false;
-            }
-            catch (IOException ex)
-            {
-                //well something went wrong, unlucky Access
                 FileHandlerRegister.AddError(nameof(DeleteFolder), path, ex);
                 Trace.WriteLine(ex);
                 return false;
@@ -260,30 +299,10 @@ namespace FileHandler
             {
                 stream = File.Open(path, FileMode.Open, FileAccess.Read, FileShare.None);
             }
-            catch (ArgumentException ex)
+            catch (Exception ex) when (ex is ArgumentException or PathTooLongException or IOException
+                                           or UnauthorizedAccessException or NotSupportedException)
             {
                 Trace.WriteLine(string.Concat(FileHandlerResources.ErrorLock, ex));
-                return true;
-            }
-            catch (PathTooLongException ex)
-            {
-                Trace.WriteLine(string.Concat(FileHandlerResources.ErrorLock, ex));
-                return true;
-            }
-            catch (IOException ex)
-            {
-                Trace.WriteLine(string.Concat(FileHandlerResources.ErrorLock, ex));
-                return true;
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                //the file is locked, probably
-                Trace.WriteLine(FileHandlerResources.ErrorLock + ex);
-                return true;
-            }
-            catch (NotSupportedException ex)
-            {
-                Trace.WriteLine(FileHandlerResources.ErrorLock + ex);
                 return true;
             }
             finally

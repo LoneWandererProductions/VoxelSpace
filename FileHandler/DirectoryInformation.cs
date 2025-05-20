@@ -1,10 +1,10 @@
 ﻿/*
- * COPYRIGHT:   See COPYING in the top level directory
- * PROJECT:     FileHandler
- * FILE:        FileHandler/DirectoryInformation.cs
- * PURPOSE:     Generic System Functions for Directories
- * PROGRAMER:   Peter Geinitz (Wayfarer)
- */
+* COPYRIGHT:   See COPYING in the top level directory
+* PROJECT:     FileHandler
+* FILE:        FileHandler/DirectoryInformation.cs
+* PURPOSE:     Generic System Functions for Directories
+* PROGRAMER:   Peter Geinitz (Wayfarer)
+*/
 
 // ReSharper disable UnusedType.Global
 
@@ -30,34 +30,29 @@ namespace FileHandler
             var root = Directory.GetCurrentDirectory();
 
             if (string.IsNullOrEmpty(root))
-                throw new FileHandlerException(string.Concat(FileHandlerResources.ErrorGetParentDirectory, root));
+            {
+                throw new FileHandlerException($"{FileHandlerResources.ErrorGetParentDirectory} {root}");
+            }
 
             var path = Directory.GetParent(root)?.ToString();
 
             if (string.IsNullOrEmpty(path))
-                throw new FileHandlerException(string.Concat(FileHandlerResources.ErrorGetParentDirectory, path));
+            {
+                throw new FileHandlerException($"{FileHandlerResources.ErrorGetParentDirectory} {path}");
+            }
 
             try
             {
-                for (var i = 0; i < level; i++) path = Directory.GetParent(path!)?.ToString();
+                for (var i = 0; i < level; i++)
+                {
+                    path = Directory.GetParent(path!)?.ToString();
+                }
             }
-            catch (UnauthorizedAccessException ex)
+            catch (Exception ex) when (ex is UnauthorizedAccessException or DirectoryNotFoundException or IOException)
             {
-                Trace.WriteLine(ex);
                 FileHandlerRegister.AddError(nameof(GetParentDirectory), path, ex);
-                throw new FileHandlerException(string.Concat(FileHandlerResources.ErrorGetParentDirectory, ex));
-            }
-            catch (DirectoryNotFoundException ex)
-            {
                 Trace.WriteLine(ex);
-                FileHandlerRegister.AddError(nameof(GetParentDirectory), path, ex);
-                throw new FileHandlerException(string.Concat(FileHandlerResources.ErrorGetParentDirectory, ex));
-            }
-            catch (IOException ex)
-            {
-                Trace.WriteLine(ex);
-                FileHandlerRegister.AddError(nameof(GetParentDirectory), path, ex);
-                throw new FileHandlerException(string.Concat(FileHandlerResources.ErrorGetParentDirectory, ex));
+                throw new FileHandlerException($"{FileHandlerResources.ErrorGetParentDirectory} {ex}");
             }
 
             return path;

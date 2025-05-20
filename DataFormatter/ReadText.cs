@@ -36,7 +36,10 @@ namespace DataFormatter
             {
                 var encoding = DataHelper.GetFileEncoding(filePath);
                 using var reader = new StreamReader(filePath, encoding);
-                while (reader.ReadLine() is { } line) parts.Add(line);
+                while (reader.ReadLine() is { } line)
+                {
+                    parts.Add(line);
+                }
             }
             catch (IOException ex)
             {

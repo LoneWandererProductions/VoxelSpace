@@ -41,13 +41,16 @@ namespace FileHandler
         }
 
         /// <summary>
-        ///     Customs the sort.
+        ///     Custom Sort, internal helper only avalable though extension
         /// </summary>
-        /// <param name="lst">The LST.</param>
-        /// <returns>Ordered List</returns>
+        /// <param name="lst">The list of files.</param>
+        /// <returns>Ordered List of files.</returns>
         private static IEnumerable<string> CustomSort(this IEnumerable<string> lst)
         {
-            if (!lst.Any()) return lst;
+            if (!lst.Any())
+            {
+                return lst;
+            }
 
             var enumerable = lst.ToList();
             var maxLen = enumerable.Max(s => s.Length);

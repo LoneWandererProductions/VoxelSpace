@@ -63,7 +63,7 @@ namespace Imaging
         /// <param name="image">The image.</param>
         /// <param name="gamma">The gamma.</param>
         /// <returns>Processed Image</returns>
-        /// <exception cref="System.ArgumentOutOfRangeException">gamma - Gamma must be greater than 0.</exception>
+        /// <exception cref="ArgumentOutOfRangeException">gamma - Gamma must be greater than 0.</exception>
         internal static Bitmap ApplyGammaCorrection(Bitmap image, double gamma)
         {
             if (gamma <= 0)

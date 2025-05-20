@@ -11,6 +11,7 @@
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace FileHandler
 {
@@ -24,11 +25,14 @@ namespace FileHandler
         /// <param name="folder">The folder.</param>
         /// <param name="subFolder">if set to <c>true</c> [sub folder].</param>
         /// <returns>Number of Files renamed</returns>
-        public static int RemoveAppendage(string appendage, string folder, bool subFolder)
+        public static async Task<int> RemoveAppendage(string appendage, string folder, bool subFolder)
         {
             var lst = FileHandleSearch.GetAllFiles(folder, subFolder);
 
-            if (lst == null || lst.Count == 0) return 0;
+            if (lst == null || lst.Count == 0)
+            {
+                return 0;
+            }
 
             var count = 0;
 
@@ -40,14 +44,26 @@ namespace FileHandler
 
                 if (string.IsNullOrEmpty(file) ||
                     string.Equals(str, file, StringComparison.OrdinalIgnoreCase))
+                {
                     continue;
+                }
 
                 var directory = Path.GetDirectoryName(path);
-                if (string.IsNullOrEmpty(directory)) continue;
+                if (string.IsNullOrEmpty(directory))
+                {
+                    continue;
+                }
 
                 var target = Path.Combine(directory, file);
 
-                var check = FileHandleRename.RenameFile(path, target);
+                // Check if the target file already exists
+                if (File.Exists(target))
+                {
+                    Trace.WriteLine($"{FileHandlerResources.ErrorFileAlreadyExists} {target}");
+                    continue; // Skip renaming
+                }
+
+                var check = await FileHandleRename.RenameFile(path, target);
 
                 if (!check)
                 {
@@ -66,11 +82,14 @@ namespace FileHandler
         /// <param name="folder">The folder.</param>
         /// <param name="subFolder">if set to <c>true</c> [sub folder].</param>
         /// <returns>Number of Files renamed</returns>
-        public static int AddAppendage(string appendage, string folder, bool subFolder)
+        public static async Task<int> AddAppendage(string appendage, string folder, bool subFolder)
         {
             var lst = FileHandleSearch.GetAllFiles(folder, subFolder);
 
-            if (lst == null || lst.Count == 0) return 0;
+            if (lst == null || lst.Count == 0)
+            {
+                return 0;
+            }
 
             var count = 0;
 
@@ -82,14 +101,26 @@ namespace FileHandler
 
                 if (string.IsNullOrEmpty(file) ||
                     string.Equals(str, file, StringComparison.OrdinalIgnoreCase))
+                {
                     continue;
+                }
 
                 var directory = Path.GetDirectoryName(path);
-                if (string.IsNullOrEmpty(directory)) continue;
+                if (string.IsNullOrEmpty(directory))
+                {
+                    continue;
+                }
 
                 var target = Path.Combine(directory, file);
 
-                var check = FileHandleRename.RenameFile(path, target);
+                // Check if the target file already exists
+                if (File.Exists(target))
+                {
+                    Trace.WriteLine($"{FileHandlerResources.ErrorFileAlreadyExists} {target}");
+                    continue; // Skip renaming
+                }
+
+                var check = await FileHandleRename.RenameFile(path, target);
 
                 if (!check)
                 {
@@ -109,11 +140,14 @@ namespace FileHandler
         /// <param name="folder">The folder.</param>
         /// <param name="subFolder">if set to <c>true</c> [sub folder].</param>
         /// <returns>Number of Files renamed</returns>
-        public static int ReplacePart(string targetStr, string update, string folder, bool subFolder)
+        public static async Task<int> ReplacePart(string targetStr, string update, string folder, bool subFolder)
         {
             var lst = FileHandleSearch.GetAllFiles(folder, subFolder);
 
-            if (lst == null || lst.Count == 0) return 0;
+            if (lst == null || lst.Count == 0)
+            {
+                return 0;
+            }
 
             var count = 0;
 
@@ -124,16 +158,28 @@ namespace FileHandler
 
                 if (string.IsNullOrEmpty(file) ||
                     string.Equals(str, file, StringComparison.OrdinalIgnoreCase))
+                {
                     continue;
+                }
 
                 var directory = Path.GetDirectoryName(path);
-                if (string.IsNullOrEmpty(directory)) continue;
+                if (string.IsNullOrEmpty(directory))
+                {
+                    continue;
+                }
 
                 file = file.Replace(targetStr, update);
 
                 var target = Path.Combine(directory, file);
 
-                var check = FileHandleRename.RenameFile(path, target);
+                // Check if the target file already exists
+                if (File.Exists(target))
+                {
+                    Trace.WriteLine($"{FileHandlerResources.ErrorFileAlreadyExists} {target}");
+                    continue; // Skip renaming
+                }
+
+                var check = await FileHandleRename.RenameFile(path, target);
 
                 if (!check)
                 {
@@ -154,11 +200,14 @@ namespace FileHandler
         /// <param name="folder">The folder.</param>
         /// <param name="subFolder">if set to <c>true</c> [sub folder].</param>
         /// <returns>Number of Files renamed</returns>
-        public static int ReOrderNumbers(string folder, bool subFolder)
+        public static async Task<int> ReOrderNumbers(string folder, bool subFolder)
         {
             var lst = FileHandleSearch.GetAllFiles(folder, subFolder);
 
-            if (lst == null || lst.Count == 0) return 0;
+            if (lst == null || lst.Count == 0)
+            {
+                return 0;
+            }
 
             var count = 0;
 
@@ -170,16 +219,28 @@ namespace FileHandler
                 var file = str.ReOrderNumbers();
                 if (string.IsNullOrEmpty(file) ||
                     string.Equals(str, file, StringComparison.OrdinalIgnoreCase))
+                {
                     continue;
+                }
 
                 file = string.Concat(file, ext);
 
                 var directory = Path.GetDirectoryName(path);
-                if (string.IsNullOrEmpty(directory)) continue;
+                if (string.IsNullOrEmpty(directory))
+                {
+                    continue;
+                }
 
                 file = Path.Combine(directory, file);
 
-                var check = FileHandleRename.RenameFile(path, file);
+                // Check if the target file already exists
+                if (File.Exists(file))
+                {
+                    Trace.WriteLine($"{FileHandlerResources.ErrorFileAlreadyExists} {file}");
+                    continue; // Skip renaming
+                }
+
+                var check = await FileHandleRename.RenameFile(path, file);
 
                 if (!check)
                 {

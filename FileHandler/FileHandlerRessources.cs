@@ -34,6 +34,11 @@ namespace FileHandler
         internal const string Space = " ";
 
         /// <summary>
+        ///     The append (const). Value: "_".
+        /// </summary>
+        internal const string Append = "_";
+
+        /// <summary>
         ///     Tries (const). Value: "Tries: ".
         /// </summary>
         internal const string Tries = "Tries: ";
@@ -83,10 +88,26 @@ namespace FileHandler
         /// </summary>
         internal const string ErrorEqualPath = "Paths are equal Input.";
 
+
+        /// <summary>
+        ///     The error file already exists (const). Value: "Error File already exists:".
+        /// </summary>
+        internal const string ErrorFileAlreadyExists = "Error File already exists:";
+
         /// <summary>
         ///     The error file not found (const). Value: "File not found: ".
         /// </summary>
         internal const string ErrorFileNotFound = "File not found: ";
+
+        /// <summary>
+        ///     The error file Extension null (const). Value: "File extension list cannot be null.".
+        /// </summary>
+        internal const string ErrorFileExtension = "File extension list cannot be null.";
+
+        /// <summary>
+        ///     The error invalid Path null (const). Value: "Invalid path.".
+        /// </summary>
+        internal const string ErrorInvalidPath = "Invalid path.";
 
         /// <summary>
         ///     The Information File Deletion (const). Value: "File(s) that will be deleted: ".

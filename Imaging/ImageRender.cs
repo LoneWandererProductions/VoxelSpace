@@ -144,7 +144,7 @@ namespace Imaging
         /// <returns>
         ///     Area with applied filter
         /// </returns>
-        /// <exception cref="System.ArgumentOutOfRangeException">
+        /// <exception cref="ArgumentOutOfRangeException">
         ///     filter - null
         ///     or
         ///     shape - null
@@ -704,7 +704,7 @@ namespace Imaging
         /// <returns>
         ///     Bitmap with adjusted Hue.
         /// </returns>
-        /// <exception cref="System.NotImplementedException"></exception>
+        /// <exception cref="NotImplementedException"></exception>
         public Bitmap AdjustHue(Bitmap image, double hueShift)
         {
             return ImageStreamHsv.AdjustHue(image, hueShift);
@@ -719,7 +719,7 @@ namespace Imaging
         /// <returns>
         ///     Bitmap with adjusted Saturation.
         /// </returns>
-        /// <exception cref="System.NotImplementedException"></exception>
+        /// <exception cref="NotImplementedException"></exception>
         public Bitmap AdjustSaturation(Bitmap image, double saturationFactor)
         {
             return ImageStreamHsv.AdjustSaturation(image, saturationFactor);
@@ -734,7 +734,7 @@ namespace Imaging
         /// <returns>
         ///     Bitmap with adjusted brightness.
         /// </returns>
-        /// <exception cref="System.NotImplementedException"></exception>
+        /// <exception cref="NotImplementedException"></exception>
         public Bitmap AdjustBrightness(Bitmap image, double brightnessFactor)
         {
             return ImageStreamHsv.AdjustBrightness(image, brightnessFactor);

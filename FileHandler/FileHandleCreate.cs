@@ -26,17 +26,12 @@ namespace FileHandler
         /// <exception cref="FileHandlerException">No Correct Path was provided</exception>
         public static void CreateFolder(string path)
         {
-            if (string.IsNullOrEmpty(path)) throw new FileHandlerException(FileHandlerResources.ErrorEmptyString);
+            if (string.IsNullOrEmpty(path))
+            {
+                throw new FileHandlerException(FileHandlerResources.ErrorEmptyString);
+            }
 
-            try
-            {
-                _ = Directory.CreateDirectory(path);
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                FileHandlerRegister.AddError(nameof(CreateFolder), path, ex);
-                Trace.WriteLine(ex);
-            }
+            _ = CreateDirectory(path);
         }
 
         /// <summary>
@@ -44,27 +39,38 @@ namespace FileHandler
         /// </summary>
         /// <param name="path">Path</param>
         /// <param name="name">Folder Name</param>
-        /// <returns>Generated Path</returns>
+        /// <returns>If path was generated </returns>
         /// <exception cref="FileHandlerException">No Correct Path was provided</exception>
         public static bool CreateFolder(string path, string name)
         {
             if (string.IsNullOrEmpty(path) || string.IsNullOrEmpty(name))
+            {
                 throw new FileHandlerException(FileHandlerResources.ErrorEmptyString);
+            }
 
             var root = Path.Combine(path, name);
 
+            return CreateDirectory(root);
+        }
+
+        /// <summary>
+        ///     Creates the directory.
+        /// </summary>
+        /// <param name="path">The path.</param>
+        /// <returns>If path was generated </returns>
+        private static bool CreateDirectory(string path)
+        {
             try
             {
-                _ = Directory.CreateDirectory(root);
+                _ = Directory.CreateDirectory(path);
+                return true;
             }
-            catch (UnauthorizedAccessException ex)
+            catch (Exception ex) when (ex is UnauthorizedAccessException or IOException or PathTooLongException)
             {
                 FileHandlerRegister.AddError(nameof(CreateFolder), path, ex);
                 Trace.WriteLine(ex);
                 return false;
             }
-
-            return true;
         }
     }
 }

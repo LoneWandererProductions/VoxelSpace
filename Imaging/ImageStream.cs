@@ -596,8 +596,8 @@ namespace Imaging
         /// <returns>
         ///     The Color at the point
         /// </returns>
-        /// <exception cref="System.ArgumentNullException">Image was null</exception>
-        /// <exception cref="System.ArgumentOutOfRangeException">Point was out of bound.</exception>
+        /// <exception cref="ArgumentNullException">Image was null</exception>
+        /// <exception cref="ArgumentOutOfRangeException">Point was out of bound.</exception>
         internal static Color GetPixel(Bitmap image, Point point)
         {
             ImageHelper.ValidateImage(nameof(GetPixel), image);
@@ -621,8 +621,8 @@ namespace Imaging
         /// <returns>
         ///     The Color at the Point
         /// </returns>
-        /// <exception cref="System.ArgumentNullException">image was null.</exception>
-        /// <exception cref="System.ArgumentOutOfRangeException">
+        /// <exception cref="ArgumentNullException">image was null.</exception>
+        /// <exception cref="ArgumentOutOfRangeException">
         ///     radius or point is out of bounds.
         /// </exception>
         internal static Color GetPixel(Bitmap image, Point point, int radius)
@@ -741,7 +741,7 @@ namespace Imaging
         /// <returns>
         ///     Generates a filter for a certain area
         /// </returns>
-        /// <exception cref="System.ArgumentOutOfRangeException">
+        /// <exception cref="ArgumentOutOfRangeException">
         ///     filter - null
         ///     or
         ///     shape - null

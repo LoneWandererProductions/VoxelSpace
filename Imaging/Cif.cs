@@ -287,8 +287,8 @@ namespace Imaging
         /// <returns>
         ///     Color at this point or throw an exception, if id was completely wrong.
         /// </returns>
-        /// <exception cref="System.ArgumentOutOfRangeException">id</exception>
-        /// <exception cref="System.Collections.Generic.KeyNotFoundException">id</exception>
+        /// <exception cref="ArgumentOutOfRangeException">id</exception>
+        /// <exception cref="KeyNotFoundException">id</exception>
         public Color GetColor(int id)
         {
             if (id < 0 || id > Height * Width)

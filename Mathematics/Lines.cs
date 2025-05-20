@@ -20,108 +20,170 @@ namespace Mathematics
     public static class Lines
     {
         /// <summary>
-        ///     Create Coordinates for a line.
+        ///     Create Coordinates for a line using Bresenham's algorithm (2D).
         /// </summary>
         /// <param name="from">From.</param>
         /// <param name="to">To.</param>
         /// <returns>List of Coordinates as line</returns>
-        public static List<Coordinate2D> LinearLine(Coordinate2D from, Coordinate2D to)
+        public static List<Coordinate2D> BresenhamLine(Coordinate2D from, Coordinate2D to)
         {
             var lst = new List<Coordinate2D>();
 
-            if (from.Equals(to))
-            {
-                lst.Add(from);
-                return lst;
-            }
+            var dx = to.X - from.X;
+            var dy = to.Y - from.Y;
+            var dx2 = 2 * Math.Abs(dx);
+            var dy2 = 2 * Math.Abs(dy);
+            var x = from.X;
+            var y = from.Y;
+            var xEnd = to.X;
+            var yEnd = to.Y;
 
-            if (to.Y == from.Y)
+            var signX = Math.Sign(dx);
+            var signY = Math.Sign(dy);
+
+            if (Math.Abs(dy) < Math.Abs(dx))
             {
-                for (var x = from.X; x <= to.X; x++)
+                // Line is mostly horizontal
+                var error = dy2 - Math.Abs(dx);
+                while (x != xEnd)
                 {
-                    var point = new Coordinate2D { X = x, Y = to.Y };
-                    lst.Add(point);
+                    lst.Add(new Coordinate2D { X = x, Y = y });
+                    if (error > 0)
+                    {
+                        y += signY;
+                        error -= dx2;
+                    }
+
+                    x += signX;
+                    error += dy2;
                 }
-
-                return lst;
             }
-
-            if (to.X == from.X)
+            else
             {
-                lst = new List<Coordinate2D>();
-
-                for (var y = from.Y; y <= to.Y; y++)
+                // Line is mostly vertical
+                var error = dx2 - Math.Abs(dy);
+                while (y != yEnd)
                 {
-                    var point = new Coordinate2D { X = from.X, Y = y };
-                    lst.Add(point);
+                    lst.Add(new Coordinate2D { X = x, Y = y });
+                    if (error > 0)
+                    {
+                        x += signX;
+                        error -= dy2;
+                    }
+
+                    y += signY;
+                    error += dx2;
                 }
-
-                return lst;
             }
 
-            lst = new List<Coordinate2D>();
-
-            var m = (to.Y - from.Y) / (to.X - from.X);
-            var n = from.Y - (m * from.X);
-
-            for (var x = from.X; x <= to.X; x++)
-            {
-                var y = (m * x) + n;
-                var point = new Coordinate2D { X = x, Y = y };
-                lst.Add(point);
-            }
-
+            lst.Add(new Coordinate2D { X = x, Y = y }); // Add the last point
             return lst;
         }
 
         /// <summary>
-        ///     Create Coordinates for a line.
+        ///     Create Coordinates for a line using Bresenham's algorithm (3D).
         /// </summary>
         /// <param name="from">From.</param>
         /// <param name="to">To.</param>
         /// <returns>List of Coordinates as line</returns>
-        public static List<Vector3D> LinearLine(Vector3D from, Vector3D to)
+        public static List<Vector3D> BresenhamLine(Vector3D from, Vector3D to)
         {
             var lst = new List<Vector3D>();
 
-            if (from.Equals(to))
-            {
-                lst.Add(from);
-                return lst;
-            }
+            var dx = (int)(to.X - from.X);
+            var dy = (int)(to.Y - from.Y);
+            var dz = (int)(to.Z - from.Z);
+            var dx2 = 2 * Math.Abs(dx);
+            var dy2 = 2 * Math.Abs(dy);
+            var dz2 = 2 * Math.Abs(dz);
+            var x = (int)from.X;
+            var y = (int)from.Y;
+            var z = (int)from.Z;
+            var xEnd = (int)to.X;
+            var yEnd = (int)to.Y;
+            var zEnd = (int)to.Z;
 
-            if (Math.Abs(to.Y - from.Y) < MathResources.Tolerance)
+            var signX = Math.Sign(dx);
+            var signY = Math.Sign(dy);
+            var signZ = Math.Sign(dz);
+
+            if (Math.Abs(dy) < Math.Abs(dx) && Math.Abs(dy) < Math.Abs(dz))
             {
-                for (var x = from.X; x <= to.X; x++)
+                // Line is mostly horizontal
+                var error1 = dy2 - Math.Abs(dx);
+                var error2 = dz2 - Math.Abs(dx);
+                while (x != xEnd)
                 {
-                    var point = new Vector3D { X = x, Y = to.Y };
-                    lst.Add(point);
+                    lst.Add(new Vector3D { X = x, Y = y, Z = z });
+                    if (error1 > 0)
+                    {
+                        y += signY;
+                        error1 -= dx2;
+                    }
+
+                    if (error2 > 0)
+                    {
+                        z += signZ;
+                        error2 -= dx2;
+                    }
+
+                    x += signX;
+                    error1 += dy2;
+                    error2 += dz2;
                 }
-
-                return lst;
             }
-
-            if (Math.Abs(to.X - from.X) < MathResources.Tolerance)
+            else if (Math.Abs(dz) < Math.Abs(dx) && Math.Abs(dz) < Math.Abs(dy))
             {
-                for (var y = from.Y; y <= from.Y; y++)
+                // Line is mostly in the Z direction
+                var error1 = dy2 - Math.Abs(dz);
+                var error2 = dx2 - Math.Abs(dz);
+                while (z != zEnd)
                 {
-                    var point = new Vector3D { X = from.X, Y = y };
-                    lst.Add(point);
+                    lst.Add(new Vector3D { X = x, Y = y, Z = z });
+                    if (error1 > 0)
+                    {
+                        y += signY;
+                        error1 -= dz2;
+                    }
+
+                    if (error2 > 0)
+                    {
+                        x += signX;
+                        error2 -= dz2;
+                    }
+
+                    z += signZ;
+                    error1 += dy2;
+                    error2 += dx2;
                 }
-
-                return lst;
             }
-
-            var m = (to.Y - from.Y) / (to.X - from.X);
-            var n = from.Y - (m * from.X);
-
-            for (var x = from.X; x <= to.X; x++)
+            else
             {
-                var y = (m * x) + n;
-                var point = new Vector3D { X = x, Y = y };
-                lst.Add(point);
+                // Line is mostly vertical
+                var error1 = dx2 - Math.Abs(dy);
+                var error2 = dz2 - Math.Abs(dy);
+                while (y != yEnd)
+                {
+                    lst.Add(new Vector3D { X = x, Y = y, Z = z });
+                    if (error1 > 0)
+                    {
+                        x += signX;
+                        error1 -= dy2;
+                    }
+
+                    if (error2 > 0)
+                    {
+                        z += signZ;
+                        error2 -= dy2;
+                    }
+
+                    y += signY;
+                    error1 += dx2;
+                    error2 += dz2;
+                }
             }
 
+            lst.Add(new Vector3D { X = x, Y = y, Z = z }); // Add the last point
             return lst;
         }
     }

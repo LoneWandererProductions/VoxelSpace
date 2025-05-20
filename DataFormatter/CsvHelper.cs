@@ -23,12 +23,14 @@ namespace DataFormatter
         /// </summary>
         /// <param name="filepath">The filepath.</param>
         /// <returns>Content of File</returns>
-        /// <exception cref="System.ArgumentException">File path is empty - filepath</exception>
+        /// <exception cref="ArgumentException">File path is empty - filepath</exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static List<string> ReadFileContent(string filepath)
         {
             if (string.IsNullOrEmpty(filepath))
+            {
                 throw new ArgumentException(DataFormatterResources.ThrowFileEmpty, nameof(filepath));
+            }
 
             try
             {

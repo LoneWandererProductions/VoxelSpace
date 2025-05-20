@@ -39,7 +39,7 @@ namespace Imaging
     public sealed class DirectBitmap : IDisposable
     {
         /// <summary>
-        /// The synchronize lock
+        ///     The synchronize lock
         /// </summary>
         private readonly object _syncLock = new();
 
@@ -123,34 +123,6 @@ namespace Imaging
         public int[] Bits { get; private set; }
 
         /// <summary>
-        /// Byte data for this instance.
-        /// </summary>
-        /// <returns>Image data as Bytes</returns>
-        public byte[] Bytes()
-        {
-            lock (_syncLock)
-            {
-                if (Bits == null) return null;
-
-                // The resulting byte array will have 4 bytes per int (32-bit)
-                var byteArray = new byte[Bits.Length * 4];
-
-                for (int i = 0; i < Bits.Length; i++)
-                {
-                    int color = Bits[i];
-
-                    // Extract the ARGB components from the int and pack them as RGBA
-                    byteArray[i * 4 + 0] = (byte)((color >> 16) & 0xFF); // Red
-                    byteArray[i * 4 + 1] = (byte)((color >> 8) & 0xFF); // Green
-                    byteArray[i * 4 + 2] = (byte)(color & 0xFF); // Blue
-                    byteArray[i * 4 + 3] = (byte)((color >> 24) & 0xFF); // Alpha
-                }
-
-                return byteArray;
-            }
-        }
-
-        /// <summary>
         ///     Gets the bitmap.
         /// </summary>
         /// <value>
@@ -200,6 +172,37 @@ namespace Imaging
         {
             Dispose(true);
             GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        ///     Byte data for this instance.
+        /// </summary>
+        /// <returns>Image data as Bytes</returns>
+        public byte[] Bytes()
+        {
+            lock (_syncLock)
+            {
+                if (Bits == null)
+                {
+                    return null;
+                }
+
+                // The resulting byte array will have 4 bytes per int (32-bit)
+                var byteArray = new byte[Bits.Length * 4];
+
+                for (var i = 0; i < Bits.Length; i++)
+                {
+                    var color = Bits[i];
+
+                    // Extract the ARGB components from the int and pack them as RGBA
+                    byteArray[(i * 4) + 0] = (byte)((color >> 16) & 0xFF); // Red
+                    byteArray[(i * 4) + 1] = (byte)((color >> 8) & 0xFF); // Green
+                    byteArray[(i * 4) + 2] = (byte)(color & 0xFF); // Blue
+                    byteArray[(i * 4) + 3] = (byte)((color >> 24) & 0xFF); // Alpha
+                }
+
+                return byteArray;
+            }
         }
 
         /// <summary>
@@ -317,23 +320,21 @@ namespace Imaging
 
                 // Loop over the rectangle's rows.
                 for (var y = y2; y < y2 + height && y < Height; y++)
-                {
                     // Loop over the rectangle's columns with SIMD optimizations.
-                    for (var x = x1; x < x1 + width && x < Width; x += vectorCount)
+                for (var x = x1; x < x1 + width && x < Width; x += vectorCount)
+                {
+                    var startIndex = x + (y * Width);
+                    // Ensure we don't go out of bounds.
+                    if (startIndex + vectorCount <= Bits.Length)
                     {
-                        var startIndex = x + (y * Width);
-                        // Ensure we don't go out of bounds.
-                        if (startIndex + vectorCount <= Bits.Length)
+                        colorVector.CopyTo(Bits, startIndex);
+                    }
+                    else
+                        // Handle remainder if not divisible by vectorCount
+                    {
+                        for (var j = 0; j < vectorCount && startIndex + j < Bits.Length; j++)
                         {
-                            colorVector.CopyTo(Bits, startIndex);
-                        }
-                        else
-                        {
-                            // Handle remainder if not divisible by vectorCount
-                            for (var j = 0; j < vectorCount && startIndex + j < Bits.Length; j++)
-                            {
-                                Bits[startIndex + j] = colorArgb;
-                            }
+                            Bits[startIndex + j] = colorArgb;
                         }
                     }
                 }

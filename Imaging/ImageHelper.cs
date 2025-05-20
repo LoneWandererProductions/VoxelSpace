@@ -271,7 +271,9 @@ namespace Imaging
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static double Interpolate(double a, double b, double t)
         {
-            return (a * (1 - t)) + (b * t);
+            var ft = t * Math.PI;
+            var f = (1 - Math.Cos(ft)) * 0.5;
+            return (a * (1 - f)) + (b * f);
         }
 
         /// <summary>

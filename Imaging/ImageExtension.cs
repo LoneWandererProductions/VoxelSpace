@@ -86,7 +86,7 @@ namespace Imaging
                 color.R / 255.0f, // Red
                 color.G / 255.0f, // Green
                 color.B / 255.0f, // Blue
-                color.A / 255.0f  // Alpha
+                color.A / 255.0f // Alpha
             };
         }
     }

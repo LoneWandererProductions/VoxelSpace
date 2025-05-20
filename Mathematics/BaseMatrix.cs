@@ -12,7 +12,6 @@
 
 using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
 using ExtendedSystemObjects;
 
 namespace Mathematics
@@ -64,14 +63,6 @@ namespace Mathematics
         public BaseMatrix()
         {
         }
-
-        /// <summary>
-        ///     Gets the bits handle.
-        /// </summary>
-        /// <value>
-        ///     The bits handle.
-        /// </value>
-        private GCHandle BitsHandle { get; }
 
         /// <summary>
         ///     Gets a value indicating whether this <see cref="BaseMatrix" /> is disposed.
@@ -150,7 +141,6 @@ namespace Mathematics
             {
                 // free managed resources
                 Matrix = null;
-                BitsHandle.Free();
             }
 
             Disposed = true;
@@ -187,7 +177,7 @@ namespace Mathematics
         ///     Lus the decomposition.
         /// </summary>
         /// <returns>Key Value Pair of L and U Matrix</returns>
-        /// <exception cref="System.NotImplementedException"></exception>
+        /// <exception cref="NotImplementedException"></exception>
         public KeyValuePair<BaseMatrix, BaseMatrix> LuDecomposition()
         {
             if (Height != Width)

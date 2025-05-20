@@ -157,6 +157,7 @@ namespace Imaging
             object shapeParams = null)
         {
             return TextureAreas.GenerateTexture(
+                null,
                 width,
                 height,
                 filter,
@@ -187,15 +188,13 @@ namespace Imaging
             Point? startPoint = null,
             object shapeParams = null)
         {
-            var overlay = TextureAreas.GenerateTexture(
+            return TextureAreas.GenerateTexture(
+                image,
                 width,
                 height,
                 filter,
                 shape,
                 ImageSettings, shapeParams, startPoint);
-
-            //overlay both images and return
-            return ImageStream.CombineBitmap(image, overlay, 0, 0);
         }
 
         /// <inheritdoc />
@@ -215,8 +214,8 @@ namespace Imaging
                 config.LineSpacing,
                 config.LineColor,
                 config.LineThickness,
-                config.Angle1,
-                config.Angle2
+                config.AnglePrimary,
+                config.AngleSecondary
             );
         }
 
@@ -237,6 +236,9 @@ namespace Imaging
                 config.MinValue,
                 config.MaxValue,
                 config.Alpha,
+                config.XPeriod,
+                config.YPeriod,
+                config.TurbulencePower,
                 config.TurbulenceSize
             );
         }
@@ -258,7 +260,12 @@ namespace Imaging
                 config.LineSpacing,
                 config.LineColor,
                 config.LineThickness,
-                config.Alpha
+                config.Alpha,
+                config.WaveFrequency,
+                config.WaveAmplitude,
+                config.RandomizationFactor,
+                config.EdgeJaggednessLimit,
+                config.JaggednessThreshold
             );
         }
     }

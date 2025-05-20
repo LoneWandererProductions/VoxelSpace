@@ -151,7 +151,7 @@ namespace Imaging
         {
             ImageHelper.ValidateImage(nameof(BitmapToBitmapImage), image);
 
-            Bitmap? tempImage = null;
+            Bitmap tempImage = null;
 
             // Convert the image to Format32bppArgb if necessary
             if (image.PixelFormat != PixelFormat.Format32bppArgb)

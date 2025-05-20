@@ -2,8 +2,8 @@
  * COPYRIGHT:   See COPYING in the top level directory
  * PROJECT:     FileHandler
  * FILE:        FileHandler/FileHandleSafeDelete.cs
- * PURPOSE:     Variation of delete files, with Progress Bar and Deletion to Recycle BIn
- * PROGRAMER:   Peter Geinitz (Wayfarer)
+ * PURPOSE:     Variation of delete files, with Progress Bar and Deletion to Recycle Bin
+ * PROGRAMMER:  Peter Geinitz (Wayfarer)
  */
 
 // ReSharper disable UnusedType.Global
@@ -20,29 +20,24 @@ namespace FileHandler
     public static class FileHandleSafeDelete
     {
         /// <summary>
-        ///     Deletes the file.
+        ///     Deletes the specified file and moves it to the Recycle Bin.
         /// </summary>
-        /// <param name="path">The path.</param>
-        /// <returns>Success Status</returns>
-        /// <exception cref="FileHandlerException"></exception>
+        /// <param name="path">The path of the file to delete.</param>
+        /// <returns>True if the file was successfully deleted; otherwise, false.</returns>
+        /// <exception cref="FileHandlerException">Thrown when the path is empty or null.</exception>
         public static bool DeleteFile(string path)
         {
-            if (string.IsNullOrEmpty(path)) throw new FileHandlerException(FileHandlerResources.ErrorEmptyString);
-
-            if (!File.Exists(path)) return false;
-
-            var count = 0;
-
-            //Handle the fact that file is in Use
-            for (var i = 0; FileHandleDelete.IsFileLocked(path) && i < FileHandlerRegister.Tries + 1; i++)
+            if (string.IsNullOrEmpty(path))
             {
-                count++;
-                Trace.WriteLine(string.Concat(FileHandlerResources.Tries, count));
-                Thread.Sleep(1000);
+                throw new FileHandlerException(FileHandlerResources.ErrorEmptyString);
             }
 
-            //well we tried the max number of tries so no need to go further
-            if (count == FileHandlerRegister.Tries)
+            if (!File.Exists(path))
+            {
+                return false;
+            }
+
+            if (!WaitForFileUnlock(path))
             {
                 var ex = new Exception(string.Concat(FileHandlerResources.ErrorLock, path));
                 Trace.WriteLine(ex);
@@ -50,26 +45,44 @@ namespace FileHandler
                 return false;
             }
 
-            //no locks so let's do it
+            // Attempt to delete the file
             try
             {
                 FileSystem.DeleteFile(path, UIOption.AllDialogs, RecycleOption.SendToRecycleBin);
             }
             catch (UnauthorizedAccessException ex)
             {
-                Trace.WriteLine(ex);
                 FileHandlerRegister.AddError(nameof(DeleteFile), path, ex);
+                Trace.WriteLine(ex);
                 return false;
             }
             catch (IOException ex)
             {
-                //well something went wrong, unlucky Access
-                Trace.WriteLine(ex);
                 FileHandlerRegister.AddError(nameof(DeleteFile), path, ex);
+                Trace.WriteLine(ex);
                 return false;
             }
 
             return true;
+        }
+
+        /// <summary>
+        ///     Waits for a specified file to become unlocked.
+        /// </summary>
+        /// <param name="path">The path of the file to check.</param>
+        /// <returns>True if the file is unlocked; otherwise, false.</returns>
+        private static bool WaitForFileUnlock(string path)
+        {
+            var attempts = 0;
+
+            while (FileHandleDelete.IsFileLocked(path) && attempts < FileHandlerRegister.Tries)
+            {
+                attempts++;
+                Trace.WriteLine(string.Concat(FileHandlerResources.Tries, attempts));
+                Thread.Sleep(1000);
+            }
+
+            return !FileHandleDelete.IsFileLocked(path);
         }
     }
 }

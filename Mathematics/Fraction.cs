@@ -104,11 +104,6 @@ namespace Mathematics
                     return Exponent * Numerator;
                 }
 
-                if (Exponent == 0)
-                {
-                    return Numerator;
-                }
-
                 //catch negative exponent
                 var exponentNumerator = Math.Abs(Exponent * Denominator) + Numerator;
                 if (Exponent < 0)
@@ -210,6 +205,58 @@ namespace Mathematics
         }
 
         /// <summary>
+        ///     Implements the operator ==.
+        /// </summary>
+        /// <param name="a">a.</param>
+        /// <param name="b">The b.</param>
+        /// <returns>
+        ///     The result of the operator.
+        /// </returns>
+        public static bool operator ==(Fraction a, Fraction b)
+        {
+            return a.Equals(b);
+        }
+
+        /// <summary>
+        ///     Implements the operator !=.
+        /// </summary>
+        /// <param name="a">a.</param>
+        /// <param name="b">The b.</param>
+        /// <returns>
+        ///     The result of the operator.
+        /// </returns>
+        public static bool operator !=(Fraction a, Fraction b)
+        {
+            return !(a == b);
+        }
+
+        /// <summary>
+        ///     Implements the operator &lt;.
+        /// </summary>
+        /// <param name="a">a.</param>
+        /// <param name="b">The b.</param>
+        /// <returns>
+        ///     The result of the operator.
+        /// </returns>
+        public static bool operator <(Fraction a, Fraction b)
+        {
+            return a.Decimal < b.Decimal;
+        }
+
+        /// <summary>
+        ///     Implements the operator &gt;.
+        /// </summary>
+        /// <param name="a">a.</param>
+        /// <param name="b">The b.</param>
+        /// <returns>
+        ///     The result of the operator.
+        /// </returns>
+        public static bool operator >(Fraction a, Fraction b)
+        {
+            return a.Decimal > b.Decimal;
+        }
+
+        /// <summary>
         ///     Returns a hash code for this instance.
         /// </summary>
         /// <returns>
@@ -225,56 +272,61 @@ namespace Mathematics
         /// </summary>
         private void Reduce()
         {
-            if (Numerator == 0 && Denominator != 0)
+            // If the numerator is zero and the denominator is non-zero, the fraction is 0, so set Exponent to 0
+            if (Numerator == 0)
             {
                 Exponent = 0;
                 return;
             }
 
+            // If the denominator is zero (undefined fraction), reset to 0/1
             if (Denominator == 0)
             {
                 Numerator = 0;
                 Denominator = 1;
+                return;
             }
 
+            // Ensure the denominator is positive by flipping the signs of both numerator and denominator if necessary
             if (Denominator < 0)
             {
                 Denominator *= -1;
                 Numerator *= -1;
             }
 
+            // Simplify the fraction by dividing both the numerator and denominator by their greatest common factor
             var gcd = GetGcf(Numerator, Denominator);
-
             if (gcd != 0)
             {
                 Numerator /= gcd;
                 Denominator /= gcd;
             }
 
+            // If the denominator becomes 1, the fraction is an integer, and we adjust the Exponent accordingly
             if (Denominator == 1)
             {
                 Exponent = Numerator * Exponent;
-                Denominator = 1;
                 return;
             }
 
+            // If the numerator is less than or equal to the denominator, there's no need to reduce further
             if (Numerator <= Denominator)
             {
                 return;
             }
 
+            // If the numerator is greater than the denominator, we perform the division to extract the whole part (Exponent)
             var modulo = Numerator % Denominator;
-            Exponent = (Numerator - modulo) / Denominator;
-            Numerator = modulo;
+            Exponent = (Numerator - modulo) / Denominator; // Integer part of the division
+            Numerator = modulo; // The remainder becomes the new numerator
 
-            if (Numerator != 0)
+            // If the remainder is zero, we have an exact division and the fraction reduces to a whole number
+            if (Numerator == 0)
             {
-                return;
+                Denominator = 1; // Set denominator to 1 for whole number
             }
-
-            Denominator = 1;
-            Numerator = 1;
         }
+
 
         /// <summary>
         ///     Gets the greatest common Factor.
@@ -285,17 +337,38 @@ namespace Mathematics
         /// <returns>Greatest common Factor.</returns>
         private static int GetGcf(int a, int b)
         {
-            while (true)
+            while (b != 0)
             {
-                if (a == b || b == 0)
-                {
-                    return a;
-                }
-
-                var a1 = a;
-                a = b;
-                b = a1 % b;
+                var temp = b;
+                b = a % b;
+                a = temp;
             }
+
+            return Math.Abs(a);
+        }
+
+        /// <summary>
+        ///     Performs an implicit conversion from <see cref="Fraction" /> to <see cref="System.Decimal" />.
+        /// </summary>
+        /// <param name="f">The f.</param>
+        /// <returns>
+        ///     The result of the conversion.
+        /// </returns>
+        public static implicit operator decimal(Fraction f)
+        {
+            return (decimal)f.Numerator / f.Denominator;
+        }
+
+        /// <summary>
+        ///     Performs an implicit conversion from <see cref="Fraction" /> to <see cref="System.Double" />.
+        /// </summary>
+        /// <param name="f">The f.</param>
+        /// <returns>
+        ///     The result of the conversion.
+        /// </returns>
+        public static implicit operator double(Fraction f)
+        {
+            return (double)f.Numerator / f.Denominator;
         }
     }
 }

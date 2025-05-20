@@ -1,14 +1,17 @@
 ﻿/*
- * COPYRIGHT:   See COPYING in the top level directory
- * PROJECT:     FileHandler
- * FILE:        FileHandler/FileHandleRename.cs
- * PURPOSE:     Utility to Rename Files and Folders
- * PROGRAMER:   Peter Geinitz (Wayfarer)
- */
+* COPYRIGHT:   See COPYING in the top level directory
+* PROJECT:     FileHandler
+* FILE:        FileHandler/FileHandleRename.cs
+* PURPOSE:     Utility to Rename Files and Folders
+* PROGRAMER:   Peter Geinitz (Wayfarer)
+*/
+
+// ReSharper disable MemberCanBeInternal
 
 using System;
 using System.Diagnostics;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace FileHandler
 {
@@ -24,31 +27,32 @@ namespace FileHandler
         /// <param name="target">Full qualified target Path</param>
         /// <returns>The <see cref="bool" />Was the Folder Renamed and all contents moved.</returns>
         /// <exception cref="FileHandlerException">No Correct Path was provided</exception>
-        public static bool RenameDirectory(string source, string target)
+        public static async Task<bool> RenameDirectory(string source, string target)
         {
             if (string.IsNullOrEmpty(source) || string.IsNullOrEmpty(target))
+            {
                 throw new FileHandlerException(FileHandlerResources.ErrorEmptyString);
+            }
 
-            if (source.Equals(target, StringComparison.InvariantCultureIgnoreCase))
+            if (source.Equals(target, StringComparison.OrdinalIgnoreCase))
+            {
                 throw new FileHandlerException(FileHandlerResources.ErrorEqualPath);
+            }
 
             //if nothing exists we can return anyways
-            if (!Directory.Exists(source)) return false;
+            if (!Directory.Exists(source))
+            {
+                return false;
+            }
 
             try
             {
-                Directory.Move(source, target);
+                await Task.Run(() => Directory.Move(source, target));
             }
-            catch (UnauthorizedAccessException ex)
+            catch (Exception ex) when (ex is UnauthorizedAccessException or IOException)
             {
-                Trace.WriteLine(ex);
                 FileHandlerRegister.AddError(nameof(RenameFile), source, ex);
-                return false;
-            }
-            catch (IOException ex)
-            {
                 Trace.WriteLine(ex);
-                FileHandlerRegister.AddError(nameof(RenameFile), source, ex);
                 return false;
             }
 
@@ -62,37 +66,32 @@ namespace FileHandler
         /// <param name="target">Full qualified target File Name</param>
         /// <returns>The <see cref="bool" />Was the File Renamed.</returns>
         /// <exception cref="FileHandlerException">No Correct Path was provided</exception>
-        public static bool RenameFile(string source, string target)
+        public static async Task<bool> RenameFile(string source, string target)
         {
             if (string.IsNullOrEmpty(source) || string.IsNullOrEmpty(target))
+            {
                 throw new FileHandlerException(FileHandlerResources.ErrorEmptyString);
+            }
 
             if (source.Equals(target, StringComparison.InvariantCultureIgnoreCase))
+            {
                 throw new FileHandlerException(FileHandlerResources.ErrorEqualPath);
+            }
 
             //if nothing exists we can return anyways
-            if (!File.Exists(source)) return false;
+            if (!File.Exists(source))
+            {
+                return false;
+            }
 
             try
             {
-                File.Move(source, target);
+                await Task.Run(() => File.Move(source, target));
             }
-            catch (UnauthorizedAccessException ex)
+            catch (Exception ex) when (ex is UnauthorizedAccessException or IOException or NotSupportedException)
             {
-                Trace.WriteLine(ex);
                 FileHandlerRegister.AddError(nameof(RenameFile), source, ex);
-                return false;
-            }
-            catch (IOException ex)
-            {
                 Trace.WriteLine(ex);
-                FileHandlerRegister.AddError(nameof(RenameFile), source, ex);
-                return false;
-            }
-            catch (NotSupportedException ex)
-            {
-                Trace.WriteLine(ex);
-                FileHandlerRegister.AddError(nameof(RenameFile), source, ex);
                 return false;
             }
 

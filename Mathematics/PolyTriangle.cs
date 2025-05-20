@@ -8,6 +8,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Text;
 using DataFormatter;
 
 namespace Mathematics
@@ -174,14 +175,13 @@ namespace Mathematics
         /// </returns>
         public override string ToString()
         {
-            var str = string.Empty;
-
+            var sb = new StringBuilder();
             for (var i = 0; i < Vertices.Length; i++)
             {
-                str = string.Concat(str, i, MathResources.Separator, Vertices[i].ToString(), Environment.NewLine);
+                sb.Append(i).Append(MathResources.Separator).Append(Vertices[i]).Append(Environment.NewLine);
             }
 
-            return str;
+            return sb.ToString();
         }
 
         /// <summary>
@@ -206,7 +206,17 @@ namespace Mathematics
         /// </returns>
         public static bool operator ==(PolyTriangle first, PolyTriangle second)
         {
-            return second is not null && first is not null && first.Equals(second);
+            if (first is null && second is null)
+            {
+                return true;
+            }
+
+            if (first is null || second is null)
+            {
+                return false;
+            }
+
+            return first.Equals(second);
         }
 
         /// <summary>
@@ -219,7 +229,7 @@ namespace Mathematics
         /// </returns>
         public static bool operator !=(PolyTriangle first, PolyTriangle second)
         {
-            return second is not null && first is not null && first.Equals(second);
+            return !(first == second);
         }
     }
 }

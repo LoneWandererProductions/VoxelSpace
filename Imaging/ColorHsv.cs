@@ -105,6 +105,15 @@ namespace Imaging
         public double V { get; set; }
 
         /// <summary>
+        ///     Gets or sets the l.
+        ///     New properties for HSL
+        /// </summary>
+        /// <value>
+        ///     The l.
+        /// </value>
+        public double L { get; set; }
+
+        /// <summary>
         ///     The Hue Value, in our Case x.
         /// </summary>
         public int R { get; internal set; }
@@ -500,12 +509,15 @@ namespace Imaging
         }
 
         /// <summary>
-        /// Normalizes the specified value.
+        ///     Normalizes the specified value.
         /// </summary>
         /// <param name="value">The value.</param>
         /// <returns>Normalized value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static float Normalize(int value) => value / 255f;
+        private static float Normalize(int value)
+        {
+            return value / 255f;
+        }
 
         /// <summary>
         ///     Converts to a hex string.

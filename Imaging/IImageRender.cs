@@ -25,7 +25,7 @@ namespace Imaging
     /// <summary>
     ///     The IImageRender interface.
     /// </summary>
-    internal interface IImageRender
+    public interface IImageRender
     {
         /// <summary>
         ///     Get the bitmap file.
@@ -102,7 +102,7 @@ namespace Imaging
         /// <returns>
         ///     Area with applied filter
         /// </returns>
-        /// <exception cref="System.ArgumentOutOfRangeException">
+        /// <exception cref="ArgumentOutOfRangeException">
         ///     filter - null
         ///     or
         ///     shape - null
@@ -383,7 +383,7 @@ namespace Imaging
         /// <returns>
         ///     Generates a filter for a certain area
         /// </returns>
-        /// <exception cref="System.ArgumentOutOfRangeException">
+        /// <exception cref="ArgumentOutOfRangeException">
         ///     filter - null
         ///     or
         ///     shape - null
