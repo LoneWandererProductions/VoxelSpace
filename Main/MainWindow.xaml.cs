@@ -267,7 +267,7 @@ namespace Main
 
             // Show the images (you can save or display them depending on your setup)
             voxelRenderedBitmap.Save("VoxelRendered.png");
-            raycastedBitmap.Save("Raycasted.png");
+            raycastedBitmap.Bitmap.Save("Raycasted.png");
         }
     }
 }

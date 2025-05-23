@@ -19,12 +19,12 @@ namespace Voxels
         public Bitmap Render(Key eKey)
         {
             Camera = InputHelper.SimulateCameraMovementRay(eKey, Camera);
-            return _ray.Render(Camera);
+            return _ray.Render(Camera).Bitmap;
         }
 
         public Bitmap Render()
         {
-            return _ray.Render(Camera);
+            return _ray.Render(Camera).Bitmap;
         }
     }
 }

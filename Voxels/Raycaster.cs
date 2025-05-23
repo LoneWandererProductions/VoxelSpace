@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Drawing;
+using System.IO;
 using Imaging;
 
 namespace Voxels
@@ -11,6 +12,17 @@ namespace Voxels
         private readonly int _mapHeight;
         private readonly int _mapWidth;
 
+        public class RenderResult : IDisposable
+        {
+            public Bitmap Bitmap { get; set; }
+            public byte[] Bytes { get; set; }
+            public void Dispose()
+            {
+                throw new NotImplementedException();
+            }
+        }
+
+
         public Raycaster(int[,] map, CameraContext context)
         {
             _map = map;
@@ -19,12 +31,9 @@ namespace Voxels
             _context = context;
         }
 
-        public Bitmap Render(RvCamera camera)
+        public RenderResult Render(RvCamera camera)
         {
             DirectBitmap dbm = new(_context.ScreenWidth, _context.ScreenHeight, Color.Black);
-
-            //using var g = Graphics.FromImage(bitmap);
-            //g.Clear(Color.Black);
 
             var halfFov = _context.Fov / 2.0;
             var angleStep = _context.Fov / _context.ScreenWidth;
@@ -37,14 +46,10 @@ namespace Voxels
 
                 var distanceToWall = CastRay(camera.X, camera.Y, rayX, rayY);
 
-                // Skip rendering walls beyond max visibility range
                 if (distanceToWall > _context.Distance)
                     continue;
 
-                // Adjust wall height calculation
                 var wallHeight = (int)(_context.ScreenHeight / distanceToWall);
-
-                // Adjust wall height by camera's Z position (Z offset)
                 var zOffset = camera.Z / _context.CellSize * wallHeight;
                 var wallTop = Math.Max(0, (_context.ScreenHeight - wallHeight) / 2 - zOffset);
                 var wallBottom = Math.Min(_context.ScreenHeight, (_context.ScreenHeight + wallHeight) / 2 - zOffset);
@@ -52,32 +57,23 @@ namespace Voxels
                 var wallColor = GetWallColor(distanceToWall);
 
                 dbm.DrawVerticalLine(x, wallTop, wallBottom - wallTop, wallColor);
-
-                //g.DrawLine(new Pen(wallColor), x, wallTop, x, wallBottom);
             }
 
-            return dbm.Bitmap;
+            // Create PNG-encoded byte[] from the bitmap
+            var imageBytes = ToByteArray(dbm.Bits);
+
+            return new RenderResult
+            {
+                Bitmap = dbm.Bitmap,
+                Bytes = imageBytes
+            };
         }
 
-        public byte[] RenderToByteArray(RvCamera camera)
+        private static byte[] ToByteArray(int[] bits)
         {
-            var bitmap = Render(camera); // your current rendering logic
-            var data = new byte[_context.ScreenWidth * _context.ScreenHeight * 4]; // RGBA
-
-            int index = 0;
-            for (int y = 0; y < bitmap.Height; y++)
-            {
-                for (int x = 0; x < bitmap.Width; x++)
-                {
-                    Color color = bitmap.GetPixel(x, y); // Consider locking for performance
-                    data[index++] = color.R;
-                    data[index++] = color.G;
-                    data[index++] = color.B;
-                    data[index++] = 255;
-                }
-            }
-
-            return data;
+            var bytes = new byte[bits.Length * sizeof(int)];
+            Buffer.BlockCopy(bits, 0, bytes, 0, bytes.Length);
+            return bytes;
         }
 
 
