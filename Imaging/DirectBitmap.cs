@@ -44,19 +44,20 @@ namespace Imaging
         private readonly object _syncLock = new();
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="DirectBitmap" /> class.
-        ///     Bitmap which references pixel data directly
-        ///     PixelFormat, Specifies the format of the color data for each pixel in the image.
-        ///     AddrOfPinnedObject, reference to address of pinned object
-        ///     GCHandleType, Retrieves the address of object data in a Pinned handle.
+        /// Initializes a new instance of the <see cref="DirectBitmap" /> class.
+        /// Bitmap which references pixel data directly
+        /// PixelFormat, Specifies the format of the color data for each pixel in the image.
+        /// AddrOfPinnedObject, reference to address of pinned object
+        /// GCHandleType, Retrieves the address of object data in a Pinned handle.
         /// </summary>
         /// <param name="width">The width.</param>
         /// <param name="height">The height.</param>
-        public DirectBitmap(int width, int height)
+        /// <param name="color">The color. Totally optional.</param>
+        public DirectBitmap(int width, int height, Color color = default)
         {
             Width = width;
             Height = height;
-            Initiate();
+            Initiate(color);
         }
 
         /// <summary>
@@ -208,7 +209,7 @@ namespace Imaging
         /// <summary>
         ///     Initiates this instance and sets all Helper Variables.
         /// </summary>
-        private void Initiate()
+        private void Initiate(Color color = default)
         {
             Bits = new int[Width * Height];
             BitsHandle = GCHandle.Alloc(Bits, GCHandleType.Pinned);
@@ -217,7 +218,7 @@ namespace Imaging
 
             // Make the background transparent
             using var g = Graphics.FromImage(Bitmap);
-            g.Clear(Color.Transparent);
+            g.Clear(color);
         }
 
         /// <summary>

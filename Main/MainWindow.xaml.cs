@@ -127,6 +127,8 @@ namespace Main
         /// <param name="stopwatchFullElapsedMilliseconds">The total elapsed time in milliseconds.</param>
         private void UpdateTextBox(string message, long stopwatchFullElapsedMilliseconds)
         {
+            if (_voxel == null) return;
+
             var formattedMessage = $"{message}{Environment.NewLine}" +
                                    $"Total Time: {stopwatchFullElapsedMilliseconds} ms{Environment.NewLine}" +
                                    $"Render Time: {_voxel.ImageRender} ms{Environment.NewLine}" +

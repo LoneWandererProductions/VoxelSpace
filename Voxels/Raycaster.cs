@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Drawing;
+using Imaging;
 
 namespace Voxels
 {
@@ -20,9 +21,10 @@ namespace Voxels
 
         public Bitmap Render(RvCamera camera)
         {
-            Bitmap bitmap = new(_context.ScreenWidth, _context.ScreenHeight);
-            using var g = Graphics.FromImage(bitmap);
-            g.Clear(Color.Black);
+            DirectBitmap dbm = new(_context.ScreenWidth, _context.ScreenHeight, Color.Black);
+
+            //using var g = Graphics.FromImage(bitmap);
+            //g.Clear(Color.Black);
 
             var halfFov = _context.Fov / 2.0;
             var angleStep = _context.Fov / _context.ScreenWidth;
@@ -49,10 +51,12 @@ namespace Voxels
 
                 var wallColor = GetWallColor(distanceToWall);
 
-                g.DrawLine(new Pen(wallColor), x, wallTop, x, wallBottom);
+                dbm.DrawVerticalLine(x, wallTop, wallBottom - wallTop, wallColor);
+
+                //g.DrawLine(new Pen(wallColor), x, wallTop, x, wallBottom);
             }
 
-            return bitmap;
+            return dbm.Bitmap;
         }
 
         public byte[] RenderToByteArray(RvCamera camera)
