@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Drawing;
-using System.IO;
 using Imaging;
 
 namespace Voxels
@@ -12,14 +11,10 @@ namespace Voxels
         private readonly int _mapHeight;
         private readonly int _mapWidth;
 
-        public class RenderResult : IDisposable
+        public class RenderResult
         {
             public Bitmap Bitmap { get; set; }
             public byte[] Bytes { get; set; }
-            public void Dispose()
-            {
-                throw new NotImplementedException();
-            }
         }
 
 

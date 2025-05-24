@@ -21,6 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\MinimalRender\MinimalRender.csproj" />
     <ProjectReference Include="..\RenderEngine\RenderEngine.csproj" />
     <ProjectReference Include="..\Voxels\Voxels.csproj" />
   </ItemGroup>

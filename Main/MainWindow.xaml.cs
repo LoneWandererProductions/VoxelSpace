@@ -199,8 +199,7 @@ namespace Main
 
             _voxel = new VoxelRaster(100, 100, 0, 100, 120, 120, 300, colorMap, heightMap, 200, 300);
 
-            var bmp = _voxel.StartEngine();
-            ImageView.Bitmap = bmp;
+            ImageView.Bitmap = _voxel.StartEngine();
 
             TxtBox.Text = string.Concat(TxtBox.Text, " x: ", _voxel.Camera.X, " y: ", _voxel.Camera.Y,
                 Environment.NewLine);

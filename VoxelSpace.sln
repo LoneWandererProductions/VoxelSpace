@@ -27,7 +27,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "RenderEngine", "RenderEngin
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SpeedTests", "SpeedTests\SpeedTests.csproj", "{A75E2941-678A-41B7-A855-7FFE8495D960}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MinimalRender", "MinimalRender\MinimalRender.csproj", "{BC30E352-2F46-4959-A298-80E290F91FAD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MinimalRender", "MinimalRender\MinimalRender.csproj", "{BC30E352-2F46-4959-A298-80E290F91FAD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OpenGler", "OpenGler\OpenGler.csproj", "{2CE22D5E-F125-48AA-8E6F-BB77E41E6E93}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -75,6 +77,10 @@ Global
 		{BC30E352-2F46-4959-A298-80E290F91FAD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BC30E352-2F46-4959-A298-80E290F91FAD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BC30E352-2F46-4959-A298-80E290F91FAD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2CE22D5E-F125-48AA-8E6F-BB77E41E6E93}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2CE22D5E-F125-48AA-8E6F-BB77E41E6E93}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2CE22D5E-F125-48AA-8E6F-BB77E41E6E93}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2CE22D5E-F125-48AA-8E6F-BB77E41E6E93}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
