@@ -13,6 +13,8 @@ namespace OpenGler
         private byte[] _currentPixels;
         private readonly object _lock = new();
 
+        public Action UpdateLoop { get; set; }
+
         private int _width;
         private int _height;
 
@@ -32,11 +34,15 @@ namespace OpenGler
             _window = new GameWindow(gameSettings, nativeSettings);
             _window.Load += OnLoad;
             _window.RenderFrame += OnRender;
+            _window.UpdateFrame += OnUpdate;
             _window.Unload += OnUnload;
         }
 
+        public bool IsRunning { get; set; }
+
         private void OnLoad()
         {
+            IsRunning = true;
             _renderer = new RasterRenderer();
             _renderer.Initialize(_width, _height);
         }
@@ -50,6 +56,11 @@ namespace OpenGler
 
             _renderer.Render();
             _window.SwapBuffers();
+        }
+
+        private void OnUpdate(FrameEventArgs args)
+        {
+            UpdateLoop?.Invoke();
         }
 
         private void OnUnload()

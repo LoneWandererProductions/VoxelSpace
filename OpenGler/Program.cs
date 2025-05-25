@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using MinimalRender;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
@@ -11,7 +12,7 @@ namespace OpenGler
     {
         private static RasterRaycast _raycaster;
         private static RenderHost _renderHost;
-        private static RenderMode _renderMode = RenderMode.Manual;
+        private static RenderMode _renderMode = RenderMode.RenderHost;
         private static byte[] pixels;
 
         private static int width;
@@ -27,11 +28,23 @@ namespace OpenGler
         [STAThread]
         private static void Main()
         {
-            var gameSettings = new GameWindowSettings
+            switch (_renderMode)
             {
-                UpdateFrequency = 60.0
-            };
+                case RenderMode.Manual:
+                    RunManualMode();
+                    break;
+                case RenderMode.Raycaster:
+                    RunRaycasterMode();
+                    break;
+                case RenderMode.RenderHost:
+                    RunRenderHostMode();
+                    break;
+            }
+        }
 
+        private static void RunManualMode()
+        {
+            var gameSettings = new GameWindowSettings { UpdateFrequency = 60.0 };
             var nativeSettings = new NativeWindowSettings
             {
                 ClientSize = new Vector2i(800, 600),
@@ -39,108 +52,107 @@ namespace OpenGler
             };
 
             using var window = new GameWindow(gameSettings, nativeSettings);
+            var renderer = new RasterRenderer();
 
-            RasterRenderer renderer = null;
+            int width = window.Size.X;
+            int height = window.Size.Y;
+            var pixels = new byte[width * height * 4];
+            int frameCounter = 0;
 
-            width = window.Size.X;
-            height = window.Size.Y;
-            pixels = new byte[width * height * 4];
+            window.Load += () => renderer.Initialize(width, height);
 
-            var frameCounter = 0;
-
-            window.Load += () =>
-            {
-                switch (_renderMode)
-                {
-                    case RenderMode.Manual:
-                    case RenderMode.Raycaster:
-                        renderer = new RasterRenderer();
-                        renderer.Initialize(width, height);
-                        if (_renderMode == RenderMode.Raycaster)
-                            InitiateVRaycaster(width, height);
-                        break;
-
-                    case RenderMode.RenderHost:
-                        _renderHost = new RenderHost(width, height);
-                        // Start RenderHost on a separate thread or run directly
-                        // We'll handle that later in this example
-                        break;
-                }
-            };
-
-            window.Resize += (ResizeEventArgs e) =>
+            window.Resize += e =>
             {
                 width = e.Width;
                 height = e.Height;
                 pixels = new byte[width * height * 4];
-
-                switch (_renderMode)
-                {
-                    case RenderMode.Manual:
-                        // nothing special
-                        break;
-
-                    case RenderMode.Raycaster:
-                        InitiateVRaycaster(width, height);
-                        break;
-
-                    case RenderMode.RenderHost:
-                        _renderHost?.Dispose();
-                        _renderHost = new RenderHost(width, height);
-                        break;
-                }
             };
 
-            window.UpdateFrame += (FrameEventArgs args) =>
+            window.UpdateFrame += args =>
             {
-                switch (_renderMode)
-                {
-                    case RenderMode.Manual:
-                        UpdateImageFromGameLogic(height, width, pixels, ref frameCounter);
-                        break;
-
-                    case RenderMode.Raycaster:
-                        Array.Copy(_raycaster.Render().Bytes, pixels, pixels.Length);
-                        break;
-
-                    case RenderMode.RenderHost:
-                        UpdateImageFromGameLogic(height, width, pixels, ref frameCounter);
-                        _renderHost?.SetFrame(pixels);
-                        break;
-                }
-
-                if (_renderMode != RenderMode.RenderHost && renderer != null)
-                {
-                    renderer.UpdateTexture(pixels, width, height);
-                }
+                UpdateImageFromGameLogic(height, width, pixels, ref frameCounter);
+                renderer.UpdateTexture(pixels, width, height);
             };
 
-            window.RenderFrame += (FrameEventArgs args) =>
+            window.RenderFrame += args =>
             {
-                if (_renderMode != RenderMode.RenderHost && renderer != null)
-                {
-                    renderer.Render();
-                    window.SwapBuffers();
-                }
+                renderer.Render();
+                window.SwapBuffers();
             };
 
-            window.Unload += () =>
-            {
-                renderer?.Dispose();
-                _renderHost?.Dispose();
-            };
-
-            if (_renderMode == RenderMode.RenderHost)
-            {
-                // Run the RenderHost loop instead of this GameWindow's loop
-                _renderHost?.Run();
-            }
-            else
-            {
-                window.Run();
-            }
+            window.Unload += () => renderer.Dispose();
+            window.Run();
         }
 
+        private static void RunRaycasterMode()
+        {
+            var gameSettings = new GameWindowSettings { UpdateFrequency = 60.0 };
+            var nativeSettings = new NativeWindowSettings
+            {
+                ClientSize = new Vector2i(800, 600),
+                Title = "Raycaster Example"
+            };
+
+            using var window = new GameWindow(gameSettings, nativeSettings);
+            var renderer = new RasterRenderer();
+
+            int width = window.Size.X;
+            int height = window.Size.Y;
+            var pixels = new byte[width * height * 4];
+
+            window.Load += () =>
+            {
+                renderer.Initialize(width, height);
+                InitiateVRaycaster(width, height);
+            };
+
+            window.Resize += e =>
+            {
+                width = e.Width;
+                height = e.Height;
+                pixels = new byte[width * height * 4];
+                InitiateVRaycaster(width, height);
+            };
+
+            window.UpdateFrame += args =>
+            {
+                Array.Copy(_raycaster.Render().Bytes, pixels, pixels.Length);
+                renderer.UpdateTexture(pixels, width, height);
+            };
+
+            window.RenderFrame += args =>
+            {
+                renderer.Render();
+                window.SwapBuffers();
+            };
+
+            window.Unload += () => renderer.Dispose();
+            window.Run();
+        }
+
+        private static void RunRenderHostMode()
+        {
+            int width = 800, height = 600;
+            int frameCounter = 0;
+            byte[] pixels = new byte[width * height * 4];
+
+            _renderHost = new RenderHost(width, height);
+
+            _renderHost.UpdateLoop = () =>
+            {
+                UpdateImageFromGameLogic(height, width, pixels, ref frameCounter);
+                _renderHost.SetFrame(pixels);
+            };
+
+            try
+            {
+                _renderHost.Run();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Exception during Run: " + ex);
+            }
+        }
 
         private static void InitiateVRaycaster(int width, int height)
         {
