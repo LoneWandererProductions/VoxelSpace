@@ -22,8 +22,8 @@ namespace OpenGler
             base.OnLoad();
             GL.ClearColor(Color.Black);
 
-            int screenWidth = 320;
-            int screenHeight = 200;
+            var screenWidth = 320;
+            var screenHeight = 200;
 
             _renderer = new RasterRenderer();
             _renderer.Initialize(screenWidth, screenHeight);
@@ -63,7 +63,7 @@ namespace OpenGler
             _camera.Angle += 2;
 
             var result = _raycaster.Render(_camera);
-            byte[] pixelData = result.Bytes;
+            var pixelData = result.Bytes;
 
             _renderer.UpdateTexture(pixelData, result.Bitmap.Width, result.Bitmap.Height);
             _renderer.Render();

@@ -1,22 +1,21 @@
 ﻿using System;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
-using OpenTK.Windowing.Common;
-using OpenTK.Windowing.Desktop;
 
 namespace MinimalRender
 {
-    public class RasterRenderer : IDisposable
+    public sealed class RasterRenderer : IDisposable
     {
         private int _textureId;
         private int _vao, _vbo;
         private int _shaderProgram;
-        private int _screenWidth, _screenHeight;
+        public int ScreenWidth { get; private set; }
+        public int ScreenHeight { get; private set; }
 
         public void Initialize(int screenWidth, int screenHeight)
         {
-            _screenWidth = screenWidth;
-            _screenHeight = screenHeight;
+            ScreenWidth = screenWidth;
+            ScreenHeight = screenHeight;
 
             GL.Viewport(0, 0, screenWidth, screenHeight);
             GL.ClearColor(Color4.Black);
@@ -55,15 +54,31 @@ namespace MinimalRender
             GL.EnableVertexAttribArray(1);
 
             GL.UseProgram(_shaderProgram);
-            int texLocation = GL.GetUniformLocation(_shaderProgram, "tex");
+            var texLocation = GL.GetUniformLocation(_shaderProgram, "tex");
             GL.Uniform1(texLocation, 0);
         }
 
         public void UpdateTexture(byte[] data, int width, int height)
         {
             GL.BindTexture(TextureTarget.Texture2D, _textureId);
-            GL.TexSubImage2D(TextureTarget.Texture2D, 0, 0, 0, width, height, PixelFormat.Bgra, PixelType.UnsignedByte, data);
+
+            // <<< YOUR IMAGE DATA GOES HERE >>>
+            // Replace `data` with your custom byte array (RGBA or BGRA format, 8-bit per channel)
+            // Make sure width/height match or adjust texture size if needed
+
+            GL.TexSubImage2D(
+                TextureTarget.Texture2D,
+                level: 0,
+                xoffset: 0,
+                yoffset: 0,
+                width: width,
+                height: height,
+                format: PixelFormat.Bgra,        // You can also use PixelFormat.Rgba if your data matches
+                type: PixelType.UnsignedByte,
+                pixels: data
+            );
         }
+
 
         public void Render()
         {
@@ -77,9 +92,9 @@ namespace MinimalRender
             GL.DrawArrays(PrimitiveType.Triangles, 0, 6);
         }
 
-        private int CreateShaderProgram()
+        private static int CreateShaderProgram()
         {
-            string vertexShaderSource = @"
+            var vertexShaderSource = @"
                 #version 330 core
                 layout(location = 0) in vec2 aPos;
                 layout(location = 1) in vec2 aTex;
@@ -90,7 +105,7 @@ namespace MinimalRender
                     gl_Position = vec4(aPos, 0.0, 1.0);
                 }";
 
-            string fragmentShaderSource = @"
+            var fragmentShaderSource = @"
                 #version 330 core
                 in vec2 TexCoord;
                 out vec4 FragColor;
@@ -100,10 +115,10 @@ namespace MinimalRender
                     FragColor = texture(tex, TexCoord);
                 }";
 
-            int vertexShader = CompileShader(ShaderType.VertexShader, vertexShaderSource);
-            int fragmentShader = CompileShader(ShaderType.FragmentShader, fragmentShaderSource);
+            var vertexShader = CompileShader(ShaderType.VertexShader, vertexShaderSource);
+            var fragmentShader = CompileShader(ShaderType.FragmentShader, fragmentShaderSource);
 
-            int program = GL.CreateProgram();
+            var program = GL.CreateProgram();
             GL.AttachShader(program, vertexShader);
             GL.AttachShader(program, fragmentShader);
             GL.LinkProgram(program);
@@ -111,7 +126,7 @@ namespace MinimalRender
 
             if (status == 0)
             {
-                string info = GL.GetProgramInfoLog(program);
+                var info = GL.GetProgramInfoLog(program);
                 throw new Exception($"Shader link failed: {info}");
             }
 
@@ -121,16 +136,16 @@ namespace MinimalRender
             return program;
         }
 
-        private int CompileShader(ShaderType type, string source)
+        private static int CompileShader(ShaderType type, string source)
         {
-            int shader = GL.CreateShader(type);
+            var shader = GL.CreateShader(type);
             GL.ShaderSource(shader, source);
             GL.CompileShader(shader);
             GL.GetShader(shader, ShaderParameter.CompileStatus, out var status);
 
             if (status == 0)
             {
-                string info = GL.GetShaderInfoLog(shader);
+                var info = GL.GetShaderInfoLog(shader);
                 throw new Exception($"{type} compilation failed: {info}");
             }
 
@@ -145,5 +160,4 @@ namespace MinimalRender
             GL.DeleteVertexArray(_vao);
         }
     }
-
 }

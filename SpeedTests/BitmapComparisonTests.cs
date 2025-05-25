@@ -48,7 +48,7 @@ namespace SpeedTests
         public void CompareRenderingSpeedsForMultipleUpdates()
         {
             // Number of updates to simulate a slideshow
-            int updateCount = 100;
+            var updateCount = 100;
 
             // Measure time for Media.Image with conversion
             var mediaImageTime = MeasureMediaImageRendering(updateCount);
@@ -66,10 +66,10 @@ namespace SpeedTests
         {
             var stopwatch = Stopwatch.StartNew();
 
-            for (int i = 0; i < updateCount; i++)
+            for (var i = 0; i < updateCount; i++)
             {
                 // Convert Bitmap to BitmapSource
-                BitmapSource bitmapSource = BitmapToBitmapSource(_testBitmap);
+                var bitmapSource = BitmapToBitmapSource(_testBitmap);
 
                 // Simulate rendering in Media.Image
                 var imageControl = new System.Windows.Controls.Image { Source = bitmapSource };
@@ -83,7 +83,7 @@ namespace SpeedTests
         {
             var stopwatch = Stopwatch.StartNew();
 
-            for (int i = 0; i < updateCount; i++)
+            for (var i = 0; i < updateCount; i++)
             {
                 // Simulate rendering in NativeBitmapDisplay
                 var nativeControl = new NativeBitmapDisplay { Bitmap = _testBitmap };
@@ -98,7 +98,7 @@ namespace SpeedTests
             var stopwatch = Stopwatch.StartNew();
 
             // Convert Bitmap to BitmapSource
-            BitmapSource bitmapSource = BitmapToBitmapSource(_testBitmap);
+            var bitmapSource = BitmapToBitmapSource(_testBitmap);
 
             // Simulate rendering in Media.Image
             // Normally, we'd add this to a visual tree in WPF, but here we're testing only the conversion/rendering logic.
