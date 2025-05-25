@@ -3,11 +3,14 @@ using MinimalRender;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
+using Voxels;
 
 namespace OpenGler
 {
     internal static class Program
     {
+        private static RasterRaycast _raycaster;
+
         [STAThread]
         private static void Main()
         {
@@ -26,26 +29,30 @@ namespace OpenGler
             RasterRenderer renderer = null;
 
             //stretch the image to the window size
-            //int width = window.Size.X;   // 800
-            //int height = window.Size.Y;  // 600
-            //byte[] pixels = new byte[width * height * 4];
-
-
-            var width = 256;
-            var height = 256;
+            var width = window.Size.X;   // 800
+            var height = window.Size.Y;  // 600
             var pixels = new byte[width * height * 4];
+
+
+            //var width = 256;
+            //var height = 256;
+            //var pixels = new byte[width * height * 4];
+
             var frameCounter = 0;
 
             window.Load += () =>
             {
                 renderer = new RasterRenderer();
                 renderer.Initialize(window.Size.X, window.Size.Y);
+
+                InitiateVRaycaster(); // <-- Initialize your world
             };
 
 
             // Game logic runs here — this is where you update the pixel buffer
             window.UpdateFrame += (FrameEventArgs args) =>
             {
+                // var result = _raycaster.Render(); // <- returns byte[] (RGBA or BGRA)
                 UpdateImageFromGameLogic(height, width, pixels, ref frameCounter); // Call your method manually
                 renderer.UpdateTexture(pixels, width, height);
             };
@@ -79,9 +86,34 @@ namespace OpenGler
                 renderer?.Dispose();
             };
 
-
-
             window.Run();
+        }
+
+        private static void InitiateVRaycaster()
+        {
+            // Simple map where 1 is a wall and 0 is empty space
+            var map = new int[10, 10]
+            {
+                { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                { 1, 0, 0, 0, 1, 0, 0, 0, 0, 1 },
+                { 1, 0, 1, 0, 1, 0, 1, 0, 0, 1 },
+                { 1, 0, 1, 0, 1, 0, 1, 0, 0, 1 },
+                { 1, 0, 0, 0, 1, 0, 1, 0, 1, 1 },
+                { 1, 0, 1, 0, 0, 0, 1, 1, 1, 1 },
+                { 1, 0, 1, 1, 1, 1, 0, 0, 0, 1 },
+                { 1, 0, 0, 0, 1, 0, 1, 0, 1, 1 },
+                { 1, 1, 1, 1, 1, 0, 1, 0, 0, 1 },
+                { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }
+            };
+
+            // Set up a camera
+            var camera = new RvCamera(96, 96, 0); // Position and angle of the camera
+            //setup the context
+            CameraContext context = new(64, 600, 800);
+
+            // Create Raycaster and render
+            _raycaster = new RasterRaycast(map, camera, context);
+            var result = _raycaster.Render();
         }
 
         /// <summary>

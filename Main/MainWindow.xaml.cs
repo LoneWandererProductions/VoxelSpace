@@ -183,8 +183,8 @@ namespace Main
 
             // Create Raycaster and render
             _raycaster = new RasterRaycast(map, camera, context);
-            var bmp = _raycaster.Render();
-            ImageView.Bitmap = bmp;
+            var result = _raycaster.Render();
+            ImageView.Bitmap = result.Bitmap;
         }
 
         /// <summary>

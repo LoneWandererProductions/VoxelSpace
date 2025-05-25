@@ -22,9 +22,9 @@ namespace Voxels
             return _ray.Render(Camera).Bitmap;
         }
 
-        public Bitmap Render()
+        public Raycaster.RenderResult Render()
         {
-            return _ray.Render(Camera).Bitmap;
+            return _ray.Render(Camera);
         }
     }
 }
