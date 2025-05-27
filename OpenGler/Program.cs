@@ -54,10 +54,10 @@ namespace OpenGler
             using var window = new GameWindow(gameSettings, nativeSettings);
             var renderer = new RasterRenderer();
 
-            int width = window.Size.X;
-            int height = window.Size.Y;
+            var width = window.Size.X;
+            var height = window.Size.Y;
             var pixels = new byte[width * height * 4];
-            int frameCounter = 0;
+            var frameCounter = 0;
 
             window.Load += () => renderer.Initialize(width, height);
 
@@ -96,8 +96,8 @@ namespace OpenGler
             using var window = new GameWindow(gameSettings, nativeSettings);
             var renderer = new RasterRenderer();
 
-            int width = window.Size.X;
-            int height = window.Size.Y;
+            var width = window.Size.X;
+            var height = window.Size.Y;
             var pixels = new byte[width * height * 4];
 
             window.Load += () =>
@@ -133,8 +133,8 @@ namespace OpenGler
         private static void RunRenderHostMode()
         {
             int width = 800, height = 600;
-            int frameCounter = 0;
-            byte[] pixels = new byte[width * height * 4];
+            var frameCounter = 0;
+            var pixels = new byte[width * height * 4];
 
             _renderHost = new RenderHost(width, height);
 
