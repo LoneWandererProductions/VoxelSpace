@@ -25,7 +25,7 @@ namespace RenderEngineTests
             var offset = (1 + 1 * 2) * 4;
             var span = buffer.BufferSpan;
 
-            Assert.AreEqual(200, span[offset]);     // B
+            Assert.AreEqual(200, span[offset]); // B
             Assert.AreEqual(150, span[offset + 1]); // G
             Assert.AreEqual(100, span[offset + 2]); // R
             Assert.AreEqual(255, span[offset + 3]); // A
@@ -40,7 +40,7 @@ namespace RenderEngineTests
             var span = buffer.BufferSpan;
             for (var i = 0; i < span.Length; i += 4)
             {
-                Assert.AreEqual(30, span[i]);     // B
+                Assert.AreEqual(30, span[i]); // B
                 Assert.AreEqual(20, span[i + 1]); // G
                 Assert.AreEqual(10, span[i + 2]); // R
                 Assert.AreEqual(128, span[i + 3]); // A
@@ -56,7 +56,7 @@ namespace RenderEngineTests
             var changes = new (int x, int y, uint bgra)[]
             {
                 (0, 0, 0xFF112233), // A=0xFF, R=0x11, G=0x22, B=0x33
-                (1, 1, 0x80123456)  // A=0x80, R=0x12, G=0x34, B=0x56
+                (1, 1, 0x80123456) // A=0x80, R=0x12, G=0x34, B=0x56
             };
 
             buffer.ApplyChanges(changes);
@@ -84,17 +84,14 @@ namespace RenderEngineTests
 
             var newData = new byte[]
             {
-                1,2,3,4, 5,6,7,8, 9,10,11,12, 13,14,15,16
+                1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16
             };
 
             buffer.ReplaceBuffer(newData);
 
             var span = buffer.BufferSpan;
 
-            for (var i = 0; i < newData.Length; i++)
-            {
-                Assert.AreEqual(newData[i], span[i]);
-            }
+            for (var i = 0; i < newData.Length; i++) Assert.AreEqual(newData[i], span[i]);
         }
 
         [TestMethod]

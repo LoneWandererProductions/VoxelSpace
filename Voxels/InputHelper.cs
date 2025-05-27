@@ -6,7 +6,6 @@ using Mathematics;
 
 namespace Voxels
 {
-
     //TODO Performance Bottleneck is here
     public static class InputHelper
     {
@@ -54,7 +53,7 @@ namespace Voxels
                     break;
                 case Key.A:
                     angle = RotationSpeed * _elapsedTime;
-                    cam.Angle += NormalizeAngle(angle);// Turn left
+                    cam.Angle += NormalizeAngle(angle); // Turn left
                     break;
                 case Key.D:
                     angle = RotationSpeed * _elapsedTime;
@@ -139,7 +138,7 @@ namespace Voxels
         }
 
         /// <summary>
-        /// Normalizes an angle to the range [0, 360).
+        ///     Normalizes an angle to the range [0, 360).
         /// </summary>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private static int NormalizeAngle(float angle)

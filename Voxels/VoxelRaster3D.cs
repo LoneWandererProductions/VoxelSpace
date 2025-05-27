@@ -17,6 +17,7 @@ namespace Voxels
         private readonly CameraContext _context;
         private readonly int _topographyHeight;
         private readonly int _topographyWidth;
+        private ImmutableDictionary<int, Color> _colorDictionary;
 
         private List<int[]> _columnSlices;
         private DirectBitmap _directBitmap;
@@ -28,7 +29,6 @@ namespace Voxels
 
         private Color[] _flatColorMap;
         private int[] _flatHeightMap;
-        private ImmutableDictionary<int, Color> _colorDictionary;
 
         /// <summary>
         ///     The y buffer
@@ -81,11 +81,11 @@ namespace Voxels
             // Populate the ImmutableDictionary
             var dictionaryBuilder = ImmutableDictionary.CreateBuilder<int, Color>();
             for (var y = 0; y < colorHeight; y++)
-                for (var x = 0; x < colorWidth; x++)
-                {
-                    var color = colorMap[x, y];
-                    dictionaryBuilder[color.ToArgb()] = color; // Add ARGB as key and Color as value
-                }
+            for (var x = 0; x < colorWidth; x++)
+            {
+                var color = colorMap[x, y];
+                dictionaryBuilder[color.ToArgb()] = color; // Add ARGB as key and Color as value
+            }
 
             _colorDictionary = dictionaryBuilder.ToImmutable();
         }

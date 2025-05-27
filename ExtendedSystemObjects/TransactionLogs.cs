@@ -143,9 +143,7 @@ namespace ExtendedSystemObjects
                 foreach (var item in Changelog.Reverse().Where(item =>
                              item.Key < id && item.Value.UniqueIdentifier == unique &&
                              item.Value.State == LogState.Add))
-                {
                     return item.Key;
-                }
 
                 return -1;
             }
@@ -175,18 +173,11 @@ namespace ExtendedSystemObjects
         {
             lock (_lock)
             {
-                if (Changelog == null || Changelog.Count == 0)
-                {
-                    return -1;
-                }
+                if (Changelog == null || Changelog.Count == 0) return -1;
 
                 foreach (var (key, value) in Changelog.Reverse())
-                {
                     if (value.UniqueIdentifier == uniqueIdentifier && value.State == state)
-                    {
                         return key;
-                    }
-                }
 
                 return -1;
             }
@@ -200,10 +191,7 @@ namespace ExtendedSystemObjects
         {
             lock (_lock)
             {
-                if (Changelog == null || Changelog.Count == 0)
-                {
-                    return 0;
-                }
+                if (Changelog == null || Changelog.Count == 0) return 0;
 
                 var lst = Changelog.Keys.ToList();
                 return Utility.GetFirstAvailableIndex(lst);

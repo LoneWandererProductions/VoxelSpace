@@ -44,10 +44,7 @@ namespace RenderEngine
         public bool Draw(SKCanvas canvas, SKPaint paint, GraphicStyle style)
         {
             //check if it division is possible
-            if (Path.Count % 3 != 0)
-            {
-                return false;
-            }
+            if (Path.Count % 3 != 0) return false;
 
             using var path = RenderHelper.CreatePath(Start, Path);
 
@@ -58,18 +55,11 @@ namespace RenderEngine
             path.MoveTo(Start.X, Start.Y);
 
             for (var i = 0; i < Path.Count; i += 3)
-            {
                 // Draw a cubic Bezier curve
                 if (i + 2 < Path.Count)
-                {
                     path.CubicTo(path[i], path[i + 1], path[i + 2]);
-                }
                 // Draw a quadratic Bezier curve (if there are only three control points left)
-                else if (i + 1 < Path.Count)
-                {
-                    path.QuadTo(path[i], path[i + 1]);
-                }
-            }
+                else if (i + 1 < Path.Count) path.QuadTo(path[i], path[i + 1]);
 
             switch (style)
             {
@@ -86,18 +76,12 @@ namespace RenderEngine
                 }
                 case GraphicStyle.Plot:
                     paint.StrokeWidth = StrokeWidth;
-                    foreach (var plot in Path)
-                    {
-                        RenderHelper.DrawPoint(canvas, plot, paint);
-                    }
+                    foreach (var plot in Path) RenderHelper.DrawPoint(canvas, plot, paint);
 
                     break;
             }
 
-            if (RenderRegister.Debug)
-            {
-                Trace.WriteLine(ToString());
-            }
+            if (RenderRegister.Debug) Trace.WriteLine(ToString());
 
             // Draw the path
             canvas.DrawPath(path, paint);

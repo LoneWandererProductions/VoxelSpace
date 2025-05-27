@@ -110,12 +110,10 @@ namespace Imaging
                 {
                     // Validate pixel bounds
                     if (pixel.X < 0 || pixel.X >= Width || pixel.Y < 0 || pixel.Y >= Height)
-                    {
                         continue; // Skip invalid pixels
-                    }
 
                     // Calculate the index in the back buffer
-                    var pixelIndex = ((pixel.Y * Width) + pixel.X) * 4; // 4 bytes per pixel (BGRA)
+                    var pixelIndex = (pixel.Y * Width + pixel.X) * 4; // 4 bytes per pixel (BGRA)
 
                     // Set the pixel data in the back buffer
                     dataPointer[pixelIndex + 0] = pixel.B; // Blue
@@ -124,7 +122,7 @@ namespace Imaging
                     dataPointer[pixelIndex + 3] = pixel.A; // Alpha
 
                     // Store the pixel data as ARGB in the Bits array
-                    Bits[(pixel.Y * Width) + pixel.X] = Bits[(pixel.Y * Width) + pixel.X] =
+                    Bits[pixel.Y * Width + pixel.X] = Bits[pixel.Y * Width + pixel.X] =
                         (uint)((pixel.A << 24) | (pixel.R << 16) | (pixel.G << 8) | pixel.B);
                     // This will be fine as long as A, R, G, B are 0-255
                 }
@@ -204,9 +202,7 @@ namespace Imaging
                 {
                     result[j] = 0; // Initialize to zero before summation
                     for (var k = 0; k < 4; k++) // Ensure we only sum over valid indices
-                    {
                         result[j] += matrix[j][k] * colorVector[k];
-                    }
                 }
 
                 // Clamp result to [0, 255] and convert to bytes
@@ -241,9 +237,7 @@ namespace Imaging
 
             // Ensure Bits array is properly initialized
             if (Bits == null || Bits.Length < Width * Height)
-            {
                 throw new InvalidOperationException(ImagingResources.ErrorInvalidOperation);
-            }
 
             for (var i = 0; i < pixelArray.Length; i += vectorCount)
             {
@@ -252,7 +246,6 @@ namespace Imaging
 
                 // Load data into vectors
                 for (var j = 0; j < vectorCount; j++)
-                {
                     if (i + j < pixelArray.Length)
                     {
                         var (x, y, color) = pixelArray[i + j];
@@ -260,7 +253,7 @@ namespace Imaging
                         // Check for valid pixel bounds
                         if (x >= 0 && x < Width && y >= 0 && y < Height)
                         {
-                            indices[j] = x + (y * Width);
+                            indices[j] = x + y * Width;
                             colors[j] = (color.A << 24) | (color.R << 16) | (color.G << 8) | color.B;
                         }
                         else
@@ -276,17 +269,12 @@ namespace Imaging
                         indices[j] = 0; // Default index (can also be an invalid one)
                         colors[j] = 0; // Default color
                     }
-                }
 
                 // Write data to Bits array
                 for (var j = 0; j < vectorCount; j++)
                     // Write only valid indices
-                {
                     if (i + j < pixelArray.Length)
-                    {
                         Bits[indices[j]] = (uint)colors[j];
-                    }
-                }
             }
         }
 
@@ -319,19 +307,12 @@ namespace Imaging
         /// </param>
         private void Dispose(bool disposing)
         {
-            if (_disposed)
-            {
-                return;
-            }
+            if (_disposed) return;
 
             if (disposing)
                 // Free the GCHandle if allocated
-            {
                 if (_bitsHandle.IsAllocated)
-                {
                     _bitsHandle.Free();
-                }
-            }
 
             _disposed = true;
         }

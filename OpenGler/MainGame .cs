@@ -1,21 +1,29 @@
 ﻿using System;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
+using System.Runtime.InteropServices;
 using MinimalRender;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
-using Voxels; // your Raycaster namespace
+using Voxels;
+using PixelFormat = System.Drawing.Imaging.PixelFormat;
+
+// your Raycaster namespace
 
 namespace OpenGler
 {
     public class MainGame : GameWindow
     {
-        private RasterRenderer _renderer;
+        private RvCamera _camera;
         private Raycaster _raycaster;
+        private RasterRenderer _renderer;
 
         public MainGame(GameWindowSettings gws, NativeWindowSettings nws)
-            : base(gws, nws) { }
+            : base(gws, nws)
+        {
+        }
 
         protected override void OnLoad()
         {
@@ -54,8 +62,6 @@ namespace OpenGler
             _camera = camera;
         }
 
-        private RvCamera _camera;
-
         protected override void OnRenderFrame(FrameEventArgs args)
         {
             base.OnRenderFrame(args);
@@ -77,12 +83,12 @@ namespace OpenGler
         {
             Directory.CreateDirectory(Path.GetDirectoryName(path)!);
 
-            using var bmp = new System.Drawing.Bitmap(width, height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+            using var bmp = new Bitmap(width, height, PixelFormat.Format32bppArgb);
             var data = bmp.LockBits(new Rectangle(0, 0, width, height),
-                System.Drawing.Imaging.ImageLockMode.WriteOnly,
+                ImageLockMode.WriteOnly,
                 bmp.PixelFormat);
 
-            System.Runtime.InteropServices.Marshal.Copy(pixels, 0, data.Scan0, pixels.Length);
+            Marshal.Copy(pixels, 0, data.Scan0, pixels.Length);
             bmp.UnlockBits(data);
             bmp.RotateFlip(RotateFlipType.RotateNoneFlipY); // OpenGL is flipped
 

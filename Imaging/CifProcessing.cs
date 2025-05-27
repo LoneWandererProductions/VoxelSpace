@@ -39,10 +39,7 @@ namespace Imaging
             {
                 var color = colorMap[i];
 
-                if (!imageFormat.ContainsKey(color))
-                {
-                    imageFormat[color] = new SortedSet<int>();
-                }
+                if (!imageFormat.ContainsKey(color)) imageFormat[color] = new SortedSet<int>();
 
                 imageFormat[color].Add(i);
             }
@@ -58,19 +55,13 @@ namespace Imaging
         internal static Bitmap? CifFileToImage(string path)
         {
             var cif = CifFromFile(path);
-            if (cif == null)
-            {
-                return null;
-            }
+            if (cif == null) return null;
 
             var image = new Bitmap(cif.Width, cif.Height);
 
             var dbm = DirectBitmap.GetInstance(image);
 
-            foreach (var (color, ids) in cif.CifImage)
-            {
-                dbm.SetArea(ids, color);
-            }
+            foreach (var (color, ids) in cif.CifImage) dbm.SetArea(ids, color);
 
             return dbm.Bitmap;
         }
@@ -93,18 +84,13 @@ namespace Imaging
             var csvData = new List<object>();
 
             foreach (var (converter, startLine, endLine) in ranges)
-            {
                 csvData.AddRange(CsvHandler.ReadCsvRange(path, ImagingResources.Separator, converter, startLine,
                     endLine));
-            }
 
             var meta = csvData.OfType<CifMetadata>().FirstOrDefault();
             var imageData = csvData.OfType<CifImageData>().ToList();
 
-            if (meta == null)
-            {
-                return null;
-            }
+            if (meta == null) return null;
 
             var cif = new Cif
             {
@@ -116,15 +102,9 @@ namespace Imaging
 
             foreach (var data in imageData)
             {
-                if (!cif.CifImage.ContainsKey(data.Color))
-                {
-                    cif.CifImage[data.Color] = new SortedSet<int>();
-                }
+                if (!cif.CifImage.ContainsKey(data.Color)) cif.CifImage[data.Color] = new SortedSet<int>();
 
-                foreach (var coordinates in data.Coordinates)
-                {
-                    cif.CifImage[data.Color].Add(coordinates);
-                }
+                foreach (var coordinates in data.Coordinates) cif.CifImage[data.Color].Add(coordinates);
             }
 
             return cif;
@@ -204,10 +184,7 @@ namespace Imaging
 
                 var compressed = new List<int>();
 
-                if (sequence == null)
-                {
-                    continue;
-                }
+                if (sequence == null) continue;
 
                 var sortedList = new List<int>(value);
 

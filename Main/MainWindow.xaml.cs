@@ -26,13 +26,13 @@ namespace Main
     /// </summary>
     public sealed partial class MainWindow
     {
-        private string _active;
-        private RasterRaycast _raycaster;
-        private VoxelRaster _voxel;
+        private readonly DispatcherTimer _keyRepeatTimer;
 
         private readonly HashSet<Key> _pressedKeys = new();
         private readonly Stopwatch _timer = new();
-        private readonly DispatcherTimer _keyRepeatTimer;
+        private string _active;
+        private RasterRaycast _raycaster;
+        private VoxelRaster _voxel;
 
         /// <inheritdoc />
         /// <summary>
@@ -50,7 +50,7 @@ namespace Main
             if (_pressedKeys.Contains(e.Key)) return; // Ignore if already pressed
             _pressedKeys.Add(e.Key);
 
-            HandleKeyAction(e.Key);  // Handle the action when key is first pressed
+            HandleKeyAction(e.Key); // Handle the action when key is first pressed
 
             if (_pressedKeys.Count == 1) // Start the timer once any key is pressed
             {
@@ -72,10 +72,7 @@ namespace Main
         private void KeyRepeatTimer_Tick(object sender, EventArgs e)
         {
             // Handle repeated actions when a key is held down
-            foreach (var key in _pressedKeys)
-            {
-                HandleKeyAction(key);
-            }
+            foreach (var key in _pressedKeys) HandleKeyAction(key);
         }
 
         private void HandleKeyAction(Key key)
@@ -121,7 +118,7 @@ namespace Main
         }
 
         /// <summary>
-        /// Updates the TextBox with the specified content and elapsed times.
+        ///     Updates the TextBox with the specified content and elapsed times.
         /// </summary>
         /// <param name="message">The message to append to the TextBox.</param>
         /// <param name="stopwatchFullElapsedMilliseconds">The total elapsed time in milliseconds.</param>

@@ -41,12 +41,10 @@ namespace Imaging
             for (var x = Math.Max(0, center.X - radius); x <= Math.Min(width - 1, center.X + radius); x++)
             {
                 var dx = x - center.X;
-                var height = (int)Math.Sqrt((radius * radius) - (dx * dx));
+                var height = (int)Math.Sqrt(radius * radius - dx * dx);
 
                 for (var y = Math.Max(0, center.Y - height); y <= Math.Min(length - 1, center.Y + height); y++)
-                {
                     points.Add(new Point(x, y));
-                }
             }
 
             return points;
@@ -76,9 +74,7 @@ namespace Imaging
             // Normalize the kernel
             for (var y = 0; y < size; y++)
             for (var x = 0; x < size; x++)
-            {
                 kernel[y, x] /= sum;
-            }
 
             return kernel;
         }
@@ -125,31 +121,16 @@ namespace Imaging
             for (var x = 0; x < image.Width; x++)
             {
                 var pixel = image.GetPixel(x, y);
-                if (pixel.A == 0)
-                {
-                    continue;
-                }
+                if (pixel.A == 0) continue;
 
                 hasNonTransparentPixel = true;
-                if (x < minX)
-                {
-                    minX = x;
-                }
+                if (x < minX) minX = x;
 
-                if (x > maxX)
-                {
-                    maxX = x;
-                }
+                if (x > maxX) maxX = x;
 
-                if (y < minY)
-                {
-                    minY = y;
-                }
+                if (y < minY) minY = y;
 
-                if (y > maxY)
-                {
-                    maxY = y;
-                }
+                if (y > maxY) maxY = y;
             }
 
             // If all pixels are transparent, return a zero-sized rectangle
@@ -166,10 +147,7 @@ namespace Imaging
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void HandleException(Exception ex)
         {
-            if (ex == null)
-            {
-                throw new ArgumentNullException(nameof(ex), ImagingResources.ExceptionNull);
-            }
+            if (ex == null) throw new ArgumentNullException(nameof(ex), ImagingResources.ExceptionNull);
 
             // Log the exception details (implementation may vary)
             Trace.WriteLine(string.Format(ImagingResources.ExceptionType, ex.GetType().Name));
@@ -179,9 +157,7 @@ namespace Imaging
             // Optionally, rethrow or handle further
             if (ex is ArgumentException or InvalidOperationException or NotSupportedException or UriFormatException
                 or IOException)
-            {
                 throw new ApplicationException(ImagingResources.GeneralProcessingError, ex);
-            }
         }
 
 
@@ -194,10 +170,7 @@ namespace Imaging
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void ValidateImage(string method, Bitmap image)
         {
-            if (image != null)
-            {
-                return;
-            }
+            if (image != null) return;
 
             var innerException =
                 new ArgumentNullException(string.Concat(method, ImagingResources.Spacing, nameof(image)));
@@ -213,10 +186,7 @@ namespace Imaging
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         internal static void ValidateImage(string method, BitmapImage image)
         {
-            if (image != null)
-            {
-                return;
-            }
+            if (image != null) return;
 
             var innerException =
                 new ArgumentNullException(string.Concat(method, ImagingResources.Spacing, nameof(image)));
@@ -248,10 +218,7 @@ namespace Imaging
                 count++;
             }
 
-            if (!calculateMeanColor || count <= 0)
-            {
-                return (pixels, null);
-            }
+            if (!calculateMeanColor || count <= 0) return (pixels, null);
 
             var averageRed = rSum / count;
             var averageGreen = gSum / count;
@@ -273,7 +240,7 @@ namespace Imaging
         {
             var ft = t * Math.PI;
             var f = (1 - Math.Cos(ft)) * 0.5;
-            return (a * (1 - f)) + (b * f);
+            return a * (1 - f) + b * f;
         }
 
         /// <summary>
@@ -321,15 +288,10 @@ namespace Imaging
         internal static void ValidateParameters(int minValue, int maxValue, int alpha)
         {
             if (minValue is < 0 or > 255 || maxValue is < 0 or > 255 || minValue > maxValue)
-            {
                 throw new ArgumentException(
                     ImagingResources.ErrorColorRange);
-            }
 
-            if (alpha is < 0 or > 255)
-            {
-                throw new ArgumentException(ImagingResources.ErrorColorRange);
-            }
+            if (alpha is < 0 or > 255) throw new ArgumentException(ImagingResources.ErrorColorRange);
         }
     }
 }

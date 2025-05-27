@@ -45,15 +45,9 @@ namespace Imaging
             Point? startPoint = null)
         {
             // Validate input
-            if (image == null)
-            {
-                throw new ArgumentNullException(nameof(image));
-            }
+            if (image == null) throw new ArgumentNullException(nameof(image));
 
-            if (filter == FiltersType.None)
-            {
-                return image; // No filtering required
-            }
+            if (filter == FiltersType.None) return image; // No filtering required
 
             // Default start point
             var actualStartPoint = startPoint ?? new Point(0, 0);

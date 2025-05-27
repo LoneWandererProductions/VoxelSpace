@@ -30,20 +30,13 @@ namespace FileHandler
         public static async Task<bool> RenameDirectory(string source, string target)
         {
             if (string.IsNullOrEmpty(source) || string.IsNullOrEmpty(target))
-            {
                 throw new FileHandlerException(FileHandlerResources.ErrorEmptyString);
-            }
 
             if (source.Equals(target, StringComparison.OrdinalIgnoreCase))
-            {
                 throw new FileHandlerException(FileHandlerResources.ErrorEqualPath);
-            }
 
             //if nothing exists we can return anyways
-            if (!Directory.Exists(source))
-            {
-                return false;
-            }
+            if (!Directory.Exists(source)) return false;
 
             try
             {
@@ -69,20 +62,13 @@ namespace FileHandler
         public static async Task<bool> RenameFile(string source, string target)
         {
             if (string.IsNullOrEmpty(source) || string.IsNullOrEmpty(target))
-            {
                 throw new FileHandlerException(FileHandlerResources.ErrorEmptyString);
-            }
 
             if (source.Equals(target, StringComparison.InvariantCultureIgnoreCase))
-            {
                 throw new FileHandlerException(FileHandlerResources.ErrorEqualPath);
-            }
 
             //if nothing exists we can return anyways
-            if (!File.Exists(source))
-            {
-                return false;
-            }
+            if (!File.Exists(source)) return false;
 
             try
             {

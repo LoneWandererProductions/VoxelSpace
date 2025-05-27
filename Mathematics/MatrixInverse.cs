@@ -32,10 +32,7 @@ namespace Mathematics
 
             double result = toggle;
 
-            for (var i = 0; i < lum.GetLength(1); ++i)
-            {
-                result *= lum[i, i];
-            }
+            for (var i = 0; i < lum.GetLength(1); ++i) result *= lum[i, i];
 
             return result;
         }
@@ -61,18 +58,12 @@ namespace Mathematics
             var rows = matrix.GetLength(0);
             var cols = matrix.GetLength(1); // assume square
 
-            if (rows != cols)
-            {
-                throw new ArithmeticException(MathResources.MatrixErrorInverseNotCubic);
-            }
+            if (rows != cols) throw new ArithmeticException(MathResources.MatrixErrorInverseNotCubic);
 
             var result = matrix.Duplicate();
 
             perm = new int[rows]; // set up row permutation result
-            for (var i = 0; i < rows; ++i)
-            {
-                perm[i] = i;
-            }
+            for (var i = 0; i < rows; ++i) perm[i] = i;
 
             toggle = 1; // toggle tracks row swaps.
             // +1 -greater-than even, -1 -greater-than odd. used by MatrixDeterminant
@@ -84,13 +75,11 @@ namespace Mathematics
 
                 // reader Matt V needed this:
                 for (var i = j + 1; i < rows; ++i)
-                {
                     if (Math.Abs(result[i, j]) > colMax)
                     {
                         colMax = Math.Abs(result[i, j]);
                         pRow = i;
                     }
-                }
                 // Not sure if this approach is needed always, or not.
 
                 if (pRow != j) // if largest value not on pivot, swap rows
@@ -115,17 +104,10 @@ namespace Mathematics
                     // find a good row to swap
                     var goodRow = -1;
                     for (var row = j + 1; row < rows; ++row)
-                    {
                         if (result[row, j] != 0.0)
-                        {
                             goodRow = row;
-                        }
-                    }
 
-                    if (goodRow == -1)
-                    {
-                        throw new Exception(MathResources.MatrixErrorDoolittle);
-                    }
+                    if (goodRow == -1) throw new Exception(MathResources.MatrixErrorDoolittle);
 
                     result.SwapColumn(goodRow, j);
 
@@ -137,10 +119,7 @@ namespace Mathematics
                 for (var i = j + 1; i < rows; ++i)
                 {
                     result[i, j] /= result[j, j];
-                    for (var k = j + 1; k < rows; ++k)
-                    {
-                        result[i, k] -= result[i, j] * result[j, k];
-                    }
+                    for (var k = j + 1; k < rows; ++k) result[i, k] -= result[i, j] * result[j, k];
                 }
             } // main j column loop
 
@@ -160,32 +139,20 @@ namespace Mathematics
             var lum = MatrixDecompose(matrix, out var perm,
                 out _);
 
-            if (lum == null)
-            {
-                throw new ArithmeticException(MathResources.MatrixErrorInverse);
-            }
+            if (lum == null) throw new ArithmeticException(MathResources.MatrixErrorInverse);
 
             var b = new double[n];
             for (var i = 0; i < n; ++i)
             {
                 for (var j = 0; j < n; ++j)
-                {
                     if (i == perm[j])
-                    {
                         b[j] = 1.0;
-                    }
                     else
-                    {
                         b[j] = 0.0;
-                    }
-                }
 
                 var x = HelperSolve(lum, b); // 
 
-                for (var j = 0; j < n; ++j)
-                {
-                    result[j, i] = x[j];
-                }
+                for (var j = 0; j < n; ++j) result[j, i] = x[j];
             }
 
             return result;
@@ -208,10 +175,7 @@ namespace Mathematics
             for (var i = 1; i < n; ++i)
             {
                 var sum = x[i];
-                for (var j = 0; j < i; ++j)
-                {
-                    sum -= luMatrix[i, j] * x[j];
-                }
+                for (var j = 0; j < i; ++j) sum -= luMatrix[i, j] * x[j];
 
                 x[i] = sum;
             }
@@ -220,10 +184,7 @@ namespace Mathematics
             for (var i = n - 2; i >= 0; --i)
             {
                 var sum = x[i];
-                for (var j = i + 1; j < n; ++j)
-                {
-                    sum -= luMatrix[i, j] * x[j];
-                }
+                for (var j = i + 1; j < n; ++j) sum -= luMatrix[i, j] * x[j];
 
                 x[i] = sum / luMatrix[i, i];
             }
@@ -254,10 +215,7 @@ namespace Mathematics
                 {
                     // Summation of L(i, j) * U(j, k)
                     double sum = 0;
-                    for (var j = 0; j < i; j++)
-                    {
-                        sum += lower[i, j] * upper[j, k];
-                    }
+                    for (var j = 0; j < i; j++) sum += lower[i, j] * upper[j, k];
 
                     // Evaluating U(i, k)
                     upper[i, k] = matrix[i, k] - sum;
@@ -265,7 +223,6 @@ namespace Mathematics
 
                 // Lower Triangular
                 for (var k = i; k < width; k++)
-                {
                     if (i == k)
                     {
                         lower[i, i] = 1; // Diagonal as 1
@@ -274,16 +231,12 @@ namespace Mathematics
                     {
                         // Summation of L(k, j) * U(j, i)
                         double sum = 0;
-                        for (var j = 0; j < i; j++)
-                        {
-                            sum += lower[k, j] * upper[j, i];
-                        }
+                        for (var j = 0; j < i; j++) sum += lower[k, j] * upper[j, i];
 
                         // Evaluating L(k, i)
                         lower[k, i]
                             = (matrix[k, i] - sum) / upper[i, i];
                     }
-                }
             }
 
             return new KeyValuePair<double[,], double[,]>(lower, upper);

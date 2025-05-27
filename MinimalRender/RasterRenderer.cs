@@ -6,11 +6,19 @@ namespace MinimalRender
 {
     public sealed class RasterRenderer : IDisposable
     {
+        private int _shaderProgram;
         private int _textureId;
         private int _vao, _vbo;
-        private int _shaderProgram;
         public int ScreenWidth { get; private set; }
         public int ScreenHeight { get; private set; }
+
+        public void Dispose()
+        {
+            GL.DeleteProgram(_shaderProgram);
+            GL.DeleteTexture(_textureId);
+            GL.DeleteBuffer(_vbo);
+            GL.DeleteVertexArray(_vao);
+        }
 
         public void Initialize(int screenWidth, int screenHeight)
         {
@@ -27,17 +35,20 @@ namespace MinimalRender
             GL.TexImage2D(TextureTarget.Texture2D, 0, PixelInternalFormat.Rgba, screenWidth, screenHeight, 0,
                 PixelFormat.Bgra, PixelType.UnsignedByte, IntPtr.Zero);
 
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter, (int)TextureMinFilter.Nearest);
-            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter, (int)TextureMagFilter.Nearest);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMinFilter,
+                (int)TextureMinFilter.Nearest);
+            GL.TexParameter(TextureTarget.Texture2D, TextureParameterName.TextureMagFilter,
+                (int)TextureMagFilter.Nearest);
 
-            float[] vertices = {
+            float[] vertices =
+            {
                 // positions   // texcoords
-                -1f, -1f,  0f, 0f,
-                 1f, -1f,  1f, 0f,
-                 1f,  1f,  1f, 1f,
-                -1f, -1f,  0f, 0f,
-                 1f,  1f,  1f, 1f,
-                -1f,  1f,  0f, 1f
+                -1f, -1f, 0f, 0f,
+                1f, -1f, 1f, 0f,
+                1f, 1f, 1f, 1f,
+                -1f, -1f, 0f, 0f,
+                1f, 1f, 1f, 1f,
+                -1f, 1f, 0f, 1f
             };
 
             _vao = GL.GenVertexArray();
@@ -45,7 +56,8 @@ namespace MinimalRender
 
             GL.BindVertexArray(_vao);
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vbo);
-            GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
+            GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices,
+                BufferUsageHint.StaticDraw);
 
             GL.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, 4 * sizeof(float), 0);
             GL.EnableVertexAttribArray(0);
@@ -68,14 +80,14 @@ namespace MinimalRender
 
             GL.TexSubImage2D(
                 TextureTarget.Texture2D,
-                level: 0,
-                xoffset: 0,
-                yoffset: 0,
-                width: width,
-                height: height,
-                format: PixelFormat.Bgra,        // You can also use PixelFormat.Rgba if your data matches
-                type: PixelType.UnsignedByte,
-                pixels: data
+                0,
+                0,
+                0,
+                width,
+                height,
+                PixelFormat.Bgra, // You can also use PixelFormat.Rgba if your data matches
+                PixelType.UnsignedByte,
+                data
             );
         }
 
@@ -150,14 +162,6 @@ namespace MinimalRender
             }
 
             return shader;
-        }
-
-        public void Dispose()
-        {
-            GL.DeleteProgram(_shaderProgram);
-            GL.DeleteTexture(_textureId);
-            GL.DeleteBuffer(_vbo);
-            GL.DeleteVertexArray(_vao);
         }
     }
 }

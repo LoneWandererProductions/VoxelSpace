@@ -53,13 +53,9 @@ namespace Imaging
             var noiseData = new double[_height, _width];
 
             for (var y = 0; y < _height; y++)
-            {
-                for (var x = 0; x < _width; x++)
-                {
-                    noiseData[y, x] =
-                        rand.NextDouble(); // Assign a random value between 0 and 1random.NextDouble(); // Random value between 0.0 and 1.0
-                }
-            }
+            for (var x = 0; x < _width; x++)
+                noiseData[y, x] =
+                    rand.NextDouble(); // Assign a random value between 0 and 1random.NextDouble(); // Random value between 0.0 and 1.0
 
             return noiseData;
         }

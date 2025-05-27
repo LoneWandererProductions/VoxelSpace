@@ -22,22 +22,19 @@ namespace RenderEngine
             Clear(0, 0, 0, 0);
         }
 
-        public Span<byte> BufferSpan => new Span<byte>(_bufferPtr.ToPointer(), _bufferSize);
+        public Span<byte> BufferSpan => new(_bufferPtr.ToPointer(), _bufferSize);
 
         public int Width { get; }
         public int Height { get; }
 
         public void Dispose()
         {
-            if (_bufferPtr != IntPtr.Zero)
-            {
-                Marshal.FreeHGlobal(_bufferPtr);
-            }
+            if (_bufferPtr != IntPtr.Zero) Marshal.FreeHGlobal(_bufferPtr);
         }
 
         private int GetPixelOffset(int x, int y)
         {
-            return ((y * Width) + x) * _bytesPerPixel;
+            return (y * Width + x) * _bytesPerPixel;
         }
 
         public void SetPixel(int x, int y, byte a, byte r, byte g, byte b)
@@ -59,10 +56,7 @@ namespace RenderEngine
             var vectorSize = Vector<byte>.Count;
             var i = 0;
 
-            for (; i <= buffer.Length - vectorSize; i += vectorSize)
-            {
-                pixelVector.CopyTo(buffer.Slice(i, vectorSize));
-            }
+            for (; i <= buffer.Length - vectorSize; i += vectorSize) pixelVector.CopyTo(buffer.Slice(i, vectorSize));
 
             for (; i < buffer.Length; i += 4)
             {
@@ -99,10 +93,7 @@ namespace RenderEngine
 
             foreach (var (x, y, bgra) in changes)
             {
-                if ((uint)x >= (uint)Width || (uint)y >= (uint)Height)
-                {
-                    continue;
-                }
+                if ((uint)x >= (uint)Width || (uint)y >= (uint)Height) continue;
 
                 var offset = GetPixelOffset(x, y);
 
@@ -121,10 +112,7 @@ namespace RenderEngine
         /// </summary>
         public void ReplaceBuffer(ReadOnlySpan<byte> fullBuffer)
         {
-            if (fullBuffer.Length != _bufferSize)
-            {
-                throw new ArgumentException("Input buffer size does not match.");
-            }
+            if (fullBuffer.Length != _bufferSize) throw new ArgumentException("Input buffer size does not match.");
 
             var buffer = BufferSpan;
 
@@ -140,15 +128,12 @@ namespace RenderEngine
 
                     for (var i = 0; i < simdCount; i++)
                     {
-                        var vec = Avx.LoadVector256(srcPtr + (i * vectorSize));
-                        Avx.Store(dstPtr + (i * vectorSize), vec);
+                        var vec = Avx.LoadVector256(srcPtr + i * vectorSize);
+                        Avx.Store(dstPtr + i * vectorSize, vec);
                     }
 
                     // copy remaining bytes
-                    for (var i = _bufferSize - remainder; i < _bufferSize; i++)
-                    {
-                        buffer[i] = fullBuffer[i];
-                    }
+                    for (var i = _bufferSize - remainder; i < _bufferSize; i++) buffer[i] = fullBuffer[i];
                 }
             }
             else
@@ -158,19 +143,16 @@ namespace RenderEngine
         }
 
         /// <summary>
-        ///     Returns a Span
-        ///     <byte>
-        ///         representing the pixel data for a horizontal run starting at (x,y).
-        ///         Length is count pixels (count * bytesPerPixel bytes).
-        ///         No bounds checking, so use carefully or add your own.
+        /// Gets the pixel span.
         /// </summary>
-        /// <exception cref="ArgumentOutOfRangeException"></exception>
+        /// <param name="x">The x.</param>
+        /// <param name="y">The y.</param>
+        /// <param name="count">The count.</param>
+        /// <returns></returns>
+        /// <exception cref="System.ArgumentOutOfRangeException"></exception>
         public Span<byte> GetPixelSpan(int x, int y, int count)
         {
-            if (x < 0 || y < 0 || x + count > Width || y >= Height)
-            {
-                throw new ArgumentOutOfRangeException();
-            }
+            if (x < 0 || y < 0 || x + count > Width || y >= Height) throw new ArgumentOutOfRangeException();
 
             var offset = GetPixelOffset(x, y);
             var length = count * _bytesPerPixel;

@@ -11,12 +11,6 @@ namespace Voxels
         private readonly int _mapHeight;
         private readonly int _mapWidth;
 
-        public class RenderResult
-        {
-            public Bitmap Bitmap { get; set; }
-            public byte[] Bytes { get; set; }
-        }
-
 
         public Raycaster(int[,] map, CameraContext context)
         {
@@ -111,6 +105,12 @@ namespace Voxels
         private static double DegreeToRadian(double degree)
         {
             return degree * Math.PI / 180.0;
+        }
+
+        public class RenderResult
+        {
+            public Bitmap Bitmap { get; set; }
+            public byte[] Bytes { get; set; }
         }
     }
 }

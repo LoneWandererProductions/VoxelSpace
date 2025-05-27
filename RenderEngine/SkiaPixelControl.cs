@@ -38,9 +38,7 @@ namespace RenderEngine
         public void SetPixel(int x, int y, SKColor color)
         {
             if (_bitmap == null)
-            {
                 throw new InvalidOperationException("The control must be initialized before setting pixels.");
-            }
 
             _bitmap.SetPixel(x, y, color);
 
@@ -54,9 +52,7 @@ namespace RenderEngine
         public SKColor GetPixel(int x, int y)
         {
             if (_bitmap == null)
-            {
                 throw new InvalidOperationException("The control must be initialized before getting pixels.");
-            }
 
             return _bitmap.GetPixel(x, y);
         }
@@ -64,27 +60,23 @@ namespace RenderEngine
         public void ChangeAreaOfPixels(int startX, int startY, int width, int height, byte[] pixelData)
         {
             if (_bitmap == null)
-            {
                 throw new InvalidOperationException("The control must be initialized before changing pixels.");
-            }
 
             // Update the pixels in the area defined by startX, startY, width, height
             for (var y = 0; y < height; y++)
+            for (var x = 0; x < width; x++)
             {
-                for (var x = 0; x < width; x++)
-                {
-                    var srcIndex = ((y * width) + x) * 4; // BGRA32 format
-                    var dstIndex = (((startY + y) * _bitmap.Width) + startX + x) * 4;
+                var srcIndex = (y * width + x) * 4; // BGRA32 format
+                var dstIndex = ((startY + y) * _bitmap.Width + startX + x) * 4;
 
-                    var color = new SKColor(
-                        pixelData[srcIndex + 2], // Red
-                        pixelData[srcIndex + 1], // Green
-                        pixelData[srcIndex], // Blue
-                        pixelData[srcIndex + 3] // Alpha
-                    );
+                var color = new SKColor(
+                    pixelData[srcIndex + 2], // Red
+                    pixelData[srcIndex + 1], // Green
+                    pixelData[srcIndex], // Blue
+                    pixelData[srcIndex + 3] // Alpha
+                );
 
-                    _bitmap.SetPixel(startX + x, startY + y, color);
-                }
+                _bitmap.SetPixel(startX + x, startY + y, color);
             }
 
             // Mark the updated area as dirty
@@ -98,12 +90,10 @@ namespace RenderEngine
         {
             // Convert SkiaSharp Bitmap to System.Drawing Bitmap (BGRA to ARGB conversion)
             for (var y = 0; y < _bitmap.Height; y++)
+            for (var x = 0; x < _bitmap.Width; x++)
             {
-                for (var x = 0; x < _bitmap.Width; x++)
-                {
-                    var color = _bitmap.GetPixel(x, y);
-                    _gdiBitmap.SetPixel(x, y, Color.FromArgb(color.Alpha, color.Red, color.Green, color.Blue));
-                }
+                var color = _bitmap.GetPixel(x, y);
+                _gdiBitmap.SetPixel(x, y, Color.FromArgb(color.Alpha, color.Red, color.Green, color.Blue));
             }
 
             return _gdiBitmap;
@@ -113,10 +103,7 @@ namespace RenderEngine
         {
             base.OnPaintSurface(e);
 
-            if (_bitmap == null)
-            {
-                return;
-            }
+            if (_bitmap == null) return;
 
             var canvas = e.Surface.Canvas;
 

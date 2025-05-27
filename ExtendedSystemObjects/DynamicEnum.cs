@@ -100,10 +100,7 @@ namespace ExtendedSystemObjects
         /// </returns>
         public bool Equals(DynamicEnum<T> other)
         {
-            if (other == null)
-            {
-                return false;
-            }
+            if (other == null) return false;
 
             return Value == other.Value && Name == other.Name;
         }
@@ -121,10 +118,7 @@ namespace ExtendedSystemObjects
         /// </remarks>
         public static T Add(string name, int value)
         {
-            if (!Values.ContainsKey(name))
-            {
-                return (T)Activator.CreateInstance(typeof(T), name, value)!;
-            }
+            if (!Values.ContainsKey(name)) return (T)Activator.CreateInstance(typeof(T), name, value)!;
 
             return Values[name];
         }
@@ -194,10 +188,7 @@ namespace ExtendedSystemObjects
         /// <returns>True if both instances are equal; otherwise, false.</returns>
         public override bool Equals(object obj)
         {
-            if (obj is DynamicEnum<T> other)
-            {
-                return Equals(other);
-            }
+            if (obj is DynamicEnum<T> other) return Equals(other);
 
             return false;
         }
@@ -210,10 +201,7 @@ namespace ExtendedSystemObjects
         /// <returns>True if the instances are equal; otherwise, false.</returns>
         public static bool operator ==(DynamicEnum<T> left, DynamicEnum<T> right)
         {
-            if (left is null)
-            {
-                return right is null;
-            }
+            if (left is null) return right is null;
 
             return left.Equals(right);
         }

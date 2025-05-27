@@ -22,9 +22,7 @@ namespace ExtendedSystemObjects
         public static void SwapColumn<TValue>(this TValue[,] array, int xOne, int xTwo)
         {
             for (var i = 0; i < array.GetLength(1); i++)
-            {
                 (array[xOne, i], array[xTwo, i]) = (array[xTwo, i], array[xOne, i]);
-            }
         }
 
         /// <summary>
@@ -37,9 +35,7 @@ namespace ExtendedSystemObjects
         public static void SwapRow<TValue>(this TValue[,] array, int xOne, int xTwo)
         {
             for (var i = 0; i < array.GetLength(0); i++)
-            {
                 (array[i, xOne], array[i, xTwo]) = (array[i, xTwo], array[i, xOne]);
-            }
         }
 
         /// <summary>
@@ -65,13 +61,9 @@ namespace ExtendedSystemObjects
                     _ = str.Append(tmp);
 
                     if ((i + 1) % row == 0 && i + 1 >= row)
-                    {
                         _ = str.Append(Environment.NewLine);
-                    }
                     else
-                    {
                         _ = str.Append(ExtendedSystemObjectsResources.Separator);
-                    }
                 }
             }
 
@@ -95,7 +87,7 @@ namespace ExtendedSystemObjects
                 for (var i = 0; i < array.GetLength(0); i++)
                 for (var j = 0; j < array.GetLength(1); j++)
                 {
-                    var cursor = i + (j * array.GetLength(1));
+                    var cursor = i + j * array.GetLength(1);
 
                     one[cursor] = two[cursor];
                 }
@@ -113,27 +105,17 @@ namespace ExtendedSystemObjects
         /// <returns>Equal or not</returns>
         public static unsafe bool Equal<TValue>(this TValue[,] array, TValue[,] compare) where TValue : unmanaged
         {
-            if (array.GetLength(0) != compare.GetLength(0))
-            {
-                return false;
-            }
+            if (array.GetLength(0) != compare.GetLength(0)) return false;
 
-            if (array.GetLength(1) != compare.GetLength(1))
-            {
-                return false;
-            }
+            if (array.GetLength(1) != compare.GetLength(1)) return false;
 
             var length = array.GetLength(0) * array.GetLength(1);
 
             fixed (TValue* one = array, two = compare)
             {
                 for (var i = 0; i < length; ++i)
-                {
                     if (!one[i].Equals(two[i]))
-                    {
                         return false;
-                    }
-                }
             }
 
             return true;
@@ -174,16 +156,11 @@ namespace ExtendedSystemObjects
 
             // Iterate through each row
             for (var i = 0; i < rows; i++)
-            {
                 // Pin the current row
                 fixed (TValue* rowPtr = jaggedArray[i])
                 {
-                    for (var j = 0; j < cols; j++)
-                    {
-                        result[i, j] = rowPtr[j]; // Copy the value directly
-                    }
+                    for (var j = 0; j < cols; j++) result[i, j] = rowPtr[j]; // Copy the value directly
                 }
-            }
 
             return result;
         }

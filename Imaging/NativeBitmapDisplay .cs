@@ -91,20 +91,13 @@ namespace Imaging
         /// <param name="e">The <see cref="DependencyPropertyChangedEventArgs" /> instance containing the event data.</param>
         private static void OnBitmapChanged(DependencyObject d, DependencyPropertyChangedEventArgs e)
         {
-            if (d is not NativeBitmapDisplay control || e.NewValue is not Bitmap newBitmap)
-            {
-                return;
-            }
+            if (d is not NativeBitmapDisplay control || e.NewValue is not Bitmap newBitmap) return;
 
             // Ensure we are on the UI thread before updating the image
             if (control.Dispatcher.CheckAccess())
-            {
                 UpdateImage(control, newBitmap);
-            }
             else
-            {
                 control.Dispatcher.Invoke(() => UpdateImage(control, newBitmap));
-            }
         }
 
         /// <summary>
@@ -114,15 +107,9 @@ namespace Imaging
         /// <param name="newBitmap">The new bitmap.</param>
         private static void UpdateImage(NativeBitmapDisplay control, Bitmap newBitmap)
         {
-            if (ReferenceEquals(control._pictureBox.Image, newBitmap))
-            {
-                return;
-            }
+            if (ReferenceEquals(control._pictureBox.Image, newBitmap)) return;
 
-            if (control._pictureBox.Image is Bitmap oldBitmap)
-            {
-                oldBitmap.Dispose();
-            }
+            if (control._pictureBox.Image is Bitmap oldBitmap) oldBitmap.Dispose();
 
             control._pictureBox.Image = newBitmap.Clone() as Bitmap; // Clone to ensure safe assignment
         }

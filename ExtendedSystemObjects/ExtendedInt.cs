@@ -82,10 +82,7 @@ namespace ExtendedSystemObjects
         /// <returns>Rounded  up float to int value.</returns>
         public static int RoundToInt(this float value)
         {
-            if (value < 0)
-            {
-                return (int)(value - 0.5f); // round down for negative values
-            }
+            if (value < 0) return (int)(value - 0.5f); // round down for negative values
 
             return (int)(value + 0.5f); // round up for positive values
         }

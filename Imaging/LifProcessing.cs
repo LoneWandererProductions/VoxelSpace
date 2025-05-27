@@ -28,12 +28,8 @@ namespace Imaging
             var similarPixels = 0;
 
             foreach (var color in colorCount1.Keys)
-            {
                 if (colorCount2.ContainsKey(color))
-                {
                     similarPixels += Math.Min(colorCount1[color], colorCount2[color]);
-                }
-            }
 
             var similarity = (double)similarPixels / Math.Min(totalPixels1, totalPixels2);
             return similarity >= threshold;
@@ -67,13 +63,10 @@ namespace Imaging
             for (var x = 0; x < bitmap.Width; x++)
             {
                 var pixelColor = bitmap.GetPixel(x, y);
-                var pixelIndex = (y * bitmap.Width) + x;
+                var pixelIndex = y * bitmap.Width + x;
 
                 // Group pixels by color
-                if (!cif.ContainsKey(pixelColor))
-                {
-                    cif[pixelColor] = new List<int>();
-                }
+                if (!cif.ContainsKey(pixelColor)) cif[pixelColor] = new List<int>();
 
                 cif[pixelColor].Add(pixelIndex);
             }
@@ -106,31 +99,20 @@ namespace Imaging
             Dictionary<Color, List<int>> cif2, double threshold)
         {
             if (!AreColorCountsSimilar(GetColorCount(cif1), GetColorCount(cif2), threshold))
-            {
                 return cif2; // No compression possible, return the second CIF as is
-            }
 
             var compressedCif = new Dictionary<Color, List<int>>();
 
             // Store the base CIF data
-            foreach (var entry in cif1)
-            {
-                compressedCif[entry.Key] = new List<int>(entry.Value); // Copy existing pixels
-            }
+            foreach (var entry in cif1) compressedCif[entry.Key] = new List<int>(entry.Value); // Copy existing pixels
 
             // Apply delta logic for similar colors
             foreach (var entry in cif2)
-            {
                 if (!compressedCif.ContainsKey(entry.Key))
-                {
                     compressedCif[entry.Key] = new List<int>();
-                }
                 else
                     // Only add new pixels if the color already exists
-                {
                     compressedCif[entry.Key].AddRange(entry.Value);
-                }
-            }
 
             return compressedCif;
         }

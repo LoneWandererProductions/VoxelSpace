@@ -5,7 +5,8 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:imaging="clr-namespace:Imaging;assembly=Imaging"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800" PreviewKeyDown="Window_PreviewKeyDown" PreviewKeyUp="Window_PreviewKeyUp">
+        Title="MainWindow" Height="450" Width="800" PreviewKeyDown="Window_PreviewKeyDown"
+        PreviewKeyUp="Window_PreviewKeyUp">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="25" />
@@ -14,7 +15,7 @@
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="150" />
             <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
         <imaging:NativeBitmapDisplay Name="ImageView" Grid.Column="1" Grid.RowSpan="2" Grid.ColumnSpan="2" />
         <TextBox Grid.Column="0" x:Name="TxtBox" VerticalContentAlignment="Stretch"

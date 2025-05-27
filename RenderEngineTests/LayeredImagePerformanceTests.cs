@@ -63,10 +63,10 @@ namespace RenderEngineTests
             // Basic pseudorandom fill based on iteration/seed
             for (var i = 0; i < buffer.Length; i += 4)
             {
-                buffer[i + 0] = (byte)((seed * 13 + i) % 256);       // B
-                buffer[i + 1] = (byte)(255 - ((seed * 7 + i) % 256)); // G
-                buffer[i + 2] = (byte)((seed * 3 + i) % 256);        // R
-                buffer[i + 3] = (byte)((seed * 5 + 128 + i) % 256);  // A
+                buffer[i + 0] = (byte)((seed * 13 + i) % 256); // B
+                buffer[i + 1] = (byte)(255 - (seed * 7 + i) % 256); // G
+                buffer[i + 2] = (byte)((seed * 3 + i) % 256); // R
+                buffer[i + 3] = (byte)((seed * 5 + 128 + i) % 256); // A
             }
         }
     }

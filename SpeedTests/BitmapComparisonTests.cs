@@ -1,18 +1,18 @@
 ﻿using System.Diagnostics;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.IO;
 using System.Threading;
 using System.Windows.Media.Imaging;
 using Imaging;
 using NUnit.Framework;
+using Image = System.Windows.Controls.Image;
 
 namespace SpeedTests
 {
     [TestFixture]
     public class BitmapRenderingTests
     {
-        private Bitmap _testBitmap;
-
         [SetUp]
         public void Setup()
         {
@@ -27,6 +27,8 @@ namespace SpeedTests
             _testBitmap.Dispose();
         }
 
+        private Bitmap _testBitmap;
+
         [Test]
         [Apartment(ApartmentState.STA)]
         public void CompareRenderingSpeeds()
@@ -40,7 +42,8 @@ namespace SpeedTests
             TestContext.WriteLine($"Media.Image Time: {mediaImageTime}ms");
             TestContext.WriteLine($"NativeBitmapDisplay Time: {nativeDisplayTime}ms");
 
-            Assert.IsTrue(nativeDisplayTime <= mediaImageTime, "NativeBitmapDisplay should be as fast or faster than Media.Image rendering.");
+            Assert.IsTrue(nativeDisplayTime <= mediaImageTime,
+                "NativeBitmapDisplay should be as fast or faster than Media.Image rendering.");
         }
 
         [Test]
@@ -59,7 +62,8 @@ namespace SpeedTests
             TestContext.WriteLine($"Media.Image Time for {updateCount} updates: {mediaImageTime}ms");
             TestContext.WriteLine($"NativeBitmapDisplay Time for {updateCount} updates: {nativeDisplayTime}ms");
 
-            Assert.IsTrue(nativeDisplayTime <= mediaImageTime, "NativeBitmapDisplay should be as fast or faster than Media.Image rendering.");
+            Assert.IsTrue(nativeDisplayTime <= mediaImageTime,
+                "NativeBitmapDisplay should be as fast or faster than Media.Image rendering.");
         }
 
         private long MeasureMediaImageRendering(int updateCount)
@@ -72,7 +76,7 @@ namespace SpeedTests
                 var bitmapSource = BitmapToBitmapSource(_testBitmap);
 
                 // Simulate rendering in Media.Image
-                var imageControl = new System.Windows.Controls.Image { Source = bitmapSource };
+                var imageControl = new Image { Source = bitmapSource };
             }
 
             stopwatch.Stop();
@@ -102,7 +106,7 @@ namespace SpeedTests
 
             // Simulate rendering in Media.Image
             // Normally, we'd add this to a visual tree in WPF, but here we're testing only the conversion/rendering logic.
-            var imageControl = new System.Windows.Controls.Image { Source = bitmapSource };
+            var imageControl = new Image { Source = bitmapSource };
 
             stopwatch.Stop();
             return stopwatch.ElapsedMilliseconds;
@@ -122,7 +126,7 @@ namespace SpeedTests
         private static BitmapSource BitmapToBitmapSource(Bitmap bitmap)
         {
             using var memoryStream = new MemoryStream();
-            bitmap.Save(memoryStream, System.Drawing.Imaging.ImageFormat.Png);
+            bitmap.Save(memoryStream, ImageFormat.Png);
             memoryStream.Position = 0;
 
             var bitmapImage = new BitmapImage();

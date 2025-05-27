@@ -13,6 +13,8 @@ namespace Voxels
 {
     public sealed class VoxelRaster : IDisposable
     {
+        private static readonly List<Task> _pendingTasks = new(); // To track pending tasks
+
         /// <summary>
         ///     The cache preload thread
         /// </summary>
@@ -25,9 +27,13 @@ namespace Voxels
 
         private readonly Key[] _directionKey;
 
+        private readonly ConcurrentDictionary<Key, bool> _isImageBeingGenerated = new();
+
         private readonly ConcurrentDictionary<Key, Bitmap> _lazyCache;
 
         private readonly object _lock = new();
+
+        private readonly VoxelRaster3D _raster;
         private Dictionary<int, Color> _colorDictionary;
 
         /// <summary>
@@ -60,12 +66,8 @@ namespace Voxels
         /// </summary>
         private bool _isCachePreloading;
 
-        private readonly VoxelRaster3D _raster;
-
         private int _topographyHeight;
         private int _topographyWidth;
-
-        public long CameraTime { get; set; }
 
         /// <summary>
         ///     Initializes a new instance of the <see cref="VoxelRaster" /> class.
@@ -122,6 +124,8 @@ namespace Voxels
             InputHelper.LastUpdateTime = DateTime.Now;
         }
 
+        public long CameraTime { get; set; }
+
         /// <summary>
         ///     Gets the camera.
         /// </summary>
@@ -131,10 +135,10 @@ namespace Voxels
         public RvCamera Camera { get; set; }
 
         /// <summary>
-        /// Gets the image render.
+        ///     Gets the image render.
         /// </summary>
         /// <value>
-        /// The image render.
+        ///     The image render.
         /// </value>
         public long ImageRender { get; private set; }
 
@@ -143,8 +147,6 @@ namespace Voxels
             Dispose(true);
             GC.SuppressFinalize(this);
         }
-
-        private static List<Task> _pendingTasks = new List<Task>(); // To track pending tasks
 
         /// <summary>
         ///     Gets the bitmap for key.
@@ -255,8 +257,6 @@ namespace Voxels
             PreloadCache(_cancellationTokenSource.Token);
         }
 
-        private readonly ConcurrentDictionary<Key, bool> _isImageBeingGenerated = new ConcurrentDictionary<Key, bool>();
-
         /// <summary>
         ///     Generates the and cache bitmap for key.
         /// </summary>
@@ -266,7 +266,8 @@ namespace Voxels
             lock (_lock)
             {
                 // Check if the bitmap is already being generated in another thread
-                if (_lazyCache.ContainsKey(key) || _isImageBeingGenerated.ContainsKey(key) && _isImageBeingGenerated[key])
+                if (_lazyCache.ContainsKey(key) ||
+                    (_isImageBeingGenerated.ContainsKey(key) && _isImageBeingGenerated[key]))
                     return;
 
                 // Mark that we are generating the image for this key

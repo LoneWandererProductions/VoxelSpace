@@ -8,15 +8,13 @@ namespace OpenGler
 {
     public class RenderHost : IDisposable
     {
-        private GameWindow _window;
-        private RasterRenderer _renderer;
-        private byte[] _currentPixels;
         private readonly object _lock = new();
+        private readonly byte[] _currentPixels;
+        private readonly int _height;
+        private RasterRenderer _renderer;
 
-        public Action UpdateLoop { get; set; }
-
-        private int _width;
-        private int _height;
+        private readonly int _width;
+        private readonly GameWindow _window;
 
         public RenderHost(int width, int height)
         {
@@ -38,7 +36,15 @@ namespace OpenGler
             _window.Unload += OnUnload;
         }
 
+        public Action UpdateLoop { get; set; }
+
         public bool IsRunning { get; set; }
+
+        public void Dispose()
+        {
+            _window?.Close();
+            _window?.Dispose();
+        }
 
         private void OnLoad()
         {
@@ -82,12 +88,5 @@ namespace OpenGler
         {
             _window.Run();
         }
-
-        public void Dispose()
-        {
-            _window?.Close();
-            _window?.Dispose();
-        }
     }
-
 }

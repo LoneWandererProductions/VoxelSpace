@@ -43,10 +43,7 @@ namespace DataFormatter
             var bytesRead = fs.Read(buffer, 0, 5);
 
             // Check if the file is smaller than the BOM sizes we are checking
-            if (bytesRead < 2)
-            {
-                return Encoding.Default; // Default ANSI code page if not enough bytes for BOM
-            }
+            if (bytesRead < 2) return Encoding.Default; // Default ANSI code page if not enough bytes for BOM
 
             switch (buffer[0])
             {

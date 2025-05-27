@@ -9,7 +9,7 @@ namespace Voxels
     internal static class RasterHelper
     {
         /// <summary>
-        /// Fills gaps (zeros) in a column slice with the last known non-zero value.
+        ///     Fills gaps (zeros) in a column slice with the last known non-zero value.
         /// </summary>
         private static int[] FillGaps(int[] columnSlice)
         {
@@ -29,7 +29,8 @@ namespace Voxels
             return filledColumnSlice;
         }
 
-        internal static IEnumerable<(int x, int y, Color color)> FillMissingColorsOld(List<int[]> columnSlices, ImmutableDictionary<int, Color> colorDictionary)
+        internal static IEnumerable<(int x, int y, Color color)> FillMissingColorsOld(List<int[]> columnSlices,
+            ImmutableDictionary<int, Color> colorDictionary)
         {
             var filledPixelTuples = new ConcurrentBag<(int x, int y, Color color)>();
 
@@ -50,7 +51,8 @@ namespace Voxels
             return filledPixelTuples;
         }
 
-        internal static IEnumerable<(int x, int y, Color color)> FillMissingColorsPoints(List<int[]> columnSlices, ImmutableDictionary<int, Color> colorDictionary)
+        internal static IEnumerable<(int x, int y, Color color)> FillMissingColorsPoints(List<int[]> columnSlices,
+            ImmutableDictionary<int, Color> colorDictionary)
         {
             var filledPixelTuples = new ConcurrentBag<(int x, int y, Color color)>();
 

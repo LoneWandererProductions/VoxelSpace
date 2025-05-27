@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Threading;
 using MinimalRender;
 using OpenTK.Mathematics;
-using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using Voxels;
 
@@ -12,18 +10,11 @@ namespace OpenGler
     {
         private static RasterRaycast _raycaster;
         private static RenderHost _renderHost;
-        private static RenderMode _renderMode = RenderMode.RenderHost;
+        private static readonly RenderMode _renderMode = RenderMode.RenderHost;
         private static byte[] pixels;
 
         private static int width;
         private static int height;
-
-        private enum RenderMode
-        {
-            Manual,
-            Raycaster,
-            RenderHost
-        }
 
         [STAThread]
         private static void Main()
@@ -178,18 +169,23 @@ namespace OpenGler
         private static void UpdateImageFromGameLogic(int height, int width, byte[] pixels, ref int frameCounter)
         {
             for (var y = 0; y < height; y++)
+            for (var x = 0; x < width; x++)
             {
-                for (var x = 0; x < width; x++)
-                {
-                    var i = (y * width + x) * 4;
-                    pixels[i + 0] = (byte)((x + frameCounter) % 256); // Blue
-                    pixels[i + 1] = (byte)((y + frameCounter) % 256); // Green
-                    pixels[i + 2] = 0; // Red
-                    pixels[i + 3] = 255; // Alpha
-                }
+                var i = (y * width + x) * 4;
+                pixels[i + 0] = (byte)((x + frameCounter) % 256); // Blue
+                pixels[i + 1] = (byte)((y + frameCounter) % 256); // Green
+                pixels[i + 2] = 0; // Red
+                pixels[i + 3] = 255; // Alpha
             }
 
             frameCounter++;
+        }
+
+        private enum RenderMode
+        {
+            Manual,
+            Raycaster,
+            RenderHost
         }
     }
 }

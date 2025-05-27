@@ -154,10 +154,7 @@ namespace Imaging
             //collect and convert all images
             var btm = lst.ConvertAll(ImageStream.GetOriginalBitmap);
 
-            if (btm.IsNullOrEmpty())
-            {
-                return;
-            }
+            if (btm.IsNullOrEmpty()) return;
 
             GifCreator(btm, target);
         }
@@ -172,10 +169,7 @@ namespace Imaging
             //collect and convert all images
             var btm = path.ConvertAll(ImageStream.GetOriginalBitmap);
 
-            if (btm.IsNullOrEmpty())
-            {
-                return;
-            }
+            if (btm.IsNullOrEmpty()) return;
 
             GifCreator(btm, target);
         }
@@ -187,10 +181,7 @@ namespace Imaging
         /// <param name="target">The target.</param>
         internal static void CreateGif(IEnumerable<FrameInfo> frames, string target)
         {
-            if (frames == null)
-            {
-                return;
-            }
+            if (frames == null) return;
 
             GifCreator(frames, target);
         }
@@ -210,9 +201,7 @@ namespace Imaging
                              IntPtr.Zero,
                              Int32Rect.Empty,
                              BitmapSizeOptions.FromEmptyOptions())))
-            {
                 gEnc.Frames.Add(BitmapFrame.Create(src));
-            }
 
             using var ms = new MemoryStream();
             gEnc.Save(ms);

@@ -25,10 +25,7 @@ namespace Imaging
         /// <exception cref="InvalidDataException">Not a valid GIF file.</exception>
         internal static ImageGifInfo ExtractGifMetadata(string filePath)
         {
-            if (!File.Exists(filePath))
-            {
-                throw new FileNotFoundException(ImagingResources.FileNotFoundMessage, filePath);
-            }
+            if (!File.Exists(filePath)) throw new FileNotFoundException(ImagingResources.FileNotFoundMessage, filePath);
 
             var metadata = new ImageGifInfo { Name = Path.GetFileName(filePath), Size = new FileInfo(filePath).Length };
 
@@ -40,9 +37,7 @@ namespace Imaging
             // Read GIF Header
             metadata.Header = new string(reader.ReadChars(ImagingResources.GifHeaderLength));
             if (!metadata.Header.StartsWith(ImagingResources.GifHeaderStart, StringComparison.Ordinal))
-            {
                 throw new InvalidDataException(ImagingResources.InvalidGifMessage);
-            }
 
             // Logical Screen Descriptor
             metadata.Width = reader.ReadInt16();
@@ -57,10 +52,7 @@ namespace Imaging
                 ? 3 * (1 << ((packedFields & ImagingResources.TableSizeMask) + 1))
                 : 0;
 
-            if (metadata.HasGlobalColorTable)
-            {
-                reader.BaseStream.Seek(metadata.GlobalColorTableSize, SeekOrigin.Current);
-            }
+            if (metadata.HasGlobalColorTable) reader.BaseStream.Seek(metadata.GlobalColorTableSize, SeekOrigin.Current);
 
             while (reader.BaseStream.Position < reader.BaseStream.Length)
             {
@@ -144,10 +136,7 @@ namespace Imaging
                             while (true)
                             {
                                 var subBlockSize = reader.ReadByte();
-                                if (subBlockSize == ImagingResources.TerminatorBlockId)
-                                {
-                                    break;
-                                }
+                                if (subBlockSize == ImagingResources.TerminatorBlockId) break;
 
                                 reader.BaseStream.Seek(subBlockSize, SeekOrigin.Current);
                             }
@@ -180,10 +169,7 @@ namespace Imaging
             while (true)
             {
                 var subBlockSize = reader.ReadByte();
-                if (subBlockSize == ImagingResources.TerminatorBlockId)
-                {
-                    break;
-                }
+                if (subBlockSize == ImagingResources.TerminatorBlockId) break;
 
                 reader.BaseStream.Seek(subBlockSize, SeekOrigin.Current);
             }
@@ -198,10 +184,7 @@ namespace Imaging
             while (true)
             {
                 var blockSize = reader.ReadByte();
-                if (blockSize == ImagingResources.TerminatorBlockId)
-                {
-                    break;
-                }
+                if (blockSize == ImagingResources.TerminatorBlockId) break;
 
                 Console.WriteLine(ImagingResources.SkipExtensionBlockMessage, blockSize);
                 reader.BaseStream.Seek(blockSize, SeekOrigin.Current);

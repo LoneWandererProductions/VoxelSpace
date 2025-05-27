@@ -32,10 +32,7 @@ namespace ExtendedSystemObjects
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static bool IsNullOrEmpty<TValue>(this List<TValue> lst)
         {
-            if (lst == null)
-            {
-                return true;
-            }
+            if (lst == null) return true;
 
             return lst.Count == 0;
         }
@@ -48,10 +45,7 @@ namespace ExtendedSystemObjects
         /// <param name="item">item we will replace or add</param>
         public static void AddFirst<TValue>(this List<TValue> lst, TValue item)
         {
-            if (lst == null)
-            {
-                throw new ArgumentNullException(nameof(lst));
-            }
+            if (lst == null) throw new ArgumentNullException(nameof(lst));
 
             lst.Insert(0, item);
         }
@@ -68,10 +62,7 @@ namespace ExtendedSystemObjects
             var hashSet = new HashSet<TValue>(lst);
 
             // Check if the item already exists in the HashSet
-            if (hashSet.Contains(item))
-            {
-                return false; // Item already exists, no need to add
-            }
+            if (hashSet.Contains(item)) return false; // Item already exists, no need to add
 
             // Add the item to the list since it doesn't already exist
             lst.Add(item);
@@ -234,10 +225,7 @@ namespace ExtendedSystemObjects
                 case EnumerableCompare.IgnoreOrder:
                     return lst.Count == compare.Count && lst.Equal(compare);
                 case EnumerableCompare.AllEqual:
-                    if (lst.Count != compare.Count)
-                    {
-                        return false;
-                    }
+                    if (lst.Count != compare.Count) return false;
 
                     return !lst.Where((t, i) => !t.Equals(compare[i])).Any();
                 default:
@@ -290,10 +278,7 @@ namespace ExtendedSystemObjects
         {
             var dct = new Dictionary<TId, TValue>();
 
-            foreach (var item in lst)
-            {
-                dct.Add(item.Id, item);
-            }
+            foreach (var item in lst) dct.Add(item.Id, item);
 
             return dct;
         }

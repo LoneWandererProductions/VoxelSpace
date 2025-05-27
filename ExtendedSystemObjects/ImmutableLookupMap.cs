@@ -54,10 +54,7 @@ namespace ExtendedSystemObjects
         /// <exception cref="ArgumentNullException">data</exception>
         public ImmutableLookupMap(IDictionary<TKey, TValue> data)
         {
-            if (data == null)
-            {
-                throw new ArgumentNullException(nameof(data));
-            }
+            if (data == null) throw new ArgumentNullException(nameof(data));
 
             // Double the capacity and find the next prime number
             var capacity = FindNextPrime(data.Count * 2);
@@ -69,10 +66,9 @@ namespace ExtendedSystemObjects
 
             // Populate the arrays with a brute-force quadratic approach
             foreach (var (key, value) in data)
-            {
                 for (var i = 0; i < capacity; i++)
                 {
-                    var hash = (GetHash(key, capacity) + (i * i)) % capacity; // Quadratic probing formula
+                    var hash = (GetHash(key, capacity) + i * i) % capacity; // Quadratic probing formula
 
                     if (!_keyPresence[hash])
                     {
@@ -82,12 +78,8 @@ namespace ExtendedSystemObjects
                         break;
                     }
 
-                    if (_keys[hash].Equals(key))
-                    {
-                        throw new InvalidOperationException($"Duplicate key detected: {key}");
-                    }
+                    if (_keys[hash].Equals(key)) throw new InvalidOperationException($"Duplicate key detected: {key}");
                 }
-            }
         }
 
         /// <inheritdoc />
@@ -97,12 +89,8 @@ namespace ExtendedSystemObjects
         public IEnumerator<KeyValuePair<TKey, TValue>> GetEnumerator()
         {
             for (var i = 0; i < _keys.Length; i++)
-            {
                 if (_keyPresence[i])
-                {
                     yield return new KeyValuePair<TKey, TValue>(_keys[i], _values[i]);
-                }
-            }
         }
 
         /// <inheritdoc />
@@ -130,16 +118,10 @@ namespace ExtendedSystemObjects
 
             while (_keyPresence[hash])
             {
-                if (_keys[hash].Equals(key))
-                {
-                    return _values[hash];
-                }
+                if (_keys[hash].Equals(key)) return _values[hash];
 
                 hash = (hash + 1) % _keys.Length; // Linear probing
-                if (hash == originalHash)
-                {
-                    break; // Full cycle, key not found
-                }
+                if (hash == originalHash) break; // Full cycle, key not found
             }
 
             throw new KeyNotFoundException(ExtendedSystemObjectsResources.ErrorValueNotFound);
@@ -165,10 +147,7 @@ namespace ExtendedSystemObjects
                 }
 
                 hash = (hash + 1) % _keys.Length; // Linear probing
-                if (hash == originalHash)
-                {
-                    break; // Full cycle, key not found
-                }
+                if (hash == originalHash) break; // Full cycle, key not found
             }
 
             value = default;
@@ -196,10 +175,7 @@ namespace ExtendedSystemObjects
         /// <returns>Next prime number</returns>
         private static int FindNextPrime(int number)
         {
-            while (!IsPrime(number))
-            {
-                number++;
-            }
+            while (!IsPrime(number)) number++;
 
             return number;
         }
@@ -214,31 +190,18 @@ namespace ExtendedSystemObjects
         /// </returns>
         private static bool IsPrime(int number)
         {
-            if (number < 2)
-            {
-                return false;
-            }
+            if (number < 2) return false;
 
             foreach (var prime in SmallPrimes)
             {
-                if (number == prime)
-                {
-                    return true;
-                }
+                if (number == prime) return true;
 
-                if (number % prime == 0)
-                {
-                    return false;
-                }
+                if (number % prime == 0) return false;
             }
 
             for (var i = 49; i * i <= number; i += 2)
-            {
                 if (number % i == 0)
-                {
                     return false;
-                }
-            }
 
             return true;
         }

@@ -31,9 +31,9 @@ namespace RenderEngineTests
             // G: 0
             // B: 50% of 255 = 127.5 => 127 or 128
             Assert.IsTrue(pixel[0] >= 127 && pixel[0] <= 128); // B
-            Assert.AreEqual(0, pixel[1]);                     // G
+            Assert.AreEqual(0, pixel[1]); // G
             Assert.IsTrue(pixel[2] >= 127 && pixel[2] <= 128); // R
-            Assert.AreEqual(255, pixel[3]);                   // A (fully opaque after blend)
+            Assert.AreEqual(255, pixel[3]); // A (fully opaque after blend)
         }
 
         [TestMethod]
@@ -42,10 +42,7 @@ namespace RenderEngineTests
             using var container = new LayeredImageContainer(2, 2);
             using var badLayer = new UnmanagedImageBuffer(1, 1);
 
-            Assert.ThrowsException<ArgumentException>(() =>
-            {
-                container.AddLayer(badLayer);
-            });
+            Assert.ThrowsException<ArgumentException>(() => { container.AddLayer(badLayer); });
         }
 
         [TestMethod]
@@ -56,10 +53,7 @@ namespace RenderEngineTests
             var layer = container.AddEmptyLayer();
             var span = layer.BufferSpan;
 
-            for (var i = 0; i < span.Length; i++)
-            {
-                Assert.AreEqual(0, span[i]);
-            }
+            for (var i = 0; i < span.Length; i++) Assert.AreEqual(0, span[i]);
         }
 
         [TestMethod]

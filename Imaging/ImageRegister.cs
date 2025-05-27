@@ -581,12 +581,8 @@ namespace Imaging
                 var settings = JsonSerializer.Deserialize<Dictionary<FiltersType, HashSet<string>>>(json);
 
                 if (settings != null)
-                {
                     foreach (var (imageFilters, filter) in settings)
-                    {
                         _filterPropertyMap[imageFilters] = filter;
-                    }
-                }
             }
             catch (Exception ex) when (ex is ArgumentNullException or JsonException or NotSupportedException)
             {

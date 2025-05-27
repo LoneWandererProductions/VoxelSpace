@@ -34,47 +34,43 @@ namespace RenderEngine
             int vIndex = 0, iIndex = 0, vertexOffset = 0;
 
             for (var x = 0; x < _gridSizeX; x++)
+            for (var y = 0; y < _gridSizeY; y++)
+            for (var z = 0; z < _heightLevels; z++)
             {
-                for (var y = 0; y < _gridSizeY; y++)
+                var xPos = x * _cellSize;
+                var yPos = y * _cellSize;
+                var zPos = z * _cellSize;
+
+                // Define 4 vertices for a single 2D plane
+                Vector3[] planeVertices =
                 {
-                    for (var z = 0; z < _heightLevels; z++)
-                    {
-                        var xPos = x * _cellSize;
-                        var yPos = y * _cellSize;
-                        var zPos = z * _cellSize;
+                    new(xPos, yPos, zPos), // Bottom-left
+                    new(xPos + _cellSize, yPos, zPos), // Bottom-right
+                    new(xPos + _cellSize, yPos + _cellSize, zPos), // Top-right
+                    new(xPos, yPos + _cellSize, zPos) // Top-left
+                };
 
-                        // Define 4 vertices for a single 2D plane
-                        Vector3[] planeVertices =
-                        {
-                            new(xPos, yPos, zPos), // Bottom-left
-                            new(xPos + _cellSize, yPos, zPos), // Bottom-right
-                            new(xPos + _cellSize, yPos + _cellSize, zPos), // Top-right
-                            new(xPos, yPos + _cellSize, zPos) // Top-left
-                        };
+                // UV Coordinates (entire texture mapped)
+                float[] uv = { 0, 0, 1, 0, 1, 1, 0, 1 };
 
-                        // UV Coordinates (entire texture mapped)
-                        float[] uv = { 0, 0, 1, 0, 1, 1, 0, 1 };
-
-                        for (var v = 0; v < 4; v++)
-                        {
-                            vertices[vIndex++] = planeVertices[v].X;
-                            vertices[vIndex++] = planeVertices[v].Y;
-                            vertices[vIndex++] = planeVertices[v].Z;
-                            vertices[vIndex++] = uv[v * 2];
-                            vertices[vIndex++] = uv[(v * 2) + 1];
-                        }
-
-                        // Indices for two triangles per plane
-                        indices[iIndex++] = (uint)vertexOffset;
-                        indices[iIndex++] = (uint)(vertexOffset + 1);
-                        indices[iIndex++] = (uint)(vertexOffset + 2);
-                        indices[iIndex++] = (uint)(vertexOffset + 2);
-                        indices[iIndex++] = (uint)(vertexOffset + 3);
-                        indices[iIndex++] = (uint)vertexOffset;
-
-                        vertexOffset += 4;
-                    }
+                for (var v = 0; v < 4; v++)
+                {
+                    vertices[vIndex++] = planeVertices[v].X;
+                    vertices[vIndex++] = planeVertices[v].Y;
+                    vertices[vIndex++] = planeVertices[v].Z;
+                    vertices[vIndex++] = uv[v * 2];
+                    vertices[vIndex++] = uv[v * 2 + 1];
                 }
+
+                // Indices for two triangles per plane
+                indices[iIndex++] = (uint)vertexOffset;
+                indices[iIndex++] = (uint)(vertexOffset + 1);
+                indices[iIndex++] = (uint)(vertexOffset + 2);
+                indices[iIndex++] = (uint)(vertexOffset + 2);
+                indices[iIndex++] = (uint)(vertexOffset + 3);
+                indices[iIndex++] = (uint)vertexOffset;
+
+                vertexOffset += 4;
             }
 
             // Generate OpenGL buffers

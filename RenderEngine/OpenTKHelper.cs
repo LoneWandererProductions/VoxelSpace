@@ -41,16 +41,11 @@ namespace RenderEngine
                     Console.WriteLine($"OpenGL Version: {versionString}");
 
                     var versionParts = versionString.Split('.');
-                    if (versionParts.Length < 2)
-                    {
-                        return;
-                    }
+                    if (versionParts.Length < 2) return;
 
                     if (int.TryParse(versionParts[0], out var major) &&
                         int.TryParse(versionParts[1].Split(' ')[0], out var minor))
-                    {
                         isCompatible = major > requiredMajor || (major == requiredMajor && minor >= requiredMinor);
-                    }
                 }
                 catch (Exception ex)
                 {
@@ -70,11 +65,11 @@ namespace RenderEngine
             for (var i = 0; i < data.Length; i++)
             {
                 var attributes = getVertexAttributes(data[i]);
-                var xLeft = (i / (float)screenWidth * 2.0f) - 1.0f;
-                var xRight = ((i + 1) / (float)screenWidth * 2.0f) - 1.0f;
+                var xLeft = i / (float)screenWidth * 2.0f - 1.0f;
+                var xRight = (i + 1) / (float)screenWidth * 2.0f - 1.0f;
 
                 var columnHeight = attributes[0]; // In case of columns, this would be height, for example
-                var yTop = (columnHeight / screenHeight * 2.0f) - 1.0f;
+                var yTop = columnHeight / screenHeight * 2.0f - 1.0f;
                 var yBottom = -1.0f; // Bottom of the screen is -1.0f
 
                 var offset = i * 30; // 6 vertices * 5 attributes (x, y, r, g, b)
@@ -127,10 +122,7 @@ namespace RenderEngine
             GL.CompileShader(shader);
 
             GL.GetShader(shader, ShaderParameter.CompileStatus, out var status);
-            if (status == (int)All.True)
-            {
-                return shader;
-            }
+            if (status == (int)All.True) return shader;
 
             var infoLog = GL.GetShaderInfoLog(shader);
             throw new Exception($"Error compiling shader of type {type}: {infoLog}");
@@ -177,9 +169,7 @@ namespace RenderEngine
         internal static int LoadCubeMap(string[] filePaths)
         {
             if (filePaths.Length != 6)
-            {
                 throw new ArgumentException("Cube map must have exactly 6 textures.", nameof(filePaths));
-            }
 
             var textureId = GL.GenTexture();
             GL.BindTexture(TextureTarget.TextureCubeMap, textureId);

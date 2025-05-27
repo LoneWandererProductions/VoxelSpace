@@ -27,15 +27,9 @@ namespace FileHandler
         /// <exception cref="FileHandlerException">Thrown when the path is empty or null.</exception>
         public static bool DeleteFile(string path)
         {
-            if (string.IsNullOrEmpty(path))
-            {
-                throw new FileHandlerException(FileHandlerResources.ErrorEmptyString);
-            }
+            if (string.IsNullOrEmpty(path)) throw new FileHandlerException(FileHandlerResources.ErrorEmptyString);
 
-            if (!File.Exists(path))
-            {
-                return false;
-            }
+            if (!File.Exists(path)) return false;
 
             if (!WaitForFileUnlock(path))
             {

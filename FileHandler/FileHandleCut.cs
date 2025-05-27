@@ -36,10 +36,7 @@ namespace FileHandler
             FileHandlerProcessing.ValidatePaths(source, target);
 
             //if nothing exists we can return anyways
-            if (!Directory.Exists(source))
-            {
-                return false;
-            }
+            if (!Directory.Exists(source)) return false;
 
             var check = true;
             var dir = new DirectoryInfo(source);
@@ -60,10 +57,7 @@ namespace FileHandler
             //do the actual work
             if (files.Length > 0)
             {
-                if (!Directory.Exists(target))
-                {
-                    _ = Directory.CreateDirectory(target);
-                }
+                if (!Directory.Exists(target)) _ = Directory.CreateDirectory(target);
 
                 foreach (var file in files)
                 {
@@ -89,15 +83,9 @@ namespace FileHandler
             {
                 var tempPath = Path.Combine(target, subDir.Name);
 
-                if (!Directory.Exists(target))
-                {
-                    _ = Directory.CreateDirectory(target);
-                }
+                if (!Directory.Exists(target)) _ = Directory.CreateDirectory(target);
 
-                if (Directory.Exists(tempPath))
-                {
-                    continue;
-                }
+                if (Directory.Exists(tempPath)) continue;
 
                 _ = CutFiles(subDir.FullName, tempPath, overwrite);
             }
@@ -116,14 +104,9 @@ namespace FileHandler
         public static bool CutFiles(List<string> source, string target, bool overwrite)
         {
             if (source == null || source.Count == 0 || string.IsNullOrEmpty(target))
-            {
                 throw new FileHandlerException(FileHandlerResources.ErrorEmptyString);
-            }
 
-            if (!Directory.Exists(target))
-            {
-                _ = Directory.CreateDirectory(target);
-            }
+            if (!Directory.Exists(target)) _ = Directory.CreateDirectory(target);
 
             //Give the User Optional Infos about the Amount we Copy
             var itm = new FileItems
@@ -140,7 +123,6 @@ namespace FileHandler
             root = file.Directory.FullName;
 
             foreach (var element in source)
-            {
                 try
                 {
                     file = new FileInfo(element);
@@ -150,17 +132,11 @@ namespace FileHandler
                     //Get Sub Folder
                     var path = FileHandlerProcessing.GetSubFolder(directory, root, target);
 
-                    if (path?.Length == 0)
-                    {
-                        continue;
-                    }
+                    if (path?.Length == 0) continue;
 
                     var tempPath = Path.Combine(path!, file.Name);
 
-                    if (!Directory.Exists(path))
-                    {
-                        _ = Directory.CreateDirectory(path);
-                    }
+                    if (!Directory.Exists(path)) _ = Directory.CreateDirectory(path);
 
                     file.MoveTo(tempPath, overwrite);
 
@@ -173,7 +149,6 @@ namespace FileHandler
                     Trace.WriteLine(ex);
                     check = false;
                 }
-            }
 
             return check;
         }

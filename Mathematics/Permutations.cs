@@ -35,12 +35,8 @@ namespace Mathematics
                 var cache = new List<T>();
 
                 for (var j = 0; j < str.Length; j++)
-                {
                     if (str[j] == '1')
-                    {
                         cache.Add(list[j]);
-                    }
-                }
 
                 yield return cache;
             }
@@ -58,21 +54,15 @@ namespace Mathematics
         public static IEnumerable<IEnumerable<T>> CombinationsWithRepetition<T>(this IEnumerable<T> input, int length)
         {
             if (length <= 0)
-            {
                 yield return new List<T>();
-            }
             else
-            {
                 foreach (var i in input)
+                foreach (var c in CombinationsWithRepetition(input, length - 1))
                 {
-                    foreach (var c in CombinationsWithRepetition(input, length - 1))
-                    {
-                        var combination = new List<T> { i };
-                        combination.AddRange(c);
-                        yield return combination;
-                    }
+                    var combination = new List<T> { i };
+                    combination.AddRange(c);
+                    yield return combination;
                 }
-            }
         }
     }
 }
