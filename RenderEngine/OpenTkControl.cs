@@ -4,6 +4,8 @@
  * FILE:        Imaging/OpenTkControl.cs
  * PURPOSE:     OpenGL Viewer for WPF applications.
  * PROGRAMMER:  Peter Geinitz (Wayfarer)
+ * NOTES:       Uses https://github.com/opentk/GLControl
+ *              and OpenTK so beware GLControl is a third Party control
  */
 
 #nullable enable
@@ -46,6 +48,7 @@ namespace RenderEngine
                 InitializeGlControl();
                 InitializeShaders();
                 InitializeBuffers();
+
                 Child = _glControl; // Set GLControl as the hosted child
             }
 
