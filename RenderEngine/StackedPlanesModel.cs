@@ -59,7 +59,7 @@ namespace RenderEngine
                     vertices[vIndex++] = planeVertices[v].Y;
                     vertices[vIndex++] = planeVertices[v].Z;
                     vertices[vIndex++] = uv[v * 2];
-                    vertices[vIndex++] = uv[v * 2 + 1];
+                    vertices[vIndex++] = uv[(v * 2) + 1];
                 }
 
                 // Indices for two triangles per plane

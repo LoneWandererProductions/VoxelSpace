@@ -15,13 +15,14 @@ namespace RenderEngine
 {
     /// <inheritdoc />
     /// <summary>
-    /// Represents an unmanaged memory buffer for storing image pixel data with direct memory access,
-    /// optimized for fast pixel manipulation and bulk operations using SIMD acceleration where available.
+    ///     Represents an unmanaged memory buffer for storing image pixel data with direct memory access,
+    ///     optimized for fast pixel manipulation and bulk operations using SIMD acceleration where available.
     /// </summary>
     /// <remarks>
-    /// This class allocates unmanaged memory of size Width * Height * BytesPerPixel to store image data in BGRA format by default.
-    /// It supports setting individual pixels, clearing the buffer to a uniform color,
-    /// applying multiple pixel changes at once, and replacing the entire buffer efficiently.
+    ///     This class allocates unmanaged memory of size Width * Height * BytesPerPixel to store image data in BGRA format by
+    ///     default.
+    ///     It supports setting individual pixels, clearing the buffer to a uniform color,
+    ///     applying multiple pixel changes at once, and replacing the entire buffer efficiently.
     /// </remarks>
     public sealed unsafe class UnmanagedImageBuffer : IDisposable
     {
@@ -30,8 +31,9 @@ namespace RenderEngine
         private readonly int _bytesPerPixel;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="UnmanagedImageBuffer"/> class with specified dimensions and bytes per pixel.
-        /// The buffer is allocated in unmanaged memory and initially cleared to transparent black.
+        ///     Initializes a new instance of the <see cref="UnmanagedImageBuffer" /> class with specified dimensions and bytes per
+        ///     pixel.
+        ///     The buffer is allocated in unmanaged memory and initially cleared to transparent black.
         /// </summary>
         /// <param name="width">The width of the image in pixels. Must be positive.</param>
         /// <param name="height">The height of the image in pixels. Must be positive.</param>
@@ -39,9 +41,20 @@ namespace RenderEngine
         /// <exception cref="ArgumentOutOfRangeException">Thrown if width or height is less than or equal to zero.</exception>
         public UnmanagedImageBuffer(int width, int height, int bytesPerPixel = 4)
         {
-            if (width <= 0) throw new ArgumentOutOfRangeException(nameof(width));
-            if (height <= 0) throw new ArgumentOutOfRangeException(nameof(height));
-            if (bytesPerPixel <= 0) throw new ArgumentOutOfRangeException(nameof(bytesPerPixel));
+            if (width <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(width));
+            }
+
+            if (height <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(height));
+            }
+
+            if (bytesPerPixel <= 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(bytesPerPixel));
+            }
 
             Width = width;
             Height = height;
@@ -53,24 +66,24 @@ namespace RenderEngine
         }
 
         /// <summary>
-        /// Gets a span representing the entire unmanaged buffer memory as a byte sequence.
-        /// Modifications to this span directly update the unmanaged image data.
+        ///     Gets a span representing the entire unmanaged buffer memory as a byte sequence.
+        ///     Modifications to this span directly update the unmanaged image data.
         /// </summary>
         public Span<byte> BufferSpan => new(_bufferPtr.ToPointer(), _bufferSize);
 
         /// <summary>
-        /// Gets the width of the image in pixels.
+        ///     Gets the width of the image in pixels.
         /// </summary>
         public int Width { get; }
 
         /// <summary>
-        /// Gets the height of the image in pixels.
+        ///     Gets the height of the image in pixels.
         /// </summary>
         public int Height { get; }
 
         /// <inheritdoc />
         /// <summary>
-        /// Frees the unmanaged buffer memory.
+        ///     Frees the unmanaged buffer memory.
         /// </summary>
         public void Dispose()
         {
@@ -81,7 +94,7 @@ namespace RenderEngine
         }
 
         /// <summary>
-        /// Calculates the byte offset in the buffer for the pixel at coordinates (x, y).
+        ///     Calculates the byte offset in the buffer for the pixel at coordinates (x, y).
         /// </summary>
         /// <param name="x">The horizontal pixel coordinate (0-based).</param>
         /// <param name="y">The vertical pixel coordinate (0-based).</param>
@@ -92,7 +105,7 @@ namespace RenderEngine
         }
 
         /// <summary>
-        /// Sets the color of a single pixel at coordinates (x, y) in BGRA order.
+        ///     Sets the color of a single pixel at coordinates (x, y) in BGRA order.
         /// </summary>
         /// <param name="x">The horizontal pixel coordinate (0-based).</param>
         /// <param name="y">The vertical pixel coordinate (0-based).</param>
@@ -111,8 +124,8 @@ namespace RenderEngine
         }
 
         /// <summary>
-        /// Clears the entire buffer by setting every pixel to the specified color in BGRA order.
-        /// Uses SIMD vectorized operations for performance when available.
+        ///     Clears the entire buffer by setting every pixel to the specified color in BGRA order.
+        ///     Uses SIMD vectorized operations for performance when available.
         /// </summary>
         /// <param name="a">Alpha channel byte value.</param>
         /// <param name="r">Red channel byte value.</param>
@@ -143,13 +156,13 @@ namespace RenderEngine
         }
 
         /// <summary>
-        /// Creates a SIMD vector filled with the specified BGRA pixel color repeated to fill the vector.
+        ///     Creates a SIMD vector filled with the specified BGRA pixel color repeated to fill the vector.
         /// </summary>
         /// <param name="a">Alpha channel byte value.</param>
         /// <param name="r">Red channel byte value.</param>
         /// <param name="g">Green channel byte value.</param>
         /// <param name="b">Blue channel byte value.</param>
-        /// <returns>A <see cref="Vector{Byte}"/> filled with the repeated pixel color pattern.</returns>
+        /// <returns>A <see cref="Vector{Byte}" /> filled with the repeated pixel color pattern.</returns>
         private static Vector<byte> CreatePixelVector(byte a, byte r, byte g, byte b)
         {
             var pixelBytes = new byte[Vector<byte>.Count];
@@ -165,9 +178,9 @@ namespace RenderEngine
         }
 
         /// <summary>
-        /// Applies multiple pixel changes to the buffer in-place, given a span of coordinate-color tuples.
-        /// Each tuple contains the x and y pixel coordinates and a packed 32-bit BGRA color.
-        /// Pixels outside the valid image bounds are ignored.
+        ///     Applies multiple pixel changes to the buffer in-place, given a span of coordinate-color tuples.
+        ///     Each tuple contains the x and y pixel coordinates and a packed 32-bit BGRA color.
+        ///     Pixels outside the valid image bounds are ignored.
         /// </summary>
         /// <param name="changes">A read-only span of pixel changes, each specified as (x, y, BGRA color).</param>
         public void ApplyChanges(ReadOnlySpan<(int x, int y, uint bgra)> changes)
@@ -192,9 +205,9 @@ namespace RenderEngine
         }
 
         /// <summary>
-        /// Replaces the entire unmanaged buffer with a new byte span.
-        /// The input buffer must match the internal buffer size exactly.
-        /// Uses hardware-accelerated AVX2 instructions for bulk copy if supported.
+        ///     Replaces the entire unmanaged buffer with a new byte span.
+        ///     The input buffer must match the internal buffer size exactly.
+        ///     Uses hardware-accelerated AVX2 instructions for bulk copy if supported.
         /// </summary>
         /// <param name="fullBuffer">The source byte span representing the full image buffer to copy.</param>
         /// <exception cref="ArgumentException">Thrown if the input buffer length does not match the internal buffer size.</exception>
@@ -238,15 +251,15 @@ namespace RenderEngine
         }
 
         /// <summary>
-        /// Retrieves a span representing a horizontal sequence of pixels starting at (x, y).
-        /// The span length is equal to count pixels, each containing bytes per pixel.
+        ///     Retrieves a span representing a horizontal sequence of pixels starting at (x, y).
+        ///     The span length is equal to count pixels, each containing bytes per pixel.
         /// </summary>
         /// <param name="x">The starting horizontal pixel coordinate (0-based).</param>
         /// <param name="y">The vertical pixel coordinate (0-based).</param>
         /// <param name="count">The number of consecutive pixels to retrieve.</param>
         /// <returns>A span of bytes representing the requested pixels.</returns>
         /// <exception cref="ArgumentOutOfRangeException">
-        /// Thrown if the requested pixel range is out of bounds of the image dimensions.
+        ///     Thrown if the requested pixel range is out of bounds of the image dimensions.
         /// </exception>
         public Span<byte> GetPixelSpan(int x, int y, int count)
         {

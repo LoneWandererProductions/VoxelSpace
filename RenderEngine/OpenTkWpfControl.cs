@@ -1,28 +1,24 @@
-﻿using OpenTK.Graphics.OpenGL4;
-using OpenTK.Wpf;
-using System;
+﻿using System;
 using System.Windows;
 using System.Windows.Controls;
+using OpenTK.Graphics.OpenGL4;
+using OpenTK.Wpf;
 
 namespace RenderEngine
 {
-    public partial class OpenTkWpfControl : UserControl
+    public class OpenTkWpfControl : UserControl
     {
-        private GLWpfControl _glControl;
+        private int _backgroundTexture = -1;
+        private readonly GLWpfControl _glControl;
         private int _shaderProgram;
         private int _vao, _vbo;
-        private int _backgroundTexture = -1;
 
         public OpenTkWpfControl()
         {
             // Kein InitializeComponent, wenn kein XAML
             // InitializeComponent();
 
-            var settings = new GLWpfControlSettings()
-            {
-                MajorVersion = 4,
-                MinorVersion = 5,
-            };
+            var settings = new GLWpfControlSettings { MajorVersion = 4, MinorVersion = 5 };
 
             _glControl = new GLWpfControl();
             _glControl.Start(settings);
@@ -40,7 +36,9 @@ namespace RenderEngine
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
             if (!OpenTkHelper.IsOpenGlCompatible())
+            {
                 throw new NotSupportedException("OpenGL 4.5 or higher required.");
+            }
 
             InitializeShaders();
             InitializeBuffers();

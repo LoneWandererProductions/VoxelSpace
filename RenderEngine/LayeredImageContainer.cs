@@ -23,7 +23,7 @@ namespace RenderEngine
         private readonly int _width;
 
         /// <summary>
-        ///     Initializes a new instance of the <see cref="LayeredImageContainer"/> class
+        ///     Initializes a new instance of the <see cref="LayeredImageContainer" /> class
         ///     with the specified width and height.
         /// </summary>
         /// <param name="width">The width of the container and all layers.</param>
@@ -35,8 +35,8 @@ namespace RenderEngine
         }
 
         /// <summary>
-        ///     Releases all resources used by the <see cref="LayeredImageContainer"/>,
-        ///     including all contained <see cref="UnmanagedImageBuffer"/> layers.
+        ///     Releases all resources used by the <see cref="LayeredImageContainer" />,
+        ///     including all contained <see cref="UnmanagedImageBuffer" /> layers.
         /// </summary>
         public void Dispose()
         {
@@ -51,7 +51,7 @@ namespace RenderEngine
         /// <summary>
         ///     Adds an existing unmanaged image buffer as a layer.
         /// </summary>
-        /// <param name="layer">The <see cref="UnmanagedImageBuffer"/> to add as a layer.</param>
+        /// <param name="layer">The <see cref="UnmanagedImageBuffer" /> to add as a layer.</param>
         /// <exception cref="ArgumentException">
         ///     Thrown if the layer's dimensions do not match the container's size.
         /// </exception>
@@ -69,7 +69,7 @@ namespace RenderEngine
         ///     Adds a new empty (fully transparent) layer to the container.
         /// </summary>
         /// <returns>
-        ///     The newly created <see cref="UnmanagedImageBuffer"/> representing the blank layer.
+        ///     The newly created <see cref="UnmanagedImageBuffer" /> representing the blank layer.
         /// </returns>
         public UnmanagedImageBuffer AddEmptyLayer()
         {
@@ -81,10 +81,10 @@ namespace RenderEngine
 
         /// <summary>
         ///     Composites all layers in the container using alpha blending,
-        ///     producing a single combined <see cref="UnmanagedImageBuffer"/>.
+        ///     producing a single combined <see cref="UnmanagedImageBuffer" />.
         /// </summary>
         /// <returns>
-        ///     A new <see cref="UnmanagedImageBuffer"/> representing the composited image.
+        ///     A new <see cref="UnmanagedImageBuffer" /> representing the composited image.
         /// </returns>
         /// <exception cref="InvalidOperationException">Thrown if no layers exist to composite.</exception>
         public UnmanagedImageBuffer Composite()
