@@ -8,13 +8,13 @@ namespace OpenGler
 {
     public class RenderHost : IDisposable
     {
-        private readonly object _lock = new();
         private readonly byte[] _currentPixels;
         private readonly int _height;
-        private RasterRenderer _renderer;
+        private readonly object _lock = new();
 
         private readonly int _width;
         private readonly GameWindow _window;
+        private RasterRenderer _renderer;
 
         public RenderHost(int width, int height)
         {

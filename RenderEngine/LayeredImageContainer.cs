@@ -40,10 +40,7 @@ namespace RenderEngine
         /// </summary>
         public void Dispose()
         {
-            foreach (var layer in _layers)
-            {
-                layer.Dispose();
-            }
+            foreach (var layer in _layers) layer.Dispose();
 
             _layers.Clear();
         }
@@ -58,9 +55,7 @@ namespace RenderEngine
         public void AddLayer(UnmanagedImageBuffer layer)
         {
             if (layer.Width != _width || layer.Height != _height)
-            {
                 throw new ArgumentException("Layer size does not match container size.");
-            }
 
             _layers.Add(layer);
         }
@@ -89,20 +84,14 @@ namespace RenderEngine
         /// <exception cref="InvalidOperationException">Thrown if no layers exist to composite.</exception>
         public UnmanagedImageBuffer Composite()
         {
-            if (_layers.Count == 0)
-            {
-                throw new InvalidOperationException("No layers to composite.");
-            }
+            if (_layers.Count == 0) throw new InvalidOperationException("No layers to composite.");
 
             var result = new UnmanagedImageBuffer(_width, _height);
             result.Clear(0, 0, 0, 0); // start transparent
 
             var targetSpan = result.BufferSpan;
 
-            foreach (var layer in _layers)
-            {
-                AlphaBlend(targetSpan, layer.BufferSpan);
-            }
+            foreach (var layer in _layers) AlphaBlend(targetSpan, layer.BufferSpan);
 
             return result;
         }
@@ -126,10 +115,7 @@ namespace RenderEngine
                 var srcAByte = overlaySpan[i + 3];
                 var srcA = srcAByte / 255f;
 
-                if (srcA <= 0)
-                {
-                    continue;
-                }
+                if (srcA <= 0) continue;
 
                 var dstB = baseSpan[i];
                 var dstG = baseSpan[i + 1];
@@ -137,7 +123,7 @@ namespace RenderEngine
                 var dstAByte = baseSpan[i + 3];
                 var dstA = dstAByte / 255f;
 
-                var outA = srcA + (dstA * (1 - srcA));
+                var outA = srcA + dstA * (1 - srcA);
 
                 if (outA <= 0)
                 {
@@ -148,9 +134,9 @@ namespace RenderEngine
                     continue;
                 }
 
-                baseSpan[i] = (byte)Math.Round(((srcB * srcA) + (dstB * dstA * (1 - srcA))) / outA);
-                baseSpan[i + 1] = (byte)Math.Round(((srcG * srcA) + (dstG * dstA * (1 - srcA))) / outA);
-                baseSpan[i + 2] = (byte)Math.Round(((srcR * srcA) + (dstR * dstA * (1 - srcA))) / outA);
+                baseSpan[i] = (byte)Math.Round((srcB * srcA + dstB * dstA * (1 - srcA)) / outA);
+                baseSpan[i + 1] = (byte)Math.Round((srcG * srcA + dstG * dstA * (1 - srcA)) / outA);
+                baseSpan[i + 2] = (byte)Math.Round((srcR * srcA + dstR * dstA * (1 - srcA)) / outA);
                 baseSpan[i + 3] = (byte)Math.Round(outA * 255);
             }
         }
