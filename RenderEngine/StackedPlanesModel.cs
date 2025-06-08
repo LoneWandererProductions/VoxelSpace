@@ -1,4 +1,12 @@
-﻿using System.Drawing;
+/*
+ * COPYRIGHT:   See COPYING in the top level directory
+ * PROJECT:     RenderEngine
+ * FILE:        StackedPlanesModel.cs
+ * PURPOSE:     Your file purpose here
+ * PROGRAMMER:  Peter Geinitz (Wayfarer)
+ */
+
+using System.Drawing;
 using System.Drawing.Imaging;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
@@ -59,7 +67,7 @@ namespace RenderEngine
                     vertices[vIndex++] = planeVertices[v].Y;
                     vertices[vIndex++] = planeVertices[v].Z;
                     vertices[vIndex++] = uv[v * 2];
-                    vertices[vIndex++] = uv[v * 2 + 1];
+                    vertices[vIndex++] = uv[(v * 2) + 1];
                 }
 
                 // Indices for two triangles per plane

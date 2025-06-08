@@ -1,4 +1,12 @@
-﻿// ReSharper disable UnusedType.Global
+/*
+ * COPYRIGHT:   See COPYING in the top level directory
+ * PROJECT:     RenderEngine
+ * FILE:        ShaderResources.cs
+ * PURPOSE:     Your file purpose here
+ * PROGRAMMER:  Peter Geinitz (Wayfarer)
+ */
+
+// ReSharper disable UnusedType.Global
 
 namespace RenderEngine
 {

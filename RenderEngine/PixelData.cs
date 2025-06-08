@@ -1,4 +1,12 @@
-﻿using OpenTK.Mathematics;
+/*
+ * COPYRIGHT:   See COPYING in the top level directory
+ * PROJECT:     RenderEngine
+ * FILE:        PixelData.cs
+ * PURPOSE:     Your file purpose here
+ * PROGRAMMER:  Peter Geinitz (Wayfarer)
+ */
+
+using OpenTK.Mathematics;
 
 namespace RenderEngine
 {

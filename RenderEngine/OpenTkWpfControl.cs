@@ -1,4 +1,12 @@
-﻿using System;
+﻿/*
+ * COPYRIGHT:   See COPYING in the top level directory
+ * PROJECT:     RenderEngine
+ * FILE:        OpenTkWpfControl.cs
+ * PURPOSE:     Your file purpose here
+ * PROGRAMMER:  Peter Geinitz (Wayfarer)
+ */
+
+using System;
 using System.Windows;
 using System.Windows.Controls;
 using OpenTK.Graphics.OpenGL4;
@@ -8,8 +16,8 @@ namespace RenderEngine
 {
     public class OpenTkWpfControl : UserControl
     {
-        private readonly GLWpfControl _glControl;
         private int _backgroundTexture = -1;
+        private readonly GLWpfControl _glControl;
         private int _shaderProgram;
         private int _vao, _vbo;
 
@@ -35,7 +43,10 @@ namespace RenderEngine
 
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
-            if (!OpenTkHelper.IsOpenGlCompatible()) throw new NotSupportedException("OpenGL 4.5 or higher required.");
+            if (!OpenTkHelper.IsOpenGlCompatible())
+            {
+                throw new NotSupportedException(RenderResource.ErrorOpenGl);
+            }
 
             InitializeShaders();
             InitializeBuffers();
@@ -89,7 +100,10 @@ namespace RenderEngine
         {
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            if (_backgroundTexture != -1) RenderBackground(_backgroundTexture);
+            if (_backgroundTexture != -1)
+            {
+                RenderBackground(_backgroundTexture);
+            }
 
             // Hier weitere Renderlogik einfügen
         }
