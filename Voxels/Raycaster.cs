@@ -107,7 +107,7 @@ namespace Voxels
             return degree * Math.PI / 180.0;
         }
 
-        public class RenderResult
+        public sealed class RenderResult
         {
             public Bitmap Bitmap { get; set; }
             public byte[] Bytes { get; set; }

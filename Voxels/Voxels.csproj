@@ -15,6 +15,7 @@
   <ItemGroup>
     <ProjectReference Include="..\Imaging\Imaging.csproj" />
     <ProjectReference Include="..\Mathematics\Mathematics.csproj" />
+    <ProjectReference Include="..\RenderEngine\RenderEngine.csproj" />
   </ItemGroup>
 
   <ItemGroup>

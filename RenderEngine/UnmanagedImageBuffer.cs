@@ -1,12 +1,14 @@
 ﻿/*
  * COPYRIGHT:   See COPYING in the top level directory
  * PROJECT:     RenderEngine
- * FILE:        ImageBufferManager.cs
+ * FILE:        UnmanagedImageBuffer.cs
  * PURPOSE:     A way to store images in a fast way.
  * PROGRAMMER:  Peter Geinitz (Wayfarer)
  */
 
 using System;
+using System.Collections.Generic;
+using System.Drawing;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics.X86;
@@ -91,6 +93,33 @@ namespace RenderEngine
         ///     Gets the height of the image in pixels.
         /// </summary>
         public int Height { get; }
+
+        /// <summary>
+        /// Converts to bitmap.
+        /// </summary>
+        /// <param name="buffer">The buffer.</param>
+        /// <returns></returns>
+        public static Bitmap ToBitmap(UnmanagedImageBuffer buffer)
+        {
+            var bitmap = new Bitmap(buffer.Width, buffer.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+
+            var bmpData = bitmap.LockBits(
+                new Rectangle(0, 0, bitmap.Width, bitmap.Height),
+                System.Drawing.Imaging.ImageLockMode.WriteOnly,
+                bitmap.PixelFormat);
+
+            var length = buffer.BufferSpan.Length;
+            unsafe
+            {
+                fixed (byte* srcPtr = buffer.BufferSpan)
+                {
+                    Buffer.MemoryCopy(srcPtr, (void*)bmpData.Scan0, length, length);
+                }
+            }
+
+            bitmap.UnlockBits(bmpData);
+            return bitmap;
+        }
 
         /// <inheritdoc />
         /// <summary>
@@ -186,6 +215,30 @@ namespace RenderEngine
             }
 
             return new Vector<byte>(pixelBytes);
+        }
+
+        public void DrawVerticalLines(IEnumerable<(int columnIndex, int y, int finalY, Color color)> lines)
+        {
+            var list = new List<(int x, int y, uint bgra)>();
+
+            foreach (var (x, yStart, yEnd, color) in lines)
+            {
+                if ((uint)x >= (uint)Width) continue;
+
+                // Pack the color into a BGRA uint
+                var packed = ((uint)color.A << 24) | ((uint)color.R << 16) | ((uint)color.G << 8) | color.B;
+
+                // Clip the vertical range to valid Y values
+                var y0 = Math.Max(0, yStart);
+                var y1 = Math.Min(Height - 1, yEnd);
+
+                for (var y = y0; y <= y1; y++)
+                {
+                    list.Add((x, y, packed));
+                }
+            }
+
+            ApplyChanges(CollectionsMarshal.AsSpan(list));
         }
 
         /// <summary>
