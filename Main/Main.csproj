@@ -22,7 +22,9 @@
 
   <ItemGroup>
     <ProjectReference Include="..\MinimalRender\MinimalRender.csproj" />
+    <ProjectReference Include="..\Rays\Rays.csproj" />
     <ProjectReference Include="..\RenderEngine\RenderEngine.csproj" />
+    <ProjectReference Include="..\Viewer\Viewer.csproj" />
     <ProjectReference Include="..\Voxels\Voxels.csproj" />
   </ItemGroup>
 

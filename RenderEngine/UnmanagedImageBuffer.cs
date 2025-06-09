@@ -7,7 +7,6 @@
  */
 
 using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Numerics;
 using System.Runtime.InteropServices;
@@ -97,24 +96,21 @@ namespace RenderEngine
         /// <summary>
         /// Converts to bitmap.
         /// </summary>
-        /// <param name="buffer">The buffer.</param>
-        /// <returns></returns>
-        public static Bitmap ToBitmap(UnmanagedImageBuffer buffer)
+        /// <returns>The Buffer as bitmapImage</returns>
+        public Bitmap ToBitmap()
         {
-            var bitmap = new Bitmap(buffer.Width, buffer.Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+            var bitmap = new Bitmap(Width, Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
 
             var bmpData = bitmap.LockBits(
                 new Rectangle(0, 0, bitmap.Width, bitmap.Height),
                 System.Drawing.Imaging.ImageLockMode.WriteOnly,
                 bitmap.PixelFormat);
 
-            var length = buffer.BufferSpan.Length;
-            unsafe
+            var length = BufferSpan.Length;
+
+            fixed (byte* srcPtr = BufferSpan)
             {
-                fixed (byte* srcPtr = buffer.BufferSpan)
-                {
-                    Buffer.MemoryCopy(srcPtr, (void*)bmpData.Scan0, length, length);
-                }
+                Buffer.MemoryCopy(srcPtr, (void*)bmpData.Scan0, length, length);
             }
 
             bitmap.UnlockBits(bmpData);
@@ -215,30 +211,6 @@ namespace RenderEngine
             }
 
             return new Vector<byte>(pixelBytes);
-        }
-
-        public void DrawVerticalLines(IEnumerable<(int columnIndex, int y, int finalY, Color color)> lines)
-        {
-            var list = new List<(int x, int y, uint bgra)>();
-
-            foreach (var (x, yStart, yEnd, color) in lines)
-            {
-                if ((uint)x >= (uint)Width) continue;
-
-                // Pack the color into a BGRA uint
-                var packed = ((uint)color.A << 24) | ((uint)color.R << 16) | ((uint)color.G << 8) | color.B;
-
-                // Clip the vertical range to valid Y values
-                var y0 = Math.Max(0, yStart);
-                var y1 = Math.Min(Height - 1, yEnd);
-
-                for (var y = y0; y <= y1; y++)
-                {
-                    list.Add((x, y, packed));
-                }
-            }
-
-            ApplyChanges(CollectionsMarshal.AsSpan(list));
         }
 
         /// <summary>

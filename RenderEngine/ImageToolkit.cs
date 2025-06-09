@@ -10,13 +10,12 @@
 // ReSharper disable MemberCanBePrivate.Global
 // ReSharper disable UnusedMember.Global
 
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace RenderEngine
 {
-    using System;
-
     namespace RenderEngine
     {
         /// <inheritdoc />

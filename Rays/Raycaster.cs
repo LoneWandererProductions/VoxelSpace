@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Drawing;
 using Imaging;
+using Viewer;
 
-namespace Voxels
+namespace Rays
 {
     public sealed class Raycaster
     {

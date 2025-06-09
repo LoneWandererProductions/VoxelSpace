@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using System.Windows.Input;
 using Mathematics;
+using System.Windows.Input;
 
-namespace Voxels
+namespace Viewer
 {
     //TODO Performance Bottleneck is here
     public static class InputHelper

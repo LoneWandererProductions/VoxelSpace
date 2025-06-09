@@ -2,7 +2,8 @@
 using MinimalRender;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Desktop;
-using Voxels;
+using Rays;
+using Viewer;
 
 namespace OpenGler
 {

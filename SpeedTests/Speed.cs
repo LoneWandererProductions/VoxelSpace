@@ -4,6 +4,7 @@ using System.Drawing;
 using System.IO;
 using Imaging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Viewer;
 using Voxels;
 
 namespace SpeedTests
@@ -102,33 +103,37 @@ namespace SpeedTests
                 Distance = 15,
                 CellSize = 1,
                 Scale = 100
-                //Horizon = 200
             };
 
             _voxel = new VoxelRasterTest(100, 100, 0, 100, 120, 120, 300, colorMap, heightMap);
 
-            var voxelRaster = new VoxelRaster3D(context, // Example CameraContext
-                _voxel.ColorMap, _voxel.HeightMap, _voxel.TopographyWidth, _voxel.TopographyHeight, _voxel.ColorWidth,
+            var voxelRaster = new VoxelRaster3D(
+                context,
+                _voxel.ColorMap,
+                _voxel.HeightMap,
+                _voxel.TopographyWidth,
+                _voxel.TopographyHeight,
+                _voxel.ColorWidth,
                 _voxel.ColorWidth
             );
 
-            // Measure the performance of RenderWithContainer
-            stopwatch.Start();
-            var renderedBitmap = voxelRaster.RenderWithContainer(new RvCamera()); // Provide a suitable camera object
-            stopwatch.Stop();
-            Trace.WriteLine($"RenderWithContainer rendering time: {stopwatch.ElapsedMilliseconds} ms");
+            var camera = new RvCamera(); // You can customize this if needed
 
-            stopwatch.Start();
-            var btm = renderedBitmap.ToBitmapImage();
+            // --- RenderWithContainer ---
+            stopwatch.Restart();
+            var managedBitmap = voxelRaster.RenderWithContainer(camera);
             stopwatch.Stop();
-            Trace.WriteLine($"Conversion Time: {stopwatch.ElapsedMilliseconds} ms");
-            // Validate the result
-            Assert.IsNotNull(renderedBitmap, "RenderWithContainer produced a null Bitmap.");
-            Assert.IsNotNull(btm, "ToBitmapImage produced a null Bitmap.");
+            Trace.WriteLine($"RenderWithContainer time: {stopwatch.ElapsedMilliseconds} ms");
 
-            // Optionally: Compare the bitmap with expected results or other methods if needed
-            // You can use image comparison libraries or hash-based checks
+            stopwatch.Restart();
+            var managedBitmapImage = managedBitmap.ToBitmapImage();
+            stopwatch.Stop();
+            Trace.WriteLine($"Managed Bitmap conversion time: {stopwatch.ElapsedMilliseconds} ms");
+
+            Assert.IsNotNull(managedBitmap, "RenderWithContainer produced null.");
+            Assert.IsNotNull(managedBitmapImage, "ToBitmapImage from managed bitmap is null.");
         }
+
 
         /// <summary>
         ///     Speeds the and result comparison raycast tests.

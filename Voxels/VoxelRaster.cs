@@ -8,6 +8,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Imaging;
+using Viewer;
 
 namespace Voxels
 {
@@ -142,6 +143,9 @@ namespace Voxels
         /// </value>
         public long ImageRender { get; private set; }
 
+        /// <summary>
+        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+        /// </summary>
         public void Dispose()
         {
             Dispose(true);
@@ -278,10 +282,8 @@ namespace Voxels
                 simulatedCamera = InputHelper.SimulateCameraMovementVoxel(key, simulatedCamera);
 
                 // Generate the bitmap
-                var generatedBitmap = _raster.RenderWithContainer(simulatedCamera);
-
                 // Cache the bitmap
-                _lazyCache[key] = generatedBitmap;
+                _lazyCache[key] = _raster.RenderWithContainer(simulatedCamera);
 
                 // Mark the image generation as complete
                 _isImageBeingGenerated[key] = false;

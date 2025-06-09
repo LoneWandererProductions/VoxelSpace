@@ -7,7 +7,8 @@ using MinimalRender;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
-using Voxels;
+using Rays;
+using Viewer;
 using PixelFormat = System.Drawing.Imaging.PixelFormat;
 
 // your Raycaster namespace

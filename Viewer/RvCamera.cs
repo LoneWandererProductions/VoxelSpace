@@ -9,7 +9,7 @@
 using System;
 using System.Drawing;
 
-namespace Voxels
+namespace Viewer
 {
     public sealed class RvCamera
     {
@@ -101,7 +101,7 @@ namespace Voxels
         ///     Creates a deep copy of the current Camera instance.
         /// </summary>
         /// <returns>A new Camera instance with the same property values.</returns>
-        internal RvCamera Clone()
+        public RvCamera Clone()
         {
             return new RvCamera
             {

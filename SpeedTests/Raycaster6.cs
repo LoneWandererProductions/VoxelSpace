@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Drawing;
-using Voxels;
+using Viewer;
 
 namespace SpeedTests
 {
-    public class Raycaster6
+    public sealed class Raycaster6
     {
         private readonly CameraContext _context;
         private readonly int[,] _map;

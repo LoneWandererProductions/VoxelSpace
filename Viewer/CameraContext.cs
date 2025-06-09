@@ -1,6 +1,6 @@
-﻿namespace Voxels
+﻿namespace Viewer
 {
-    public class CameraContext
+    public sealed class CameraContext
     {
         public CameraContext()
         {

@@ -5,7 +5,7 @@ using System.Drawing;
 using System.Threading.Tasks;
 using Imaging;
 using Mathematics;
-using RenderEngine;
+using Viewer;
 
 namespace Voxels
 {
@@ -36,6 +36,16 @@ namespace Voxels
         /// </summary>
         private float[] _yBuffer;
 
+        /// <summary>
+        /// Initializes a new instance of the <see cref="VoxelRaster3D"/> class.
+        /// </summary>
+        /// <param name="context">The context.</param>
+        /// <param name="colorMap">The color map.</param>
+        /// <param name="heightMap">The height map.</param>
+        /// <param name="topographyWidth">Width of the topography.</param>
+        /// <param name="topographyHeight">Height of the topography.</param>
+        /// <param name="colorWidth">Width of the color.</param>
+        /// <param name="colorHeight">Height of the color.</param>
         public VoxelRaster3D(CameraContext context, Color[,] colorMap, int[,] heightMap, int topographyWidth,
             int topographyHeight, int colorWidth, int colorHeight)
         {
@@ -190,91 +200,6 @@ namespace Voxels
 
             return _directBitmap.Bitmap;
         }
-
-        public UnmanagedImageBuffer RenderUnmanaged(RvCamera camera)
-        {
-            Array.Fill(_yBuffer, _context.ScreenHeight);
-
-            Parallel.For(0, _columnSlices.Count, i => Array.Fill(_columnSlices[i], 0));
-
-            var colorDictionary = new Dictionary<int, Color>();
-            var sinPhi = ExtendedMath.CalcSinF(camera.Angle);
-            var cosPhi = ExtendedMath.CalcCosF(camera.Angle);
-
-            float z = camera.Z;
-            float dz = 1;
-
-            var fov = (int)(_context.Fov / 2.0);
-
-            var tanFovHalf = ExtendedMath.CalcTanF(fov);
-
-            while (z < camera.ZFar)
-            {
-                var halfWidth = z * tanFovHalf;
-
-                var pLeftX = -cosPhi * halfWidth - sinPhi * z + camera.X;
-                var pLeftY = sinPhi * halfWidth - cosPhi * z + camera.Y;
-
-                var pRightX = cosPhi * halfWidth - sinPhi * z + camera.X;
-                var pRightY = -sinPhi * halfWidth - cosPhi * z + camera.Y;
-
-                var dx = (pRightX - pLeftX) / _context.ScreenWidth;
-                var dy = (pRightY - pLeftY) / _context.ScreenWidth;
-
-                for (var i = 0; i < _context.ScreenWidth; i++)
-                {
-                    var diffuseX = (int)pLeftX;
-                    var diffuseY = (int)pLeftY;
-                    var heightX = (int)pLeftX;
-                    var heightY = (int)pLeftY;
-
-                    //access via Indexing
-                    var wrappedHeightX = heightX & (_topographyWidth - 1);
-                    var wrappedHeightY = heightY & (_topographyHeight - 1);
-                    var wrappedColorX = diffuseX & (_colorWidth - 1);
-                    var wrappedColorY = diffuseY & (_colorHeight - 1);
-
-                    // Access the flattened arrays using the calculated indices
-                    var heightOfHeightMap = _flatHeightMap[wrappedHeightY * _topographyWidth + wrappedHeightX];
-                    var color = _flatColorMap[wrappedColorY * _colorWidth + wrappedColorX];
-
-                    var heightOnScreen = (_context.Height - heightOfHeightMap) / z * _context.Scale + camera.Horizon -
-                                         ExtendedMath.CalcTanF(camera.Pitch) * _context.Scale;
-
-                    var y1 = (int)heightOnScreen;
-
-                    if (y1 < _yBuffer[i] && y1 >= 0 && y1 < _context.ScreenHeight)
-                    {
-                        _yBuffer[i] = heightOnScreen;
-
-                        if (color != Color.Transparent)
-                        {
-                            var colorId = color.ToArgb();
-                            colorDictionary[colorId] = color;
-                            _columnSlices[i][y1] = colorId;
-                        }
-                    }
-
-                    pLeftX += dx;
-                    pLeftY += dy;
-                }
-
-                z += dz;
-                dz += DzIncrement;
-            }
-
-            var lines = RasterHelper.FillMissingColorsLines(_columnSlices, _colorDictionary);
-            //var points = RasterHelper.FillMissingColorsPoints(_columnSlices, _colorDictionary);
-            //var all = RasterHelper.FillMissingColorsOld(_columnSlices, _colorDictionary);
-
-            //var both = RasterHelper.GetPointsAndLines(_columnSlices, _colorDictionary);
-            var buffer = new UnmanagedImageBuffer(_context.ScreenWidth, _context.ScreenHeight);
-            buffer.Clear(0, 0, 0, 0); // Start with transparent
-            buffer.DrawVerticalLines(lines); // Replace DirectBitmap method
-
-            return buffer;
-        }
-
 
         /// <summary>
         ///     Releases unmanaged and - optionally - managed resources.

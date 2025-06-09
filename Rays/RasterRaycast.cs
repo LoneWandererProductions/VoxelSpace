@@ -1,9 +1,11 @@
 ﻿using System.Drawing;
 using System.Windows.Input;
+using Viewer;
+using Voxels;
 
-namespace Voxels
+namespace Rays
 {
-    public class RasterRaycast
+    public sealed class RasterRaycast
     {
         private readonly Raycaster _ray;
 
