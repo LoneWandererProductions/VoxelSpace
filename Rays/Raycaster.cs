@@ -12,18 +12,25 @@ namespace Rays
         private readonly int _mapHeight;
         private readonly int _mapWidth;
 
+        private readonly IFloorCeilingRenderer? _floorCeilingRenderer;
 
-        public Raycaster(int[,] map, CameraContext context)
+
+        public Raycaster(int[,] map, CameraContext context, IFloorCeilingRenderer? floorCeilingRenderer = null)
         {
             _map = map;
             _mapWidth = map.GetLength(1);
             _mapHeight = map.GetLength(0);
             _context = context;
+
+            floorCeilingRenderer ??= new FlatFloorCeilingRenderer();
+            _floorCeilingRenderer = floorCeilingRenderer;
         }
 
         public RenderResult Render(RvCamera camera)
         {
             DirectBitmap dbm = new(_context.ScreenWidth, _context.ScreenHeight, Color.Black);
+
+            _floorCeilingRenderer?.Render(dbm, camera, _context);
 
             var halfFov = _context.Fov / 2.0;
             var angleStep = _context.Fov / _context.ScreenWidth;
@@ -67,7 +74,7 @@ namespace Rays
         }
 
 
-        public double CastRay(double startX, double startY, double rayDirX, double rayDirY)
+        private double CastRay(double startX, double startY, double rayDirX, double rayDirY)
         {
             var x = startX;
             var y = startY;
@@ -106,12 +113,6 @@ namespace Rays
         private static double DegreeToRadian(double degree)
         {
             return degree * Math.PI / 180.0;
-        }
-
-        public sealed class RenderResult
-        {
-            public Bitmap Bitmap { get; set; }
-            public byte[] Bytes { get; set; }
         }
     }
 }

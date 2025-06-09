@@ -24,7 +24,7 @@ namespace Rays
             return _ray.Render(Camera).Bitmap;
         }
 
-        public Raycaster.RenderResult Render()
+        public RenderResult Render()
         {
             return _ray.Render(Camera);
         }
