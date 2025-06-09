@@ -175,6 +175,21 @@ namespace Main
                 { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }
             };
 
+
+            var maps = new MapCell[10, 10];
+            for (int y = 0; y < 10; y++)
+            {
+                for (int x = 0; x < 10; x++)
+                {
+                    maps[y, x] = new MapCell
+                    {
+                        WallId = map[y, x],
+                        FloorId = 1,    // Default floor tile ID
+                        CeilingId = 1   // Default ceiling tile ID
+                    };
+                }
+            }
+
             // Set up a camera
             var camera = new RvCamera(96, 96, 0); // Position and angle of the camera
             //setup the context

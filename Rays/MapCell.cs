@@ -2,9 +2,9 @@
 {
     public class MapCell
     {
-        public int WallId;
-        public int FloorId;
-        public int CeilingId;
+        public int WallId { get; set; }
+        public int FloorId { get; set; }
+        public int CeilingId { get; set; }
     }
 
 }

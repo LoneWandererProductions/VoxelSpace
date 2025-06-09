@@ -9,6 +9,10 @@
   <ItemGroup>
     <None Remove="Terrain\C1W.png" />
     <None Remove="Terrain\D1.png" />
+    <None Remove="Tiles\cave.png" />
+    <None Remove="Tiles\cave_root_.png" />
+    <None Remove="Tiles\cave_water.png" />
+    <None Remove="Tiles\scifi.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -16,6 +20,18 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="Terrain\D1.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Tiles\cave.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Tiles\cave_root_.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Tiles\cave_water.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Tiles\scifi.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </EmbeddedResource>
   </ItemGroup>
