@@ -21,7 +21,7 @@ namespace Rays
             _mapHeight = map.GetLength(0);
             _context = context;
             _wallTextures = wallTextures;
-            _floorCeilingRenderer = floorCeilingRenderer ?? new FlatFloorCeilingRenderer();
+            _floorCeilingRenderer = floorCeilingRenderer ?? new TexturedFloorCeilingRenderer(_wallTextures[0], _wallTextures[1]);
         }
 
         public RenderResult Render(RvCamera camera)
@@ -67,13 +67,16 @@ namespace Rays
 
                 texX = Math.Clamp(texX, 0, texture.Width - 1);
 
+                // ✅ Cache the vertical texture column once
+                var textureColumn = texture.GetColumn(texX);
+
                 for (var y = wallTop; y < wallBottom; y++)
                 {
                     var t = (y - wallTop) / (double)(wallBottom - wallTop);
                     var texY = (int)(t * texture.Height);
                     texY = Math.Clamp(texY, 0, texture.Height - 1);
 
-                    var baseColor = texture.GetPixel(texX, texY);
+                    var baseColor = textureColumn[texY];
                     var foggedColor = ApplyFog(baseColor, distanceToWall);
                     dbm.SetPixel(x, y, foggedColor);
                 }
@@ -88,6 +91,7 @@ namespace Rays
             };
         }
 
+
         private static byte[] ToByteArray(int[] bits)
         {
             var bytes = new byte[bits.Length * sizeof(int)];
@@ -97,29 +101,100 @@ namespace Rays
 
         private (double Distance, double HitX, double HitY, int WallId) CastRay(double startX, double startY, double rayDirX, double rayDirY)
         {
-            var x = startX;
-            var y = startY;
+            const double NearClipDistance = 0.01; // avoid walls too close to camera
 
-            while (true)
+            // Map cell size and map indices
+            double cellSize = _context.CellSize;
+            int mapX = (int)(startX / cellSize);
+            int mapY = (int)(startY / cellSize);
+
+            // Direction step and initial side distance
+            double deltaDistX = (rayDirX == 0) ? double.MaxValue : Math.Abs(cellSize / rayDirX);
+            double deltaDistY = (rayDirY == 0) ? double.MaxValue : Math.Abs(cellSize / rayDirY);
+
+            int stepX, stepY;
+            double sideDistX, sideDistY;
+
+            // Calculate step and initial side distances
+            if (rayDirX < 0)
             {
-                var mapX = (int)(x / _context.CellSize);
-                var mapY = (int)(y / _context.CellSize);
+                stepX = -1;
+                sideDistX = (startX - mapX * cellSize) * deltaDistX / cellSize;
+            }
+            else
+            {
+                stepX = 1;
+                sideDistX = ((mapX + 1) * cellSize - startX) * deltaDistX / cellSize;
+            }
 
+            if (rayDirY < 0)
+            {
+                stepY = -1;
+                sideDistY = (startY - mapY * cellSize) * deltaDistY / cellSize;
+            }
+            else
+            {
+                stepY = 1;
+                sideDistY = ((mapY + 1) * cellSize - startY) * deltaDistY / cellSize;
+            }
+
+            bool hit = false;
+            bool hitVertical = false;
+
+            while (!hit)
+            {
+                // Step to next map square in either x or y
+                if (sideDistX < sideDistY)
+                {
+                    sideDistX += deltaDistX;
+                    mapX += stepX;
+                    hitVertical = true;
+                }
+                else
+                {
+                    sideDistY += deltaDistY;
+                    mapY += stepY;
+                    hitVertical = false;
+                }
+
+                // Bounds check
                 if (mapX < 0 || mapX >= _mapWidth || mapY < 0 || mapY >= _mapHeight)
                     return (double.MaxValue, 0, 0, 0);
 
                 var cell = _map[mapY, mapX];
                 if (cell.WallId > 0)
-                {
-                    var dx = x - startX;
-                    var dy = y - startY;
-                    var dist = Math.Sqrt(dx * dx + dy * dy) / _context.CellSize;
-                    return (dist, x, y, cell.WallId);
-                }
-
-                x += rayDirX * 0.1;
-                y += rayDirY * 0.1;
+                    hit = true;
             }
+
+            // Compute exact hit position
+            double distance;
+            double hitX, hitY;
+
+            if (hitVertical)
+            {
+                distance = (mapX - startX / cellSize + (1 - stepX) / 2) * cellSize / rayDirX;
+                hitX = mapX * cellSize;
+                hitY = startY + distance * rayDirY;
+            }
+            else
+            {
+                distance = (mapY - startY / cellSize + (1 - stepY) / 2) * cellSize / rayDirY;
+                hitY = mapY * cellSize;
+                hitX = startX + distance * rayDirX;
+            }
+
+            // Normalize distance to avoid FOV distortion
+            double dx = hitX - startX;
+            double dy = hitY - startY;
+            double correctedDistance = Math.Sqrt(dx * dx + dy * dy) / cellSize;
+
+            // Apply near clipping
+            if (correctedDistance < NearClipDistance)
+                return (double.MaxValue, 0, 0, 0);
+
+            int wallId = _map[mapY, mapX].WallId;
+
+            return (correctedDistance, hitX, hitY, wallId);
         }
 
         private Color ApplyFog(Color baseColor, double distance)
