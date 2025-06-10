@@ -469,6 +469,42 @@ namespace Imaging
         }
 
         /// <summary>
+        ///     Gets the column of pixels at a given x-coordinate.
+        /// </summary>
+        /// <param name="x">The x-coordinate.</param>
+        /// <returns>Array of Colors in the column.</returns>
+        public Color[] GetColumn(int x)
+        {
+            Color[] column = new Color[Height];
+            Span<int> bitsSpan = Bits;
+
+            for (int y = 0; y < Height; y++)
+            {
+                int index = x + y * Width;
+                column[y] = Color.FromArgb(bitsSpan[index]);
+            }
+
+            return column;
+        }
+
+        /// <summary>
+        ///     Gets the row of pixels at a given y-coordinate.
+        /// </summary>
+        /// <param name="y">The y-coordinate.</param>
+        /// <returns>Array of Colors in the row.</returns>
+        public Color[] GetRow(int y)
+        {
+            Span<int> bitsSpan = Bits.AsSpan(y * Width, Width);
+            Color[] row = new Color[Width];
+            for (int i = 0; i < Width; i++)
+            {
+                row[i] = Color.FromArgb(bitsSpan[i]);
+            }
+
+            return row;
+        }
+
+        /// <summary>
         ///     Gets the color list.
         /// </summary>
         /// <returns>The Image as a list of Colors</returns>
