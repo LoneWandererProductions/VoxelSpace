@@ -169,31 +169,27 @@ namespace RenderEngine
         /// <param name="overlaySpan">The span of bytes representing the overlay image buffer.</param>
         private static void AlphaBlend(Span<byte> baseSpan, Span<byte> overlaySpan)
         {
-            var length = baseSpan.Length;
             const int bytesPerPixel = 4;
+            int length = baseSpan.Length;
 
-            for (var i = 0; i < length; i += bytesPerPixel)
+            for (int i = 0; i < length; i += bytesPerPixel)
             {
-                var srcB = overlaySpan[i];
-                var srcG = overlaySpan[i + 1];
-                var srcR = overlaySpan[i + 2];
-                var srcAByte = overlaySpan[i + 3];
-                var srcA = srcAByte / 255f;
+                byte srcB = overlaySpan[i];
+                byte srcG = overlaySpan[i + 1];
+                byte srcR = overlaySpan[i + 2];
+                byte srcA = overlaySpan[i + 3];
 
-                if (srcA <= 0)
-                {
+                if (srcA == 0)
                     continue;
-                }
 
-                var dstB = baseSpan[i];
-                var dstG = baseSpan[i + 1];
-                var dstR = baseSpan[i + 2];
-                var dstAByte = baseSpan[i + 3];
-                var dstA = dstAByte / 255f;
+                byte dstB = baseSpan[i];
+                byte dstG = baseSpan[i + 1];
+                byte dstR = baseSpan[i + 2];
+                byte dstA = baseSpan[i + 3];
 
-                var outA = srcA + (dstA * (1 - srcA));
-
-                if (outA <= 0)
+                // Calculate output alpha: outA = srcA + dstA * (255 - srcA) / 255
+                int outA = srcA + ((dstA * (255 - srcA) + 127) / 255);
+                if (outA == 0)
                 {
                     baseSpan[i] = 0;
                     baseSpan[i + 1] = 0;
@@ -202,11 +198,13 @@ namespace RenderEngine
                     continue;
                 }
 
-                baseSpan[i] = (byte)Math.Round(((srcB * srcA) + (dstB * dstA * (1 - srcA))) / outA);
-                baseSpan[i + 1] = (byte)Math.Round(((srcG * srcA) + (dstG * dstA * (1 - srcA))) / outA);
-                baseSpan[i + 2] = (byte)Math.Round(((srcR * srcA) + (dstR * dstA * (1 - srcA))) / outA);
-                baseSpan[i + 3] = (byte)Math.Round(outA * 255);
+                // Blend channels: (src * srcA + dst * dstA * (255 - srcA) / 255) / outA
+                baseSpan[i] = (byte)((srcB * srcA + dstB * dstA * (255 - srcA) / 255 + (outA / 2)) / outA);
+                baseSpan[i + 1] = (byte)((srcG * srcA + dstG * dstA * (255 - srcA) / 255 + (outA / 2)) / outA);
+                baseSpan[i + 2] = (byte)((srcR * srcA + dstR * dstA * (255 - srcA) / 255 + (outA / 2)) / outA);
+                baseSpan[i + 3] = (byte)outA;
             }
         }
+
     }
 }
