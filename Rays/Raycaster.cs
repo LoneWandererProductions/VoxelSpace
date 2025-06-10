@@ -8,11 +8,11 @@ namespace Rays
     public sealed class Raycaster
     {
         private readonly CameraContext _context;
+
+        private readonly IFloorCeilingRenderer? _floorCeilingRenderer;
         private readonly int[,] _map;
         private readonly int _mapHeight;
         private readonly int _mapWidth;
-
-        private readonly IFloorCeilingRenderer? _floorCeilingRenderer;
 
 
         public Raycaster(int[,] map, CameraContext context, IFloorCeilingRenderer? floorCeilingRenderer = null)

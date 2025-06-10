@@ -55,7 +55,8 @@ namespace SpeedTests
             for (var x = 0; x <= width; x++)
             for (var y = 0; y <= height; y++)
             {
-                if (x == 5 && y >= 2 && y <= 8) continue; // Skip the drawn vertical line
+                if (x == 5 && y is >= 2 and <= 8) continue; // Skip the drawn vertical line
+
                 Assert.AreEqual(0, target.Bits[x + y * (width + 1)], $"Pixel at ({x}, {y}) was unexpectedly modified.");
             }
         }

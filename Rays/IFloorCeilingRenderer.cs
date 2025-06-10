@@ -7,5 +7,4 @@ namespace Rays
     {
         void Render(DirectBitmap dbm, RvCamera camera, CameraContext context);
     }
-
 }

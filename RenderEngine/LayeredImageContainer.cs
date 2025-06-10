@@ -19,31 +19,23 @@ namespace RenderEngine
     public sealed class LayeredImageContainer : IDisposable
     {
         /// <summary>
-        /// The height
+        ///     The height
         /// </summary>
         private readonly int _height;
 
         /// <summary>
-        /// The layers
+        ///     The layers
         /// </summary>
         private readonly List<UnmanagedImageBuffer> _layers = new();
 
         /// <summary>
-        /// The width
+        ///     The width
         /// </summary>
         private readonly int _width;
 
         /// <summary>
-        /// Gets the layer count.
-        /// </summary>
-        /// <value>
-        /// The layer count.
-        /// </value>
-        public int LayerCount => _layers.Count;
-
-        /// <summary>
-        /// Initializes a new instance of the <see cref="LayeredImageContainer" /> class
-        /// with the specified width and height.
+        ///     Initializes a new instance of the <see cref="LayeredImageContainer" /> class
+        ///     with the specified width and height.
         /// </summary>
         /// <param name="width">The width of the container and all layers.</param>
         /// <param name="height">The height of the container and all layers.</param>
@@ -53,6 +45,14 @@ namespace RenderEngine
             _height = height;
         }
 
+        /// <summary>
+        ///     Gets the layer count.
+        /// </summary>
+        /// <value>
+        ///     The layer count.
+        /// </value>
+        public int LayerCount => _layers.Count;
+
         /// <inheritdoc />
         /// <summary>
         ///     Releases all resources used by the <see cref="T:RenderEngine.LayeredImageContainer" />,
@@ -60,10 +60,7 @@ namespace RenderEngine
         /// </summary>
         public void Dispose()
         {
-            foreach (var layer in _layers)
-            {
-                layer.Dispose();
-            }
+            foreach (var layer in _layers) layer.Dispose();
 
             _layers.Clear();
         }
@@ -78,9 +75,7 @@ namespace RenderEngine
         public void AddLayer(UnmanagedImageBuffer layer)
         {
             if (layer.Width != _width || layer.Height != _height)
-            {
                 throw new ArgumentException(RenderResource.ErrorLayerSize);
-            }
 
             _layers.Add(layer);
         }
@@ -109,20 +104,14 @@ namespace RenderEngine
         /// <exception cref="InvalidOperationException">Thrown if no layers exist to composite.</exception>
         public UnmanagedImageBuffer Composite()
         {
-            if (_layers.Count == 0)
-            {
-                throw new InvalidOperationException(RenderResource.ErrorNoLayers);
-            }
+            if (_layers.Count == 0) throw new InvalidOperationException(RenderResource.ErrorNoLayers);
 
             var result = new UnmanagedImageBuffer(_width, _height);
             result.Clear(0, 0, 0, 0); // start transparent
 
             var targetSpan = result.BufferSpan;
 
-            foreach (var layer in _layers)
-            {
-                AlphaBlend(targetSpan, layer.BufferSpan);
-            }
+            foreach (var layer in _layers) AlphaBlend(targetSpan, layer.BufferSpan);
 
             return result;
         }
@@ -136,7 +125,8 @@ namespace RenderEngine
             foreach (var index in layerIndices)
             {
                 if (index < 0 || index >= _layers.Count)
-                    throw new ArgumentOutOfRangeException(nameof(layerIndices), string.Format(RenderResource.ErrorInvalidLayerIndex, index));
+                    throw new ArgumentOutOfRangeException(nameof(layerIndices),
+                        string.Format(RenderResource.ErrorInvalidLayerIndex, index));
 
                 var layerSpan = _layers[index].BufferSpan;
                 AlphaBlend(targetSpan, layerSpan);
@@ -156,7 +146,8 @@ namespace RenderEngine
         public void RemoveLayer(int index)
         {
             if (index < 0 || index >= _layers.Count)
-                throw new ArgumentOutOfRangeException(nameof(index), string.Format(RenderResource.ErrorInvalidLayerIndex, index));
+                throw new ArgumentOutOfRangeException(nameof(index),
+                    string.Format(RenderResource.ErrorInvalidLayerIndex, index));
 
             _layers.RemoveAt(index);
         }
@@ -170,25 +161,25 @@ namespace RenderEngine
         private static void AlphaBlend(Span<byte> baseSpan, Span<byte> overlaySpan)
         {
             const int bytesPerPixel = 4;
-            int length = baseSpan.Length;
+            var length = baseSpan.Length;
 
-            for (int i = 0; i < length; i += bytesPerPixel)
+            for (var i = 0; i < length; i += bytesPerPixel)
             {
-                byte srcB = overlaySpan[i];
-                byte srcG = overlaySpan[i + 1];
-                byte srcR = overlaySpan[i + 2];
-                byte srcA = overlaySpan[i + 3];
+                var srcB = overlaySpan[i];
+                var srcG = overlaySpan[i + 1];
+                var srcR = overlaySpan[i + 2];
+                var srcA = overlaySpan[i + 3];
 
                 if (srcA == 0)
                     continue;
 
-                byte dstB = baseSpan[i];
-                byte dstG = baseSpan[i + 1];
-                byte dstR = baseSpan[i + 2];
-                byte dstA = baseSpan[i + 3];
+                var dstB = baseSpan[i];
+                var dstG = baseSpan[i + 1];
+                var dstR = baseSpan[i + 2];
+                var dstA = baseSpan[i + 3];
 
                 // Calculate output alpha: outA = srcA + dstA * (255 - srcA) / 255
-                int outA = srcA + ((dstA * (255 - srcA) + 127) / 255);
+                var outA = srcA + (dstA * (255 - srcA) + 127) / 255;
                 if (outA == 0)
                 {
                     baseSpan[i] = 0;
@@ -199,12 +190,11 @@ namespace RenderEngine
                 }
 
                 // Blend channels: (src * srcA + dst * dstA * (255 - srcA) / 255) / outA
-                baseSpan[i] = (byte)((srcB * srcA + dstB * dstA * (255 - srcA) / 255 + (outA / 2)) / outA);
-                baseSpan[i + 1] = (byte)((srcG * srcA + dstG * dstA * (255 - srcA) / 255 + (outA / 2)) / outA);
-                baseSpan[i + 2] = (byte)((srcR * srcA + dstR * dstA * (255 - srcA) / 255 + (outA / 2)) / outA);
+                baseSpan[i] = (byte)((srcB * srcA + dstB * dstA * (255 - srcA) / 255 + outA / 2) / outA);
+                baseSpan[i + 1] = (byte)((srcG * srcA + dstG * dstA * (255 - srcA) / 255 + outA / 2) / outA);
+                baseSpan[i + 2] = (byte)((srcR * srcA + dstR * dstA * (255 - srcA) / 255 + outA / 2) / outA);
                 baseSpan[i + 3] = (byte)outA;
             }
         }
-
     }
 }

@@ -135,7 +135,7 @@ namespace Imaging
         /// <value>
         ///     The color of the open tk.
         /// </value>
-        public float[] OpenTKColor { get; private set; }
+        public float[] OpenTkColor { get; private set; }
 
         /// <inheritdoc />
         /// <summary>
@@ -457,7 +457,7 @@ namespace Imaging
             var normalizedA = Normalize(A);
 
             // Return as float[] in the range [0.0f, 1.0f]
-            OpenTKColor = new[] { normalizedR, normalizedG, normalizedB, normalizedA };
+            OpenTkColor = new[] { normalizedR, normalizedG, normalizedB, normalizedA };
         }
 
         /// <summary>

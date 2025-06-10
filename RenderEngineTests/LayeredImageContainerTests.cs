@@ -53,7 +53,8 @@ namespace RenderEngineTests
             var layer = container.AddEmptyLayer();
             var span = layer.BufferSpan;
 
-            for (var i = 0; i < span.Length; i++) Assert.AreEqual(0, span[i]);
+            foreach (var t in span)
+                Assert.AreEqual(0, t);
         }
 
         [TestMethod]

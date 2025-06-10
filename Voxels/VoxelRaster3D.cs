@@ -37,7 +37,7 @@ namespace Voxels
         private float[] _yBuffer;
 
         /// <summary>
-        /// Initializes a new instance of the <see cref="VoxelRaster3D"/> class.
+        ///     Initializes a new instance of the <see cref="VoxelRaster3D" /> class.
         /// </summary>
         /// <param name="context">The context.</param>
         /// <param name="colorMap">The color map.</param>
@@ -70,7 +70,7 @@ namespace Voxels
         }
 
         /// <summary>
-        /// Initializes the buffers.
+        ///     Initializes the buffers.
         /// </summary>
         /// <param name="colorMap">The color map.</param>
         /// <param name="heightMap">The height map.</param>
@@ -172,10 +172,7 @@ namespace Voxels
                     {
                         _yBuffer[i] = heightOnScreen;
 
-                        if (color != Color.Transparent)
-                        {
-                            _columnSlices[i][y1] = color.ToArgb();
-                        }
+                        if (color != Color.Transparent) _columnSlices[i][y1] = color.ToArgb();
                     }
 
                     pLeftX += dx;

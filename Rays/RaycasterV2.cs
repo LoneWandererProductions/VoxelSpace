@@ -8,20 +8,22 @@ namespace Rays
     public sealed class RaycasterV2
     {
         private readonly CameraContext _context;
+        private readonly IFloorCeilingRenderer? _floorCeilingRenderer;
         private readonly MapCell[,] _map;
         private readonly int _mapHeight;
         private readonly int _mapWidth;
         private readonly DirectBitmap[] _wallTextures;
-        private readonly IFloorCeilingRenderer? _floorCeilingRenderer;
 
-        public RaycasterV2(MapCell[,] map, CameraContext context, DirectBitmap[] wallTextures, IFloorCeilingRenderer? floorCeilingRenderer = null)
+        public RaycasterV2(MapCell[,] map, CameraContext context, DirectBitmap[] wallTextures,
+            IFloorCeilingRenderer? floorCeilingRenderer = null)
         {
             _map = map;
             _mapWidth = map.GetLength(1);
             _mapHeight = map.GetLength(0);
             _context = context;
             _wallTextures = wallTextures;
-            _floorCeilingRenderer = floorCeilingRenderer ?? new TexturedFloorCeilingRenderer(_wallTextures[0], _wallTextures[1]);
+            _floorCeilingRenderer = floorCeilingRenderer ??
+                                    new TexturedFloorCeilingRenderer(_wallTextures[0], _wallTextures[1]);
         }
 
         public RenderResult Render(RvCamera camera)
@@ -48,7 +50,7 @@ namespace Rays
                     continue;
 
                 var wallHeight = (int)(_context.ScreenHeight / distanceToWall);
-                var zOffset = (int)(camera.Z / _context.CellSize * wallHeight);
+                var zOffset = camera.Z / _context.CellSize * wallHeight;
                 var wallTop = Math.Max(0, (_context.ScreenHeight - wallHeight) / 2 - zOffset);
                 var wallBottom = Math.Min(_context.ScreenHeight, (_context.ScreenHeight + wallHeight) / 2 - zOffset);
 
@@ -62,8 +64,8 @@ namespace Rays
                 var isVertical = Math.Abs(hitInCellX - cellSize / 2) < Math.Abs(hitInCellY - cellSize / 2);
 
                 var texX = isVertical
-                    ? (int)((hitY % cellSize) / cellSize * texture.Width)
-                    : (int)((hitX % cellSize) / cellSize * texture.Width);
+                    ? (int)(hitY % cellSize / cellSize * texture.Width)
+                    : (int)(hitX % cellSize / cellSize * texture.Width);
 
                 texX = Math.Clamp(texX, 0, texture.Width - 1);
 
@@ -99,18 +101,19 @@ namespace Rays
             return bytes;
         }
 
-        private (double Distance, double HitX, double HitY, int WallId) CastRay(double startX, double startY, double rayDirX, double rayDirY)
+        private (double Distance, double HitX, double HitY, int WallId) CastRay(double startX, double startY,
+            double rayDirX, double rayDirY)
         {
-            const double NearClipDistance = 0.01; // avoid walls too close to camera
+            const double nearClipDistance = 0.01; // avoid walls too close to camera
 
             // Map cell size and map indices
             double cellSize = _context.CellSize;
-            int mapX = (int)(startX / cellSize);
-            int mapY = (int)(startY / cellSize);
+            var mapX = (int)(startX / cellSize);
+            var mapY = (int)(startY / cellSize);
 
             // Direction step and initial side distance
-            double deltaDistX = (rayDirX == 0) ? double.MaxValue : Math.Abs(cellSize / rayDirX);
-            double deltaDistY = (rayDirY == 0) ? double.MaxValue : Math.Abs(cellSize / rayDirY);
+            var deltaDistX = rayDirX == 0 ? double.MaxValue : Math.Abs(cellSize / rayDirX);
+            var deltaDistY = rayDirY == 0 ? double.MaxValue : Math.Abs(cellSize / rayDirY);
 
             int stepX, stepY;
             double sideDistX, sideDistY;
@@ -138,8 +141,8 @@ namespace Rays
                 sideDistY = ((mapY + 1) * cellSize - startY) * deltaDistY / cellSize;
             }
 
-            bool hit = false;
-            bool hitVertical = false;
+            var hit = false;
+            var hitVertical = false;
 
             while (!hit)
             {
@@ -184,15 +187,15 @@ namespace Rays
             }
 
             // Normalize distance to avoid FOV distortion
-            double dx = hitX - startX;
-            double dy = hitY - startY;
-            double correctedDistance = Math.Sqrt(dx * dx + dy * dy) / cellSize;
+            var dx = hitX - startX;
+            var dy = hitY - startY;
+            var correctedDistance = Math.Sqrt(dx * dx + dy * dy) / cellSize;
 
             // Apply near clipping
-            if (correctedDistance < NearClipDistance)
+            if (correctedDistance < nearClipDistance)
                 return (double.MaxValue, 0, 0, 0);
 
-            int wallId = _map[mapY, mapX].WallId;
+            var wallId = _map[mapY, mapX].WallId;
 
             return (correctedDistance, hitX, hitY, wallId);
         }

@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using Mathematics;
 using System.Windows.Input;
+using Mathematics;
 
 namespace Viewer
 {

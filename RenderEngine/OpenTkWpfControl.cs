@@ -8,8 +8,8 @@ namespace RenderEngine
 {
     public class OpenTkWpfControl : UserControl, IDisposable
     {
-        private int _backgroundTexture = -1;
         private readonly GLWpfControl _glControl;
+        private int _backgroundTexture = -1;
         private int _shaderProgram;
         private int _vao, _vbo;
 
@@ -27,6 +27,14 @@ namespace RenderEngine
             Unloaded += OnUnloaded;
         }
 
+        public void Dispose()
+        {
+            if (_vao != 0) GL.DeleteVertexArray(_vao);
+            if (_vbo != 0) GL.DeleteBuffer(_vbo);
+            if (_shaderProgram != 0) GL.DeleteProgram(_shaderProgram);
+            if (_backgroundTexture != 0) GL.DeleteTexture(_backgroundTexture);
+        }
+
         private void OnLoaded(object sender, RoutedEventArgs e)
         {
             if (!OpenTkHelper.IsOpenGlCompatible())
@@ -42,7 +50,7 @@ namespace RenderEngine
 
             // Set uniform for texture unit
             GL.UseProgram(_shaderProgram);
-            int uniformLocation = GL.GetUniformLocation(_shaderProgram, "uTexture");
+            var uniformLocation = GL.GetUniformLocation(_shaderProgram, "uTexture");
             GL.Uniform1(uniformLocation, 0); // Texture unit 0
         }
 
@@ -51,7 +59,8 @@ namespace RenderEngine
             _shaderProgram = GL.CreateProgram();
 
             var vertexShader = OpenTkHelper.CompileShader(ShaderType.VertexShader, ShaderResource.VertexShaderSource);
-            var fragmentShader = OpenTkHelper.CompileShader(ShaderType.FragmentShader, ShaderResource.FragmentShaderSource);
+            var fragmentShader =
+                OpenTkHelper.CompileShader(ShaderType.FragmentShader, ShaderResource.FragmentShaderSource);
 
             GL.AttachShader(_shaderProgram, vertexShader);
             GL.AttachShader(_shaderProgram, fragmentShader);
@@ -62,10 +71,10 @@ namespace RenderEngine
 
             GL.LinkProgram(_shaderProgram);
 
-            GL.GetProgram(_shaderProgram, GetProgramParameterName.LinkStatus, out int status);
+            GL.GetProgram(_shaderProgram, GetProgramParameterName.LinkStatus, out var status);
             if (status == 0)
             {
-                string infoLog = GL.GetProgramInfoLog(_shaderProgram);
+                var infoLog = GL.GetProgramInfoLog(_shaderProgram);
                 throw new Exception("Shader program linking failed: " + infoLog);
             }
 
@@ -77,15 +86,16 @@ namespace RenderEngine
 
         private void InitializeBuffers()
         {
-            float[] vertices = {
+            float[] vertices =
+            {
                 // Position     // TexCoords
-                -1.0f, -1.0f,   0.0f, 0.0f,
-                 1.0f, -1.0f,   1.0f, 0.0f,
-                 1.0f,  1.0f,   1.0f, 1.0f,
+                -1.0f, -1.0f, 0.0f, 0.0f,
+                1.0f, -1.0f, 1.0f, 0.0f,
+                1.0f, 1.0f, 1.0f, 1.0f,
 
-                 1.0f,  1.0f,   1.0f, 1.0f,
-                -1.0f,  1.0f,   0.0f, 1.0f,
-                -1.0f, -1.0f,   0.0f, 0.0f,
+                1.0f, 1.0f, 1.0f, 1.0f,
+                -1.0f, 1.0f, 0.0f, 1.0f,
+                -1.0f, -1.0f, 0.0f, 0.0f
             };
 
             _vao = GL.GenVertexArray();
@@ -93,7 +103,8 @@ namespace RenderEngine
 
             GL.BindVertexArray(_vao);
             GL.BindBuffer(BufferTarget.ArrayBuffer, _vbo);
-            GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices, BufferUsageHint.StaticDraw);
+            GL.BufferData(BufferTarget.ArrayBuffer, vertices.Length * sizeof(float), vertices,
+                BufferUsageHint.StaticDraw);
 
             GL.VertexAttribPointer(0, 2, VertexAttribPointerType.Float, false, 4 * sizeof(float), 0);
             GL.EnableVertexAttribArray(0);
@@ -113,10 +124,7 @@ namespace RenderEngine
         {
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
 
-            if (_backgroundTexture != -1)
-            {
-                RenderBackground(_backgroundTexture);
-            }
+            if (_backgroundTexture != -1) RenderBackground(_backgroundTexture);
 
             // Add additional rendering here
         }
@@ -137,14 +145,6 @@ namespace RenderEngine
         private void OnUnloaded(object sender, RoutedEventArgs e)
         {
             Dispose();
-        }
-
-        public void Dispose()
-        {
-            if (_vao != 0) GL.DeleteVertexArray(_vao);
-            if (_vbo != 0) GL.DeleteBuffer(_vbo);
-            if (_shaderProgram != 0) GL.DeleteProgram(_shaderProgram);
-            if (_backgroundTexture != 0) GL.DeleteTexture(_backgroundTexture);
         }
     }
 }

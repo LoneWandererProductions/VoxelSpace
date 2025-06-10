@@ -114,14 +114,14 @@ namespace Imaging
                 var turbulenceValue = noiseGen.Turbulence(x, y, turbulenceSize);
 
                 // Adjust turbulence value like in the C code (divide by 4)
-                var L = (byte)Math.Clamp(192 + (int)(turbulenceValue / 4), 192, 230); // Lightness adjustment
+                var l = (byte)Math.Clamp(192 + (int)(turbulenceValue / 4), 192, 230); // Lightness adjustment
 
                 // Set Hue and Saturation (H = 190 for light blue, S = 200 for muted saturation)
-                var H = 190; // Adjusted Hue value closer to light blue
-                var S = 200; // Reduced Saturation for a more muted, light blue
+                var h = 190; // Adjusted Hue value closer to light blue
+                var s = 200; // Reduced Saturation for a more muted, light blue
 
                 // Convert HSL to RGB
-                var color = HsLtoRgb(H, S, L);
+                var color = HsLtoRgb(h, s, l);
 
                 // Add the pixel data for SIMD processing
                 pixelData.Add((x, y, color));
@@ -442,56 +442,52 @@ namespace Imaging
         {
             var canvasBitmap = new Bitmap(width, height);
 
-            using (var graphics = Graphics.FromImage(canvasBitmap))
+            using var graphics = Graphics.FromImage(canvasBitmap);
+            graphics.Clear(Color.Transparent);
+
+            var lineColorWithAlpha = Color.FromArgb(alpha, lineColor == default ? Color.Black : lineColor);
+
+            using var fiberPen = new Pen(lineColorWithAlpha, lineThickness);
+            var random = new Random();
+
+            // Draw vertical wavy and edge-jagged fibers
+            for (var x = 0; x < width; x += lineSpacing)
             {
-                graphics.Clear(Color.Transparent);
+                var path = new GraphicsPath();
+                var shouldCutOff = random.Next(0, 100) < jaggednessThreshold;
 
-                var lineColorWithAlpha = Color.FromArgb(alpha, lineColor == default ? Color.Black : lineColor);
+                // Limit cutoff to top/bottom 20% of the image height
+                var cutoffStart = shouldCutOff ? random.Next(0, height / edgeJaggednessLimit) : 0;
+                var cutoffEnd = shouldCutOff ? height - random.Next(0, height / edgeJaggednessLimit) : height;
 
-                using (var fiberPen = new Pen(lineColorWithAlpha, lineThickness))
+                for (var y = cutoffStart; y < cutoffEnd; y += 5)
                 {
-                    var random = new Random();
-
-                    // Draw vertical wavy and edge-jagged fibers
-                    for (var x = 0; x < width; x += lineSpacing)
-                    {
-                        var path = new GraphicsPath();
-                        var shouldCutOff = random.Next(0, 100) < jaggednessThreshold;
-
-                        // Limit cutoff to top/bottom 20% of the image height
-                        var cutoffStart = shouldCutOff ? random.Next(0, height / edgeJaggednessLimit) : 0;
-                        var cutoffEnd = shouldCutOff ? height - random.Next(0, height / edgeJaggednessLimit) : height;
-
-                        for (var y = cutoffStart; y < cutoffEnd; y += 5)
-                        {
-                            var xOffset = waveAmplitude * Math.Sin(waveFrequency * y)
-                                          + randomizationFactor * (random.NextDouble() - 0.5);
-                            path.AddLine(x + (float)xOffset, y, x + (float)xOffset, y + 5);
-                        }
-
-                        graphics.DrawPath(fiberPen, path);
-                    }
-
-                    // Draw horizontal wavy and edge-jagged fibers
-                    for (var y = 0; y < height; y += lineSpacing)
-                    {
-                        var path = new GraphicsPath();
-                        var shouldCutOff = random.Next(0, 100) < jaggednessThreshold;
-
-                        // Limit cutoff to left/right 20% of the image width
-                        var cutoffStart = shouldCutOff ? random.Next(0, width / edgeJaggednessLimit) : 0;
-                        var cutoffEnd = shouldCutOff ? width - random.Next(0, width / edgeJaggednessLimit) : width;
-
-                        for (var x = cutoffStart; x < cutoffEnd; x += 5)
-                        {
-                            var yOffset = waveAmplitude * Math.Sin(waveFrequency * x)
-                                          + randomizationFactor * (random.NextDouble() - 0.5);
-                            path.AddLine(x, y + (float)yOffset, x + 5, y + (float)yOffset);
-                        }
-
-                        graphics.DrawPath(fiberPen, path);
-                    }
+                    var xOffset = waveAmplitude * Math.Sin(waveFrequency * y)
+                                  + randomizationFactor * (random.NextDouble() - 0.5);
+                    path.AddLine(x + (float)xOffset, y, x + (float)xOffset, y + 5);
                 }
+
+                graphics.DrawPath(fiberPen, path);
+            }
+
+            // Draw horizontal wavy and edge-jagged fibers
+            for (var y = 0; y < height; y += lineSpacing)
+            {
+                var path = new GraphicsPath();
+                var shouldCutOff = random.Next(0, 100) < jaggednessThreshold;
+
+                // Limit cutoff to left/right 20% of the image width
+                var cutoffStart = shouldCutOff ? random.Next(0, width / edgeJaggednessLimit) : 0;
+                var cutoffEnd = shouldCutOff ? width - random.Next(0, width / edgeJaggednessLimit) : width;
+
+                for (var x = cutoffStart; x < cutoffEnd; x += 5)
+                {
+                    var yOffset = waveAmplitude * Math.Sin(waveFrequency * x)
+                                  + randomizationFactor * (random.NextDouble() - 0.5);
+                    path.AddLine(x, y + (float)yOffset, x + 5, y + (float)yOffset);
+                }
+
+                graphics.DrawPath(fiberPen, path);
             }
 
             return canvasBitmap;

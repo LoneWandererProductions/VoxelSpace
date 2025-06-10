@@ -2,7 +2,6 @@
 using System.Windows.Input;
 using Imaging;
 using Viewer;
-using Voxels;
 
 namespace Rays
 {

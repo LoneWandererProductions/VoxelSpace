@@ -76,10 +76,10 @@ namespace OpenGler
 
         public void SetFrame(byte[] pixels)
         {
-            if (pixels.Length != _currentPixels.Length) return;
-
             lock (_lock)
             {
+                if (pixels.Length != _currentPixels.Length) return;
+
                 Buffer.BlockCopy(pixels, 0, _currentPixels, 0, pixels.Length);
             }
         }

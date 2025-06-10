@@ -16,10 +16,7 @@ namespace Voxels
 
             for (var y = 0; y < columnSlice.Length; y++)
             {
-                if (columnSlice[y] != 0)
-                {
-                    previousColor = columnSlice[y];
-                }
+                if (columnSlice[y] != 0) previousColor = columnSlice[y];
 
                 filledColumnSlice[y] = previousColor;
             }

@@ -13,7 +13,7 @@
 namespace RenderEngine
 {
     /// <summary>
-    /// Interface for our ImageToolkit
+    ///     Interface for our ImageToolkit
     /// </summary>
     public interface IImageToolkit
     {

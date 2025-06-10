@@ -8,6 +8,7 @@
 
 using System;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Numerics;
 using System.Runtime.InteropServices;
 using System.Runtime.Intrinsics.X86;
@@ -28,17 +29,17 @@ namespace RenderEngine
     public sealed unsafe class UnmanagedImageBuffer : IDisposable
     {
         /// <summary>
-        /// The buffer PTR
+        ///     The buffer PTR
         /// </summary>
         private readonly IntPtr _bufferPtr;
 
         /// <summary>
-        /// The buffer size
+        ///     The buffer size
         /// </summary>
         private readonly int _bufferSize;
 
         /// <summary>
-        /// The bytes per pixel
+        ///     The bytes per pixel
         /// </summary>
         private readonly int _bytesPerPixel;
 
@@ -53,20 +54,11 @@ namespace RenderEngine
         /// <exception cref="ArgumentOutOfRangeException">Thrown if width or height is less than or equal to zero.</exception>
         public UnmanagedImageBuffer(int width, int height, int bytesPerPixel = 4)
         {
-            if (width <= 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(width));
-            }
+            if (width <= 0) throw new ArgumentOutOfRangeException(nameof(width));
 
-            if (height <= 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(height));
-            }
+            if (height <= 0) throw new ArgumentOutOfRangeException(nameof(height));
 
-            if (bytesPerPixel <= 0)
-            {
-                throw new ArgumentOutOfRangeException(nameof(bytesPerPixel));
-            }
+            if (bytesPerPixel <= 0) throw new ArgumentOutOfRangeException(nameof(bytesPerPixel));
 
             Width = width;
             Height = height;
@@ -93,17 +85,29 @@ namespace RenderEngine
         /// </summary>
         public int Height { get; }
 
+        /// <inheritdoc />
         /// <summary>
-        /// Converts to bitmap.
+        ///     Frees the unmanaged buffer memory.
+        /// </summary>
+        public void Dispose()
+        {
+            if (_bufferPtr == IntPtr.Zero) return;
+
+            Marshal.FreeHGlobal(_bufferPtr);
+            GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        ///     Converts to bitmap.
         /// </summary>
         /// <returns>The Buffer as bitmapImage</returns>
         public Bitmap ToBitmap()
         {
-            var bitmap = new Bitmap(Width, Height, System.Drawing.Imaging.PixelFormat.Format32bppArgb);
+            var bitmap = new Bitmap(Width, Height, PixelFormat.Format32bppArgb);
 
             var bmpData = bitmap.LockBits(
                 new Rectangle(0, 0, bitmap.Width, bitmap.Height),
-                System.Drawing.Imaging.ImageLockMode.WriteOnly,
+                ImageLockMode.WriteOnly,
                 bitmap.PixelFormat);
 
             var length = BufferSpan.Length;
@@ -115,19 +119,6 @@ namespace RenderEngine
 
             bitmap.UnlockBits(bmpData);
             return bitmap;
-        }
-
-        /// <inheritdoc />
-        /// <summary>
-        ///     Frees the unmanaged buffer memory.
-        /// </summary>
-        public void Dispose()
-        {
-            if (_bufferPtr != IntPtr.Zero)
-            {
-                Marshal.FreeHGlobal(_bufferPtr);
-                GC.SuppressFinalize(this);
-            }
         }
 
         /// <summary>
@@ -150,7 +141,7 @@ namespace RenderEngine
         }
 
         /// <summary>
-        /// Sets a horizontal sequence of pixels starting at (x, y) using the provided byte data.
+        ///     Sets a horizontal sequence of pixels starting at (x, y) using the provided byte data.
         /// </summary>
         /// <param name="x">The starting horizontal coordinate.</param>
         /// <param name="y">The vertical coordinate.</param>
@@ -158,34 +149,34 @@ namespace RenderEngine
         /// <exception cref="ArgumentException">Thrown if the data does not align with bytes per pixel or is out of bounds.</exception>
         public void SetPixelSpan(int x, int y, ReadOnlySpan<byte> pixelData)
         {
-            int count = pixelData.Length / _bytesPerPixel;
+            var count = pixelData.Length / _bytesPerPixel;
             var target = GetPixelSpan(x, y, count);
             pixelData.CopyTo(target);
         }
 
         /// <summary>
-        /// Sets a vertical span of pixels at the specified x-coordinate, starting from yStart, using the provided pixel data.
+        ///     Sets a vertical span of pixels at the specified x-coordinate, starting from yStart, using the provided pixel data.
         /// </summary>
         /// <param name="x">The x-coordinate (column) where pixels will be written vertically.</param>
         /// <param name="yStart">The starting y-coordinate (row) where writing begins.</param>
         /// <param name="pixelData">
-        /// A span of bytes representing consecutive pixels to write vertically. 
-        /// Must be a multiple of the pixel size in bytes (_bytesPerPixel).
+        ///     A span of bytes representing consecutive pixels to write vertically.
+        ///     Must be a multiple of the pixel size in bytes (_bytesPerPixel).
         /// </param>
         /// <exception cref="ArgumentOutOfRangeException">
-        /// Thrown when x or yStart are out of bounds, or when the span would exceed the image height.
+        ///     Thrown when x or yStart are out of bounds, or when the span would exceed the image height.
         /// </exception>
         public void SetVerticalPixelSpan(int x, int yStart, ReadOnlySpan<byte> pixelData)
         {
             // Calculate the number of vertical pixels from the byte length
-            int count = pixelData.Length / _bytesPerPixel;
+            var count = pixelData.Length / _bytesPerPixel;
 
             // Ensure coordinates are within bounds and the span fits vertically
             if (x < 0 || x >= Width || yStart < 0 || yStart + count > Height)
                 throw new ArgumentOutOfRangeException();
 
             // Copy each pixel row-by-row into the target buffer
-            for (int i = 0; i < count; i++)
+            for (var i = 0; i < count; i++)
             {
                 // Get destination slice for this pixel
                 var dest = BufferSpan.Slice(GetPixelOffset(x, yStart + i), _bytesPerPixel);
@@ -208,10 +199,7 @@ namespace RenderEngine
         /// </exception>
         public Span<byte> GetPixelSpan(int x, int y, int count)
         {
-            if (x < 0 || y < 0 || x + count > Width || y >= Height)
-            {
-                throw new ArgumentOutOfRangeException();
-            }
+            if (x < 0 || y < 0 || x + count > Width || y >= Height) throw new ArgumentOutOfRangeException();
 
             var offset = GetPixelOffset(x, y);
             var length = count * _bytesPerPixel;
@@ -219,7 +207,7 @@ namespace RenderEngine
         }
 
         /// <summary>
-        /// Retrieves a vertical column of pixels starting from (x, yStart) over a specified number of pixels.
+        ///     Retrieves a vertical column of pixels starting from (x, yStart) over a specified number of pixels.
         /// </summary>
         /// <param name="x">Horizontal coordinate (column index).</param>
         /// <param name="yStart">Starting row.</param>
@@ -235,7 +223,7 @@ namespace RenderEngine
             if (buffer.Length < count * _bytesPerPixel)
                 throw new ArgumentException("Buffer too small");
 
-            for (int i = 0; i < count; i++)
+            for (var i = 0; i < count; i++)
             {
                 var offset = GetPixelOffset(x, yStart + i);
                 BufferSpan.Slice(offset, _bytesPerPixel).CopyTo(
@@ -260,10 +248,7 @@ namespace RenderEngine
             var vectorSize = Vector<byte>.Count;
             var i = 0;
 
-            for (; i <= buffer.Length - vectorSize; i += vectorSize)
-            {
-                pixelVector.CopyTo(buffer.Slice(i, vectorSize));
-            }
+            for (; i <= buffer.Length - vectorSize; i += vectorSize) pixelVector.CopyTo(buffer.Slice(i, vectorSize));
 
             // Fill any remaining bytes one pixel at a time
             for (; i < buffer.Length; i += 4)
@@ -287,10 +272,7 @@ namespace RenderEngine
 
             foreach (var (x, y, bgra) in changes)
             {
-                if ((uint)x >= (uint)Width || (uint)y >= (uint)Height)
-                {
-                    continue;
-                }
+                if ((uint)x >= (uint)Width || (uint)y >= (uint)Height) continue;
 
                 var offset = GetPixelOffset(x, y);
 
@@ -311,10 +293,7 @@ namespace RenderEngine
         /// <exception cref="ArgumentException">Thrown if the input buffer length does not match the internal buffer size.</exception>
         public void ReplaceBuffer(ReadOnlySpan<byte> fullBuffer)
         {
-            if (fullBuffer.Length != _bufferSize)
-            {
-                throw new ArgumentException(RenderResource.ErrorInputBuffer);
-            }
+            if (fullBuffer.Length != _bufferSize) throw new ArgumentException(RenderResource.ErrorInputBuffer);
 
             var buffer = BufferSpan;
 
@@ -330,15 +309,12 @@ namespace RenderEngine
 
                     for (var i = 0; i < simdCount; i++)
                     {
-                        var vec = Avx.LoadVector256(srcPtr + (i * vectorSize));
-                        Avx.Store(dstPtr + (i * vectorSize), vec);
+                        var vec = Avx.LoadVector256(srcPtr + i * vectorSize);
+                        Avx.Store(dstPtr + i * vectorSize, vec);
                     }
 
                     // Copy any remaining bytes one by one
-                    for (var i = _bufferSize - remainder; i < _bufferSize; i++)
-                    {
-                        buffer[i] = fullBuffer[i];
-                    }
+                    for (var i = _bufferSize - remainder; i < _bufferSize; i++) buffer[i] = fullBuffer[i];
                 }
             }
             else
@@ -356,7 +332,7 @@ namespace RenderEngine
         /// <returns>The byte offset of the pixel in the buffer.</returns>
         private int GetPixelOffset(int x, int y)
         {
-            return ((y * Width) + x) * _bytesPerPixel;
+            return (y * Width + x) * _bytesPerPixel;
         }
 
         /// <summary>

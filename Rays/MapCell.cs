@@ -6,5 +6,4 @@
         public int FloorId { get; set; }
         public int CeilingId { get; set; }
     }
-
 }

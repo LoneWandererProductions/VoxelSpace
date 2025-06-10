@@ -14,7 +14,7 @@ namespace Voxels
 {
     public sealed class VoxelRaster : IDisposable
     {
-        private static readonly List<Task> _pendingTasks = new(); // To track pending tasks
+        private static readonly List<Task> PendingTasks = new(); // To track pending tasks
 
         /// <summary>
         ///     The cache preload thread
@@ -144,7 +144,7 @@ namespace Voxels
         public long ImageRender { get; private set; }
 
         /// <summary>
-        /// Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
+        ///     Performs application-defined tasks associated with freeing, releasing, or resetting unmanaged resources.
         /// </summary>
         public void Dispose()
         {
@@ -196,16 +196,16 @@ namespace Voxels
             }
 
             // Add cache rebuilding to pending tasks
-            lock (_pendingTasks)
+            lock (PendingTasks)
             {
                 var cacheRebuildTask = Task.Run(RebuildCache);
-                _pendingTasks.Add(cacheRebuildTask);
+                PendingTasks.Add(cacheRebuildTask);
 
                 // If too many tasks are pending, wait for one to complete before adding another
-                if (_pendingTasks.Count >= 4)
+                if (PendingTasks.Count >= 4)
                 {
-                    var completedTask = Task.WhenAny(_pendingTasks).Result; // Wait for any task to complete
-                    _pendingTasks.Remove(completedTask); // Remove the completed task from the queue
+                    var completedTask = Task.WhenAny(PendingTasks).Result; // Wait for any task to complete
+                    PendingTasks.Remove(completedTask); // Remove the completed task from the queue
                 }
             }
 

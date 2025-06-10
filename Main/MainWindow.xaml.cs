@@ -50,6 +50,7 @@ namespace Main
         private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
         {
             if (_pressedKeys.Contains(e.Key)) return; // Ignore if already pressed
+
             _pressedKeys.Add(e.Key);
 
             HandleKeyAction(e.Key); // Handle the action when key is first pressed
@@ -177,18 +178,14 @@ namespace Main
 
 
             var maps = new MapCell[10, 10];
-            for (int y = 0; y < 10; y++)
-            {
-                for (int x = 0; x < 10; x++)
+            for (var y = 0; y < 10; y++)
+            for (var x = 0; x < 10; x++)
+                maps[y, x] = new MapCell
                 {
-                    maps[y, x] = new MapCell
-                    {
-                        WallId = map[y, x],
-                        FloorId = 1,    // Default floor tile ID
-                        CeilingId = 1   // Default ceiling tile ID
-                    };
-                }
-            }
+                    WallId = map[y, x],
+                    FloorId = 1, // Default floor tile ID
+                    CeilingId = 1 // Default ceiling tile ID
+                };
 
             // Set up a camera
             var camera = new RvCamera(96, 96, 0); // Position and angle of the camera

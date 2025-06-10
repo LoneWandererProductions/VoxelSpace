@@ -475,12 +475,12 @@ namespace Imaging
         /// <returns>Array of Colors in the column.</returns>
         public Color[] GetColumn(int x)
         {
-            Color[] column = new Color[Height];
+            var column = new Color[Height];
             Span<int> bitsSpan = Bits;
 
-            for (int y = 0; y < Height; y++)
+            for (var y = 0; y < Height; y++)
             {
-                int index = x + y * Width;
+                var index = x + y * Width;
                 column[y] = Color.FromArgb(bitsSpan[index]);
             }
 
@@ -494,12 +494,9 @@ namespace Imaging
         /// <returns>Array of Colors in the row.</returns>
         public Color[] GetRow(int y)
         {
-            Span<int> bitsSpan = Bits.AsSpan(y * Width, Width);
-            Color[] row = new Color[Width];
-            for (int i = 0; i < Width; i++)
-            {
-                row[i] = Color.FromArgb(bitsSpan[i]);
-            }
+            var bitsSpan = Bits.AsSpan(y * Width, Width);
+            var row = new Color[Width];
+            for (var i = 0; i < Width; i++) row[i] = Color.FromArgb(bitsSpan[i]);
 
             return row;
         }

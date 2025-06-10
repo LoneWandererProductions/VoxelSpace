@@ -12,10 +12,7 @@ namespace OpenGler
         private static RasterRaycast _raycaster;
         private static RenderHost _renderHost;
         private static readonly RenderMode _renderMode = RenderMode.RenderHost;
-        private static byte[] pixels;
 
-        private static int width;
-        private static int height;
 
         [STAThread]
         private static void Main()
@@ -148,7 +145,7 @@ namespace OpenGler
 
         private static void InitiateVRaycaster(int width, int height)
         {
-            var map = new int[10, 10]
+            var map = new int[,]
             {
                 { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
                 { 1, 0, 0, 0, 1, 0, 0, 0, 0, 1 },
