@@ -126,18 +126,8 @@ namespace RenderEngine
             if (_bufferPtr != IntPtr.Zero)
             {
                 Marshal.FreeHGlobal(_bufferPtr);
+                GC.SuppressFinalize(this);
             }
-        }
-
-        /// <summary>
-        ///     Calculates the byte offset in the buffer for the pixel at coordinates (x, y).
-        /// </summary>
-        /// <param name="x">The horizontal pixel coordinate (0-based).</param>
-        /// <param name="y">The vertical pixel coordinate (0-based).</param>
-        /// <returns>The byte offset of the pixel in the buffer.</returns>
-        private int GetPixelOffset(int x, int y)
-        {
-            return ((y * Width) + x) * _bytesPerPixel;
         }
 
         /// <summary>
@@ -157,6 +147,100 @@ namespace RenderEngine
             buffer[offset + 1] = g;
             buffer[offset + 2] = r;
             buffer[offset + 3] = a;
+        }
+
+        /// <summary>
+        /// Sets a horizontal sequence of pixels starting at (x, y) using the provided byte data.
+        /// </summary>
+        /// <param name="x">The starting horizontal coordinate.</param>
+        /// <param name="y">The vertical coordinate.</param>
+        /// <param name="pixelData">A span of pixel data to set, must be a multiple of bytes per pixel.</param>
+        /// <exception cref="ArgumentException">Thrown if the data does not align with bytes per pixel or is out of bounds.</exception>
+        public void SetPixelSpan(int x, int y, ReadOnlySpan<byte> pixelData)
+        {
+            int count = pixelData.Length / _bytesPerPixel;
+            var target = GetPixelSpan(x, y, count);
+            pixelData.CopyTo(target);
+        }
+
+        /// <summary>
+        /// Sets a vertical span of pixels at the specified x-coordinate, starting from yStart, using the provided pixel data.
+        /// </summary>
+        /// <param name="x">The x-coordinate (column) where pixels will be written vertically.</param>
+        /// <param name="yStart">The starting y-coordinate (row) where writing begins.</param>
+        /// <param name="pixelData">
+        /// A span of bytes representing consecutive pixels to write vertically. 
+        /// Must be a multiple of the pixel size in bytes (_bytesPerPixel).
+        /// </param>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// Thrown when x or yStart are out of bounds, or when the span would exceed the image height.
+        /// </exception>
+        public void SetVerticalPixelSpan(int x, int yStart, ReadOnlySpan<byte> pixelData)
+        {
+            // Calculate the number of vertical pixels from the byte length
+            int count = pixelData.Length / _bytesPerPixel;
+
+            // Ensure coordinates are within bounds and the span fits vertically
+            if (x < 0 || x >= Width || yStart < 0 || yStart + count > Height)
+                throw new ArgumentOutOfRangeException();
+
+            // Copy each pixel row-by-row into the target buffer
+            for (int i = 0; i < count; i++)
+            {
+                // Get destination slice for this pixel
+                var dest = BufferSpan.Slice(GetPixelOffset(x, yStart + i), _bytesPerPixel);
+
+                // Copy pixel data from the source span to the destination
+                pixelData.Slice(i * _bytesPerPixel, _bytesPerPixel).CopyTo(dest);
+            }
+        }
+
+        /// <summary>
+        ///     Retrieves a span representing a horizontal sequence of pixels starting at (x, y).
+        ///     The span length is equal to count pixels, each containing bytes per pixel.
+        /// </summary>
+        /// <param name="x">The starting horizontal pixel coordinate (0-based).</param>
+        /// <param name="y">The vertical pixel coordinate (0-based).</param>
+        /// <param name="count">The number of consecutive pixels to retrieve.</param>
+        /// <returns>A span of bytes representing the requested pixels.</returns>
+        /// <exception cref="ArgumentOutOfRangeException">
+        ///     Thrown if the requested pixel range is out of bounds of the image dimensions.
+        /// </exception>
+        public Span<byte> GetPixelSpan(int x, int y, int count)
+        {
+            if (x < 0 || y < 0 || x + count > Width || y >= Height)
+            {
+                throw new ArgumentOutOfRangeException();
+            }
+
+            var offset = GetPixelOffset(x, y);
+            var length = count * _bytesPerPixel;
+            return BufferSpan.Slice(offset, length);
+        }
+
+        /// <summary>
+        /// Retrieves a vertical column of pixels starting from (x, yStart) over a specified number of pixels.
+        /// </summary>
+        /// <param name="x">Horizontal coordinate (column index).</param>
+        /// <param name="yStart">Starting row.</param>
+        /// <param name="count">Number of pixels to retrieve.</param>
+        /// <param name="buffer">The destination buffer span. Must be large enough.</param>
+        /// <exception cref="ArgumentOutOfRangeException">If coordinates are invalid.</exception>
+        /// <exception cref="ArgumentException">If buffer is too small.</exception>
+        public void GetColumnSpan(int x, int yStart, int count, Span<byte> buffer)
+        {
+            if (x < 0 || x >= Width || yStart < 0 || yStart + count > Height)
+                throw new ArgumentOutOfRangeException();
+
+            if (buffer.Length < count * _bytesPerPixel)
+                throw new ArgumentException("Buffer too small");
+
+            for (int i = 0; i < count; i++)
+            {
+                var offset = GetPixelOffset(x, yStart + i);
+                BufferSpan.Slice(offset, _bytesPerPixel).CopyTo(
+                    buffer.Slice(i * _bytesPerPixel, _bytesPerPixel));
+            }
         }
 
         /// <summary>
@@ -189,28 +273,6 @@ namespace RenderEngine
                 buffer[i + 2] = r;
                 buffer[i + 3] = a;
             }
-        }
-
-        /// <summary>
-        ///     Creates a SIMD vector filled with the specified BGRA pixel color repeated to fill the vector.
-        /// </summary>
-        /// <param name="a">Alpha channel byte value.</param>
-        /// <param name="r">Red channel byte value.</param>
-        /// <param name="g">Green channel byte value.</param>
-        /// <param name="b">Blue channel byte value.</param>
-        /// <returns>A <see cref="Vector{Byte}" /> filled with the repeated pixel color pattern.</returns>
-        private static Vector<byte> CreatePixelVector(byte a, byte r, byte g, byte b)
-        {
-            var pixelBytes = new byte[Vector<byte>.Count];
-            for (var i = 0; i < pixelBytes.Length; i += 4)
-            {
-                pixelBytes[i] = b;
-                pixelBytes[i + 1] = g;
-                pixelBytes[i + 2] = r;
-                pixelBytes[i + 3] = a;
-            }
-
-            return new Vector<byte>(pixelBytes);
         }
 
         /// <summary>
@@ -287,26 +349,36 @@ namespace RenderEngine
         }
 
         /// <summary>
-        ///     Retrieves a span representing a horizontal sequence of pixels starting at (x, y).
-        ///     The span length is equal to count pixels, each containing bytes per pixel.
+        ///     Calculates the byte offset in the buffer for the pixel at coordinates (x, y).
         /// </summary>
-        /// <param name="x">The starting horizontal pixel coordinate (0-based).</param>
+        /// <param name="x">The horizontal pixel coordinate (0-based).</param>
         /// <param name="y">The vertical pixel coordinate (0-based).</param>
-        /// <param name="count">The number of consecutive pixels to retrieve.</param>
-        /// <returns>A span of bytes representing the requested pixels.</returns>
-        /// <exception cref="ArgumentOutOfRangeException">
-        ///     Thrown if the requested pixel range is out of bounds of the image dimensions.
-        /// </exception>
-        public Span<byte> GetPixelSpan(int x, int y, int count)
+        /// <returns>The byte offset of the pixel in the buffer.</returns>
+        private int GetPixelOffset(int x, int y)
         {
-            if (x < 0 || y < 0 || x + count > Width || y >= Height)
+            return ((y * Width) + x) * _bytesPerPixel;
+        }
+
+        /// <summary>
+        ///     Creates a SIMD vector filled with the specified BGRA pixel color repeated to fill the vector.
+        /// </summary>
+        /// <param name="a">Alpha channel byte value.</param>
+        /// <param name="r">Red channel byte value.</param>
+        /// <param name="g">Green channel byte value.</param>
+        /// <param name="b">Blue channel byte value.</param>
+        /// <returns>A <see cref="Vector{Byte}" /> filled with the repeated pixel color pattern.</returns>
+        private static Vector<byte> CreatePixelVector(byte a, byte r, byte g, byte b)
+        {
+            var pixelBytes = new byte[Vector<byte>.Count];
+            for (var i = 0; i < pixelBytes.Length; i += 4)
             {
-                throw new ArgumentOutOfRangeException();
+                pixelBytes[i] = b;
+                pixelBytes[i + 1] = g;
+                pixelBytes[i + 2] = r;
+                pixelBytes[i + 3] = a;
             }
 
-            var offset = GetPixelOffset(x, y);
-            var length = count * _bytesPerPixel;
-            return BufferSpan.Slice(offset, length);
+            return new Vector<byte>(pixelBytes);
         }
     }
 }
