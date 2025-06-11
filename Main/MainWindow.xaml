@@ -24,6 +24,7 @@
                   SelectionChanged="comboBoxRender_SelectionChanged">
             <ComboBoxItem Content="Voxel" />
             <ComboBoxItem Content="Raycast" />
+            <ComboBoxItem Content="RaycastV2" />
             <ComboBoxItem Content="Hybrid" />
         </ComboBox>
     </Grid>

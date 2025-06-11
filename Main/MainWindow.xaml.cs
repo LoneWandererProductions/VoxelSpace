@@ -34,6 +34,7 @@ namespace Main
         private readonly Stopwatch _timer = new();
         private string _active;
         private RasterRaycast _raycaster;
+        private RasterRaycastV2 _raycasterV2;
         private VoxelRaster _voxel;
 
         /// <inheritdoc />
@@ -97,6 +98,15 @@ namespace Main
                     camera = _raycaster.Camera;
                     break;
 
+                case "RaycastV2":
+                    if (_raycaster == null) return;
+
+                    // Measure image rendering time
+                    bmp = _raycasterV2.Render(key);
+
+                    camera = _raycasterV2.Camera;
+                    break;
+
                 case "Voxel":
                     if (_voxel == null) return;
 
@@ -147,6 +157,10 @@ namespace Main
                         InitiateVRaycaster();
                         break;
 
+                    case "RaycastV2":
+                        _active = "RaycastV2";
+                        InitiateVRaycasterV2();
+                        break;
                     case "Voxel":
                         _active = "Voxel";
                         InitiateVoxel();
@@ -196,6 +210,45 @@ namespace Main
             _raycaster = new RasterRaycast(map, camera, context);
             var result = _raycaster.Render();
             ImageView.Bitmap = result.Bitmap;
+        }
+
+        private void InitiateVRaycasterV2()
+        {
+            // Simple map where 1 is a wall and 0 is empty space
+            var map = new int[10, 10]
+            {
+                { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
+                { 1, 0, 0, 0, 1, 0, 0, 0, 0, 1 },
+                { 1, 0, 1, 0, 1, 0, 1, 0, 0, 1 },
+                { 1, 0, 1, 0, 1, 0, 1, 0, 0, 1 },
+                { 1, 0, 0, 0, 1, 0, 1, 0, 1, 1 },
+                { 1, 0, 1, 0, 0, 0, 1, 1, 1, 1 },
+                { 1, 0, 1, 1, 1, 1, 0, 0, 0, 1 },
+                { 1, 0, 0, 0, 1, 0, 1, 0, 1, 1 },
+                { 1, 1, 1, 1, 1, 0, 1, 0, 0, 1 },
+                { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }
+            };
+
+
+            var maps = new MapCell[10, 10];
+            for (var y = 0; y < 10; y++)
+                for (var x = 0; x < 10; x++)
+                    maps[y, x] = new MapCell
+                    {
+                        WallId = map[y, x],
+                        FloorId = 1, // Default floor tile ID
+                        CeilingId = 1 // Default ceiling tile ID
+                    };
+
+            // Set up a camera
+            var camera = new RvCamera(96, 96, 0); // Position and angle of the camera
+            //setup the context
+            CameraContext context = new(64, 600, 800);
+
+            // Create Raycaster and render
+            //_raycaster = new RasterRaycast(map, camera, context);
+            //var result = _raycaster.Render();
+            //ImageView.Bitmap = result.Bitmap;
         }
 
         /// <summary>
