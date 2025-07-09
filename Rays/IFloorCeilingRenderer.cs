@@ -1,4 +1,12 @@
-﻿using Imaging;
+/*
+ * COPYRIGHT:   See COPYING in the top level directory
+ * PROJECT:     Rays
+ * FILE:        IFloorCeilingRenderer.cs
+ * PURPOSE:     Your file purpose here
+ * PROGRAMMER:  Peter Geinitz (Wayfarer)
+ */
+
+using Imaging;
 using RenderEngine;
 using Viewer;
 

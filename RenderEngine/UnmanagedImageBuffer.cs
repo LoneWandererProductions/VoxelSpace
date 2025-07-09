@@ -302,7 +302,7 @@ namespace RenderEngine
 
             if (Avx2.IsSupported)
             {
-                var vectorSize = 32; // 256 bits / 8
+                const int vectorSize = 32; // 256 bits / 8
                 var simdCount = _bufferSize / vectorSize;
                 var remainder = _bufferSize % vectorSize;
 

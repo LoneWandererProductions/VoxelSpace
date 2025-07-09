@@ -1,4 +1,12 @@
-﻿namespace Rays
+/*
+ * COPYRIGHT:   See COPYING in the top level directory
+ * PROJECT:     Rays
+ * FILE:        MapCell.cs
+ * PURPOSE:     Your file purpose here
+ * PROGRAMMER:  Peter Geinitz (Wayfarer)
+ */
+
+namespace Rays
 {
     public class MapCell
     {

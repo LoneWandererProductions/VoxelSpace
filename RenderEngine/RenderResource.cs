@@ -1,4 +1,12 @@
-﻿namespace RenderEngine
+/*
+ * COPYRIGHT:   See COPYING in the top level directory
+ * PROJECT:     RenderEngine
+ * FILE:        RenderResource.cs
+ * PURPOSE:     Your file purpose here
+ * PROGRAMMER:  Peter Geinitz (Wayfarer)
+ */
+
+namespace RenderEngine
 {
     /// <summary>
     /// </summary>

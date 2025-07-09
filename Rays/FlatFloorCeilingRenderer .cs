@@ -1,4 +1,12 @@
-﻿using System.Drawing;
+/*
+ * COPYRIGHT:   See COPYING in the top level directory
+ * PROJECT:     Rays
+ * FILE:        FlatFloorCeilingRenderer .cs
+ * PURPOSE:     Your file purpose here
+ * PROGRAMMER:  Peter Geinitz (Wayfarer)
+ */
+
+using System.Drawing;
 using Imaging;
 using RenderEngine;
 using Viewer;

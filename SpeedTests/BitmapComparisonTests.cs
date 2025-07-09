@@ -1,4 +1,12 @@
-﻿using System.Diagnostics;
+/*
+ * COPYRIGHT:   See COPYING in the top level directory
+ * PROJECT:     SpeedTests
+ * FILE:        BitmapComparisonTests.cs
+ * PURPOSE:     Your file purpose here
+ * PROGRAMMER:  Peter Geinitz (Wayfarer)
+ */
+
+using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;

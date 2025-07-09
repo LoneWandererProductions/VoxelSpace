@@ -1,4 +1,12 @@
-﻿using System.Drawing;
+/*
+ * COPYRIGHT:   See COPYING in the top level directory
+ * PROJECT:     SpeedTests
+ * FILE:        PixelData.cs
+ * PURPOSE:     Your file purpose here
+ * PROGRAMMER:  Peter Geinitz (Wayfarer)
+ */
+
+using System.Drawing;
 
 namespace SpeedTests
 {

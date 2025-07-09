@@ -270,5 +270,50 @@ namespace RenderEngine
                 FragColor = vec4(0.0, 1.0, 0.0, 1.0); // Green wireframe
             }
         ";
+
+        /// <summary>
+        ///     Texture Array Tilemap Vertex Shader
+        ///     Supports texture arrays with tile index per vertex.
+        /// </summary>
+        public static string TextureArrayTilemapVertexShader => @"
+    #version 450 core
+
+    layout(location = 0) in vec3 aPosition;  // Vertex position
+    layout(location = 1) in vec2 aTexCoord;  // Texture coordinates
+    layout(location = 2) in float aTileIndex; // Tile layer index in texture array
+
+    out vec2 vTexCoord;
+    flat out int vTileIndex;
+
+    uniform mat4 view;
+    uniform mat4 projection;
+
+    void main()
+    {
+        gl_Position = projection * view * vec4(aPosition, 1.0);
+        vTexCoord = aTexCoord;
+        vTileIndex = int(aTileIndex);
+    }
+";
+
+        /// <summary>
+        ///     Texture Array Tilemap Fragment Shader
+        ///     Samples from a 2D texture array using the tile index.
+        /// </summary>
+        public static string TextureArrayTilemapFragmentShader => @"
+    #version 450 core
+
+    in vec2 vTexCoord;
+    flat in int vTileIndex;
+
+    out vec4 FragColor;
+
+    uniform sampler2DArray uTextureArray;
+
+    void main()
+    {
+        FragColor = texture(uTextureArray, vec3(vTexCoord, vTileIndex));
+    }
+";
     }
 }

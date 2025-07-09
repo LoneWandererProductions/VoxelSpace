@@ -1,4 +1,12 @@
-﻿using RenderEngine;
+/*
+ * COPYRIGHT:   See COPYING in the top level directory
+ * PROJECT:     Rays
+ * FILE:        RasterRaycast.cs
+ * PURPOSE:     Your file purpose here
+ * PROGRAMMER:  Peter Geinitz (Wayfarer)
+ */
+
+using RenderEngine;
 using System.Drawing;
 using System.Windows.Input;
 using Viewer;

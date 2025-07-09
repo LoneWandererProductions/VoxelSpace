@@ -1,4 +1,12 @@
-﻿using System.Collections.Generic;
+/*
+ * COPYRIGHT:   See COPYING in the top level directory
+ * PROJECT:     Voxels
+ * FILE:        RasterHelper.cs
+ * PURPOSE:     Your file purpose here
+ * PROGRAMMER:  Peter Geinitz (Wayfarer)
+ */
+
+using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Drawing;
 

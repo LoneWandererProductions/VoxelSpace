@@ -1,4 +1,12 @@
-﻿namespace Imaging
+/*
+ * COPYRIGHT:   See COPYING in the top level directory
+ * PROJECT:     Imaging
+ * FILE:        LayerSettings.cs
+ * PURPOSE:     Your file purpose here
+ * PROGRAMMER:  Peter Geinitz (Wayfarer)
+ */
+
+namespace Imaging
 {
     public class LayerSettings
     {

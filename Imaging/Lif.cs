@@ -1,4 +1,12 @@
-﻿using System.Collections.Generic;
+/*
+ * COPYRIGHT:   See COPYING in the top level directory
+ * PROJECT:     Imaging
+ * FILE:        Lif.cs
+ * PURPOSE:     Your file purpose here
+ * PROGRAMMER:  Peter Geinitz (Wayfarer)
+ */
+
+using System.Collections.Generic;
 using System.Drawing;
 
 namespace Imaging

@@ -1,3 +1,11 @@
+/*
+ * COPYRIGHT:   See COPYING in the top level directory
+ * PROJECT:     RenderEngineTests
+ * FILE:        UnmanagedImageBufferTests.cs
+ * PURPOSE:     Your file purpose here
+ * PROGRAMMER:  Peter Geinitz (Wayfarer)
+ */
+
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using RenderEngine;
 

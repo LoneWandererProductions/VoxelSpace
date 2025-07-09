@@ -1,3 +1,11 @@
+/*
+ * COPYRIGHT:   See COPYING in the top level directory
+ * PROJECT:     SpeedTests
+ * FILE:        Speed.cs
+ * PURPOSE:     Your file purpose here
+ * PROGRAMMER:  Peter Geinitz (Wayfarer)
+ */
+
 using System;
 using System.Diagnostics;
 using System.Drawing;
@@ -209,8 +217,8 @@ namespace SpeedTests
                     Math.Cos(angle * Math.PI / 180.0),
                     Math.Sin(angle * Math.PI / 180.0));
 
-                Console.WriteLine($"Angle: {angle}° | Expected: {expected:F2} | Actual: {actual:F2}");
-                Debug.Assert(Math.Abs(expected - actual) < 0.1, $"Mismatch at angle {angle}°");
+                Console.WriteLine($"Angle: {angle}ï¿½ | Expected: {expected:F2} | Actual: {actual:F2}");
+                Debug.Assert(Math.Abs(expected - actual) < 0.1, $"Mismatch at angle {angle}ï¿½");
             }
         }
 

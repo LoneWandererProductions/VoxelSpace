@@ -1,4 +1,12 @@
-﻿using System;
+/*
+ * COPYRIGHT:   See COPYING in the top level directory
+ * PROJECT:     MinimalRender
+ * FILE:        RasterRenderer.cs
+ * PURPOSE:     Your file purpose here
+ * PROGRAMMER:  Peter Geinitz (Wayfarer)
+ */
+
+using System;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
 

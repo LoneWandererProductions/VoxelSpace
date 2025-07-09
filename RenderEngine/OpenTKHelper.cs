@@ -70,7 +70,7 @@ namespace RenderEngine
 
                 var columnHeight = attributes[0]; // In case of columns, this would be height, for example
                 var yTop = columnHeight / screenHeight * 2.0f - 1.0f;
-                var yBottom = -1.0f; // Bottom of the screen is -1.0f
+                const float yBottom = -1.0f; // Bottom of the screen is -1.0f
 
                 var offset = i * 30; // 6 vertices * 5 attributes (x, y, r, g, b)
 

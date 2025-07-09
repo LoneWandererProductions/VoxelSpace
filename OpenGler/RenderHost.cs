@@ -1,4 +1,12 @@
-﻿using System;
+/*
+ * COPYRIGHT:   See COPYING in the top level directory
+ * PROJECT:     OpenGler
+ * FILE:        RenderHost.cs
+ * PURPOSE:     Your file purpose here
+ * PROGRAMMER:  Peter Geinitz (Wayfarer)
+ */
+
+using System;
 using MinimalRender;
 using OpenTK.Mathematics;
 using OpenTK.Windowing.Common;

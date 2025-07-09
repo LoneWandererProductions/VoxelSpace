@@ -36,6 +36,18 @@ namespace RenderEngine
             GenerateModel();
         }
 
+        // Fix: Add a constructor that takes 5 arguments to resolve CS1729
+        public StackedPlanesModel(int gridSizeX, int gridSizeY, int heightLevels, float cellSize, string texturePath)
+            : this(gridSizeX, gridSizeY, heightLevels, cellSize, texturePath, Vector3.Zero)
+        {
+        }
+
+        public StackedPlanesModel(int gridSizeX, int gridSizeY, int heightLevels, float cellSize, string texturePath, RvCamera camera)
+            : this(gridSizeX, gridSizeY, heightLevels, cellSize, texturePath)
+        {
+            _worldPosition = new Vector3(camera.X * cellSize, camera.Y * cellSize, camera.Z * cellSize);
+        }
+
         private void GenerateModel()
         {
             var numPlanes = _gridSizeX * _gridSizeY * _heightLevels;
@@ -57,11 +69,11 @@ namespace RenderEngine
                         // Define 4 vertices for a single 2D plane
                         Vector3[] planeVertices =
                         {
-                            new(xPos, yPos, zPos), // Bottom-left
-                            new(xPos + _cellSize, yPos, zPos), // Bottom-right
-                            new(xPos + _cellSize, yPos + _cellSize, zPos), // Top-right
-                            new(xPos, yPos + _cellSize, zPos) // Top-left
-                        };
+                                new(xPos, yPos, zPos), // Bottom-left
+                                new(xPos + _cellSize, yPos, zPos), // Bottom-right
+                                new(xPos + _cellSize, yPos + _cellSize, zPos), // Top-right
+                                new(xPos, yPos + _cellSize, zPos) // Top-left
+                            };
 
                         // UV Coordinates (entire texture mapped)
                         float[] uv = { 0, 0, 1, 0, 1, 1, 0, 1 };
@@ -145,6 +157,35 @@ namespace RenderEngine
         public void Render()
         {
             GL.BindTexture(TextureTarget.Texture2D, _texture);
+            GL.BindVertexArray(_vao);
+            GL.DrawElements(PrimitiveType.Triangles, _gridSizeX * _gridSizeY * _heightLevels * 6,
+                DrawElementsType.UnsignedInt, 0);
+            GL.BindVertexArray(0);
+        }
+
+        /// <summary>
+        /// Renders the specified view.
+        /// Compute camera matrices
+        /// var view = cameraMatrices.GetViewMatrix();
+        /// var proj = cameraMatrices.GetProjectionMatrix(aspectRatio);
+        /// Render
+        /// skybox.Render(view, proj, shaderProgram, viewLocation, projLocation);
+        /// </summary>
+        /// <param name="view">The view.</param>
+        /// <param name="projection">The projection.</param>
+        /// <param name="shaderProgram">The shader program.</param>
+        /// <param name="viewLoc">The view loc.</param>
+        /// <param name="projLoc">The proj loc.</param>
+        public void Render(Matrix4 view, Matrix4 projection, int shaderProgram, int viewLoc, int projLoc)
+        {
+            GL.UseProgram(shaderProgram);
+
+            GL.UniformMatrix4(viewLoc, false, ref view);
+            GL.UniformMatrix4(projLoc, false, ref projection);
+
+            GL.ActiveTexture(TextureUnit.Texture0);
+            GL.BindTexture(TextureTarget.Texture2D, _texture);
+
             GL.BindVertexArray(_vao);
             GL.DrawElements(PrimitiveType.Triangles, _gridSizeX * _gridSizeY * _heightLevels * 6,
                 DrawElementsType.UnsignedInt, 0);

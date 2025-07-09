@@ -1,4 +1,12 @@
-﻿namespace Viewer
+/*
+ * COPYRIGHT:   See COPYING in the top level directory
+ * PROJECT:     Viewer
+ * FILE:        CameraContext.cs
+ * PURPOSE:     Your file purpose here
+ * PROGRAMMER:  Peter Geinitz (Wayfarer)
+ */
+
+namespace Viewer
 {
     public sealed class CameraContext
     {

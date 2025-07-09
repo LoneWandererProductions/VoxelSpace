@@ -1,4 +1,12 @@
-﻿using System.Collections.Generic;
+/*
+ * COPYRIGHT:   See COPYING in the top level directory
+ * PROJECT:     SpeedTests
+ * FILE:        DirectBitmapValidation.cs
+ * PURPOSE:     Your file purpose here
+ * PROGRAMMER:  Peter Geinitz (Wayfarer)
+ */
+
+using System.Collections.Generic;
 using System.Drawing;
 using Imaging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
