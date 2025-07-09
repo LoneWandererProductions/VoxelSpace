@@ -16,6 +16,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
 using Rays;
+using RenderEngine;
 using Viewer;
 using Voxels;
 using Image = System.Drawing.Image;

@@ -54,11 +54,14 @@ namespace RenderEngine
         /// <exception cref="ArgumentOutOfRangeException">Thrown if width or height is less than or equal to zero.</exception>
         public UnmanagedImageBuffer(int width, int height, int bytesPerPixel = 4)
         {
-            if (width <= 0) throw new ArgumentOutOfRangeException(nameof(width));
+            if (width <= 0)
+                throw new ArgumentOutOfRangeException(nameof(width), "Width must be greater than zero.");
 
-            if (height <= 0) throw new ArgumentOutOfRangeException(nameof(height));
+            if (height <= 0)
+                throw new ArgumentOutOfRangeException(nameof(height), "Height must be greater than zero.");
 
-            if (bytesPerPixel <= 0) throw new ArgumentOutOfRangeException(nameof(bytesPerPixel));
+            if (bytesPerPixel <= 0)
+                throw new ArgumentOutOfRangeException(nameof(bytesPerPixel), "Bytes per pixel must be greater than zero.");
 
             Width = width;
             Height = height;
