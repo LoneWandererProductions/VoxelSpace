@@ -120,6 +120,11 @@ namespace Main
                     // Handle hybrid logic
                     break;
 
+                case "TileGL":
+                    _active = "TileGL";
+                    InitiateTileGL();
+                    break;
+
                 default:
                     return;
             }
@@ -333,5 +338,21 @@ namespace Main
             voxelRenderedBitmap.Save("VoxelRendered.png");
             raycastedBitmap.Bitmap.Save("Raycasted.png");
         }
+
+        private void InitiateTileGL()
+        {
+            var camera = new RvCamera(0, 0, 0);
+            var context = new CameraContext(64, 600, 800); // Match your resolution and tile size
+
+            // Call your OpenGL rendering method and get the result as UnmanagedImageBuffer
+            var buffer = RenderSkybox.RenderSkyboxModelSingleTile(context.AspectRatio, camera);
+
+            // Convert to Bitmap and display
+            ImageView.Bitmap = buffer.ToBitmap();
+
+            TxtBox.Text = $"TileGL Rendered - Camera: {camera}\n";
+            TxtBox.ScrollToEnd();
+        }
+
     }
 }

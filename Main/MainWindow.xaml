@@ -26,6 +26,7 @@
             <ComboBoxItem Content="Raycast" />
             <ComboBoxItem Content="RaycastV2" />
             <ComboBoxItem Content="Hybrid" />
+            <ComboBoxItem Content="TileGL" />
         </ComboBox>
     </Grid>
 </Window>

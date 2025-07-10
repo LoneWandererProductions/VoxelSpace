@@ -42,6 +42,14 @@ namespace Viewer
         public int ScreenWidth { get; init; }
 
         /// <summary>
+        /// Gets the aspect ratio.
+        /// </summary>
+        /// <value>
+        /// The aspect ratio.
+        /// </value>
+        public float AspectRatio => (float) ScreenWidth / ScreenHeight;
+
+        /// <summary>
         ///     Gets or sets the height.
         ///     For Voxel only, is similar to CellSize, it handles the max height on Screen
         /// </summary>

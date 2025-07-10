@@ -6,10 +6,11 @@
  * PROGRAMMER:  Peter Geinitz (Wayfarer)
  */
 
-using System.Drawing;
-using System.Drawing.Imaging;
+using Contracts;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
+using System.Drawing;
+using System.Drawing.Imaging;
 using PixelFormat = System.Drawing.Imaging.PixelFormat;
 
 namespace RenderEngine
@@ -42,7 +43,7 @@ namespace RenderEngine
         {
         }
 
-        public StackedPlanesModel(int gridSizeX, int gridSizeY, int heightLevels, float cellSize, string texturePath, RvCamera camera)
+        public StackedPlanesModel(int gridSizeX, int gridSizeY, int heightLevels, float cellSize, string texturePath, ICamera camera)
             : this(gridSizeX, gridSizeY, heightLevels, cellSize, texturePath)
         {
             _worldPosition = new Vector3(camera.X * cellSize, camera.Y * cellSize, camera.Z * cellSize);

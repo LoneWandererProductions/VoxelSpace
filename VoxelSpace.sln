@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.35425.106
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36221.1 d17.14
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Mathematics", "Mathematics\Mathematics.csproj", "{692E3E3E-264E-4099-A7D8-5A15741D9BFA}"
 EndProject
@@ -36,6 +36,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Rays", "Rays\Rays.csproj", "{FC1E2427-04CF-45AD-91D6-BE2607E28544}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Viewer", "Viewer\Viewer.csproj", "{CC0AE403-7228-4709-8D0D-AAC87094E2C6}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Contracts", "Contracts\Contracts.csproj", "{A264887C-0FAF-4CE7-890A-BFE7A7B09911}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -99,6 +101,10 @@ Global
 		{CC0AE403-7228-4709-8D0D-AAC87094E2C6}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CC0AE403-7228-4709-8D0D-AAC87094E2C6}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CC0AE403-7228-4709-8D0D-AAC87094E2C6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A264887C-0FAF-4CE7-890A-BFE7A7B09911}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A264887C-0FAF-4CE7-890A-BFE7A7B09911}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A264887C-0FAF-4CE7-890A-BFE7A7B09911}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A264887C-0FAF-4CE7-890A-BFE7A7B09911}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

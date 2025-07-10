@@ -6,11 +6,14 @@
  * PROGRAMMER:  Peter Geinitz (Wayfarer)
  */
 
+using Contracts;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
+using System.Windows.Media.Media3D;
+using Viewer;
 using PixelFormat = System.Drawing.Imaging.PixelFormat;
 
 namespace RenderEngine

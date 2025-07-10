@@ -6,6 +6,7 @@
  * PROGRAMMER:  Peter Geinitz (Wayfarer)
  */
 
+using Contracts;
 using OpenTK.Mathematics;
 using System;
 
@@ -13,9 +14,9 @@ namespace RenderEngine
 {
     public class PerspectiveMatrizes
     {
-        private readonly RvCamera _camera;
+        private readonly ICamera _camera;
 
-        public PerspectiveMatrizes(RvCamera camera)
+        public PerspectiveMatrizes(ICamera camera)
         {
             _camera = camera ?? throw new ArgumentNullException(nameof(camera));
         }

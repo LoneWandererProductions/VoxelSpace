@@ -25,8 +25,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Contracts\Contracts.csproj" />
     <ProjectReference Include="..\Imaging\Imaging.csproj" />
     <ProjectReference Include="..\Mathematics\Mathematics.csproj" />
+    <ProjectReference Include="..\Viewer\Viewer.csproj" />
   </ItemGroup>
 
 </Project>

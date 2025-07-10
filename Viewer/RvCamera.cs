@@ -6,12 +6,13 @@
  * PROGRAMER:   Peter Geinitz (Wayfarer)
  */
 
+using Contracts;
 using System;
 using System.Drawing;
 
 namespace Viewer
 {
-    public sealed class RvCamera
+    public sealed class RvCamera : ICamera
     {
         public RvCamera(int x, int y, int direction)
         {

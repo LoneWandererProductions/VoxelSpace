@@ -2,10 +2,11 @@
  * COPYRIGHT:   See COPYING in the top level directory
  * PROJECT:     RenderEngine
  * FILE:        RenderSkybox.cs
- * PURPOSE:     Your file purpose here
+ * PURPOSE:     Entry for the Skybox rendering functionality.
  * PROGRAMMER:  Peter Geinitz (Wayfarer)
  */
 
+using Contracts;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
 using System.Collections.Generic;
@@ -16,7 +17,13 @@ namespace RenderEngine
     {
         private const int FramebufferSize = 512;
 
-        public static UnmanagedImageBuffer RenderSkyboxModelSingleTile(float aspectRatio)
+        /// <summary>
+        /// Renders the skybox model single tile.
+        /// </summary>
+        /// <param name="aspectRatio">The aspect ratio.</param>
+        /// <param name="camera">The camera.</param>
+        /// <returns>Custom image Container with rendered Image</returns>
+        public static UnmanagedImageBuffer RenderSkyboxModelSingleTile(float aspectRatio, ICamera? camera = null)
         {
             using var fbo = new FramebufferRenderer(FramebufferSize, FramebufferSize);
             fbo.Bind();
@@ -33,7 +40,6 @@ namespace RenderEngine
             GL.UseProgram(shaderProgram);
             GL.Uniform1(texLoc, 0);
 
-            var camera = new RvCamera(0, 0, 0);
             var cameraMatrix = new PerspectiveMatrizes(camera);
 
             Matrix4 view = cameraMatrix.GetViewMatrix();
@@ -48,7 +54,13 @@ namespace RenderEngine
             return FramebufferHelper.ConvertToUnmanagedBuffer(rgbaPixels, FramebufferSize, FramebufferSize);
         }
 
-        public static UnmanagedImageBuffer RenderSkyboxModelMultiTile(float aspectRatio)
+        /// <summary>
+        /// Renders the skybox model multi tile.
+        /// </summary>
+        /// <param name="aspectRatio">The aspect ratio.</param>
+        /// <param name="camera">The camera.</param>
+        /// <returns>Custom image Container with rendered Image</returns>
+        public static UnmanagedImageBuffer RenderSkyboxModelMultiTile(float aspectRatio, ICamera? camera = null)
         {
             using var fbo = new FramebufferRenderer(FramebufferSize, FramebufferSize);
             fbo.Bind();
@@ -73,7 +85,6 @@ namespace RenderEngine
             GL.UseProgram(shaderProgram);
             GL.Uniform1(texLoc, 0);
 
-            var camera = new RvCamera(0, 0, 0);
             var cameraMatrix = new PerspectiveMatrizes(camera);
             Matrix4 view = cameraMatrix.GetViewMatrix();
             Matrix4 proj = cameraMatrix.GetProjectionMatrix(aspectRatio);
