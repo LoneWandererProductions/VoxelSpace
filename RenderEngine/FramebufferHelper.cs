@@ -13,7 +13,7 @@ namespace RenderEngine
     public static class FramebufferHelper
     {
         /// <summary>
-        /// Converts raw OpenGL RGBA pixel data into an UnmanagedImageBuffer (BGRA).
+        ///     Converts raw OpenGL RGBA pixel data into an UnmanagedImageBuffer (BGRA).
         /// </summary>
         /// <param name="rgbaPixels">OpenGL pixel data in RGBA format.</param>
         /// <param name="width">Width of the image.</param>
@@ -31,12 +31,12 @@ namespace RenderEngine
 
             var dst = buffer.BufferSpan;
 
-            for (int i = 0; i < rgbaPixels.Length; i += 4)
+            for (var i = 0; i < rgbaPixels.Length; i += 4)
             {
-                byte r = rgbaPixels[i + 0];
-                byte g = rgbaPixels[i + 1];
-                byte b = rgbaPixels[i + 2];
-                byte a = rgbaPixels[i + 3];
+                var r = rgbaPixels[i + 0];
+                var g = rgbaPixels[i + 1];
+                var b = rgbaPixels[i + 2];
+                var a = rgbaPixels[i + 3];
 
                 dst[i + 0] = b;
                 dst[i + 1] = g;

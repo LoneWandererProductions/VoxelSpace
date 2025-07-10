@@ -4,6 +4,8 @@
     <TargetFramework>net5.0-Windows</TargetFramework>
 
     <IsPackable>false</IsPackable>
+
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>

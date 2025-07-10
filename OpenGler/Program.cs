@@ -153,7 +153,7 @@ namespace OpenGler
 
         private static void InitiateVRaycaster(int width, int height)
         {
-            var map = new int[,]
+            var map = new[,]
             {
                 { 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 },
                 { 1, 0, 0, 0, 1, 0, 0, 0, 0, 1 },

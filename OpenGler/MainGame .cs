@@ -16,7 +16,6 @@ using OpenTK.Graphics.OpenGL;
 using OpenTK.Windowing.Common;
 using OpenTK.Windowing.Desktop;
 using Rays;
-using RenderEngine;
 using Viewer;
 using PixelFormat = System.Drawing.Imaging.PixelFormat;
 

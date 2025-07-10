@@ -42,12 +42,12 @@ namespace Viewer
         public int ScreenWidth { get; init; }
 
         /// <summary>
-        /// Gets the aspect ratio.
+        ///     Gets the aspect ratio.
         /// </summary>
         /// <value>
-        /// The aspect ratio.
+        ///     The aspect ratio.
         /// </value>
-        public float AspectRatio => (float) ScreenWidth / ScreenHeight;
+        public float AspectRatio => (float)ScreenWidth / ScreenHeight;
 
         /// <summary>
         ///     Gets or sets the height.

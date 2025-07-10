@@ -5,6 +5,7 @@
     <Company>Lone Wanderer Productions</Company>
     <Copyright>Lone Wanderer Productions</Copyright>
     <Authors>Wayfarer</Authors>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

@@ -6,9 +6,9 @@
  * PROGRAMER:   Peter Geinitz (Wayfarer)
  */
 
-using Contracts;
 using System;
 using System.Drawing;
+using Contracts;
 
 namespace Viewer
 {
@@ -32,6 +32,15 @@ namespace Viewer
         ///     The color of the background.
         /// </value>
         public Color BackgroundColor { get; set; } = Color.Cyan;
+
+        /// <summary>
+        ///     Gets or sets the horizon.
+        ///     offset of the horizon position (looking up-down)
+        /// </summary>
+        /// <value>
+        ///     The horizon.
+        /// </value>
+        public int Horizon { get; set; }
 
         /// <summary>
         ///     Gets or sets the x.
@@ -62,15 +71,6 @@ namespace Viewer
         public int Z { get; set; }
 
         /// <summary>
-        ///     Gets or sets the horizon.
-        ///     offset of the horizon position (looking up-down)
-        /// </summary>
-        /// <value>
-        ///     The horizon.
-        /// </value>
-        public int Horizon { get; set; }
-
-        /// <summary>
         ///     Gets or sets the z far.
         ///     distance of the camera looking forward
         /// </summary>
@@ -96,6 +96,17 @@ namespace Viewer
         ///     The pitch.
         /// </value>
         public int Pitch { get; set; }
+
+        /// <summary>
+        ///     Converts to string.
+        /// </summary>
+        /// <returns>
+        ///     A <see cref="string" /> that represents this instance.
+        /// </returns>
+        public override string ToString()
+        {
+            return $"Camera [X={X}, Y={Y}, Z={Z}, Angle={Angle}, Horizon={Horizon}, ZFar={ZFar}], Pitch= {Pitch}";
+        }
 
 
         /// <summary>
@@ -137,17 +148,6 @@ namespace Viewer
             // this.Height = original.Height;
             // this.ZFar = original.ZFar;
             // this.Scale = original.Scale;
-        }
-
-        /// <summary>
-        ///     Converts to string.
-        /// </summary>
-        /// <returns>
-        ///     A <see cref="string" /> that represents this instance.
-        /// </returns>
-        public override string ToString()
-        {
-            return $"Camera [X={X}, Y={Y}, Z={Z}, Angle={Angle}, Horizon={Horizon}, ZFar={ZFar}], Pitch= {Pitch}";
         }
     }
 }

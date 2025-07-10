@@ -5,6 +5,7 @@
     <Authors>Wayfarer</Authors>
     <Copyright>Lone Wanderer Productions</Copyright>
     <Company>Lone Wanderer Productions</Company>
+    <Nullable>enable</Nullable>
   </PropertyGroup>
 
   <ItemGroup>

@@ -6,7 +6,6 @@
  * PROGRAMMER:  Peter Geinitz (Wayfarer)
  */
 
-using RenderEngine;
 using System.Drawing;
 using System.Windows.Input;
 using Viewer;

@@ -238,13 +238,13 @@ namespace Main
 
             var maps = new MapCell[10, 10];
             for (var y = 0; y < 10; y++)
-                for (var x = 0; x < 10; x++)
-                    maps[y, x] = new MapCell
-                    {
-                        WallId = map[y, x],
-                        FloorId = 1, // Default floor tile ID
-                        CeilingId = 1 // Default ceiling tile ID
-                    };
+            for (var x = 0; x < 10; x++)
+                maps[y, x] = new MapCell
+                {
+                    WallId = map[y, x],
+                    FloorId = 1, // Default floor tile ID
+                    CeilingId = 1 // Default ceiling tile ID
+                };
 
             // Set up a camera
             var camera = new RvCamera(96, 96, 0); // Position and angle of the camera
@@ -353,6 +353,5 @@ namespace Main
             TxtBox.Text = $"TileGL Rendered - Camera: {camera}\n";
             TxtBox.ScrollToEnd();
         }
-
     }
 }

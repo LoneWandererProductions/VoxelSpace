@@ -61,7 +61,8 @@ namespace RenderEngine
                 throw new ArgumentOutOfRangeException(nameof(height), "Height must be greater than zero.");
 
             if (bytesPerPixel <= 0)
-                throw new ArgumentOutOfRangeException(nameof(bytesPerPixel), "Bytes per pixel must be greater than zero.");
+                throw new ArgumentOutOfRangeException(nameof(bytesPerPixel),
+                    "Bytes per pixel must be greater than zero.");
 
             Width = width;
             Height = height;

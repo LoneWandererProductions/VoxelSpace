@@ -13,7 +13,6 @@ using System.Drawing;
 using System.Threading.Tasks;
 using Imaging;
 using Mathematics;
-using RenderEngine;
 using Viewer;
 
 namespace Voxels

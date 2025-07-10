@@ -9,7 +9,6 @@
 using System;
 using System.Drawing;
 using Imaging;
-using RenderEngine;
 using Viewer;
 
 namespace Rays

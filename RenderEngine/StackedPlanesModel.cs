@@ -6,11 +6,11 @@
  * PROGRAMMER:  Peter Geinitz (Wayfarer)
  */
 
+using System.Drawing;
+using System.Drawing.Imaging;
 using Contracts;
 using OpenTK.Graphics.OpenGL4;
 using OpenTK.Mathematics;
-using System.Drawing;
-using System.Drawing.Imaging;
 using PixelFormat = System.Drawing.Imaging.PixelFormat;
 
 namespace RenderEngine
@@ -21,12 +21,13 @@ namespace RenderEngine
         private readonly int _gridSizeX;
         private readonly int _gridSizeY;
         private readonly int _heightLevels;
+
+        private readonly Vector3 _worldPosition;
         private int _texture;
         private int _vao, _vbo, _ebo;
 
-        private readonly Vector3 _worldPosition;
-
-        public StackedPlanesModel(int gridSizeX, int gridSizeY, int heightLevels, float cellSize, string texturePath, Vector3 worldPosition)
+        public StackedPlanesModel(int gridSizeX, int gridSizeY, int heightLevels, float cellSize, string texturePath,
+            Vector3 worldPosition)
         {
             _gridSizeX = gridSizeX;
             _gridSizeY = gridSizeY;
@@ -43,7 +44,8 @@ namespace RenderEngine
         {
         }
 
-        public StackedPlanesModel(int gridSizeX, int gridSizeY, int heightLevels, float cellSize, string texturePath, ICamera camera)
+        public StackedPlanesModel(int gridSizeX, int gridSizeY, int heightLevels, float cellSize, string texturePath,
+            ICamera camera)
             : this(gridSizeX, gridSizeY, heightLevels, cellSize, texturePath)
         {
             _worldPosition = new Vector3(camera.X * cellSize, camera.Y * cellSize, camera.Z * cellSize);
@@ -58,47 +60,43 @@ namespace RenderEngine
             int vIndex = 0, iIndex = 0, vertexOffset = 0;
 
             for (var x = 0; x < _gridSizeX; x++)
+            for (var y = 0; y < _gridSizeY; y++)
+            for (var z = 0; z < _heightLevels; z++)
             {
-                for (var y = 0; y < _gridSizeY; y++)
+                var xPos = _worldPosition.X + x * _cellSize;
+                var yPos = _worldPosition.Y + y * _cellSize;
+                var zPos = _worldPosition.Z + z * _cellSize;
+
+                // Define 4 vertices for a single 2D plane
+                Vector3[] planeVertices =
                 {
-                    for (var z = 0; z < _heightLevels; z++)
-                    {
-                        var xPos = _worldPosition.X + (x * _cellSize);
-                        var yPos = _worldPosition.Y + (y * _cellSize);
-                        var zPos = _worldPosition.Z + (z * _cellSize);
+                    new(xPos, yPos, zPos), // Bottom-left
+                    new(xPos + _cellSize, yPos, zPos), // Bottom-right
+                    new(xPos + _cellSize, yPos + _cellSize, zPos), // Top-right
+                    new(xPos, yPos + _cellSize, zPos) // Top-left
+                };
 
-                        // Define 4 vertices for a single 2D plane
-                        Vector3[] planeVertices =
-                        {
-                                new(xPos, yPos, zPos), // Bottom-left
-                                new(xPos + _cellSize, yPos, zPos), // Bottom-right
-                                new(xPos + _cellSize, yPos + _cellSize, zPos), // Top-right
-                                new(xPos, yPos + _cellSize, zPos) // Top-left
-                            };
+                // UV Coordinates (entire texture mapped)
+                float[] uv = { 0, 0, 1, 0, 1, 1, 0, 1 };
 
-                        // UV Coordinates (entire texture mapped)
-                        float[] uv = { 0, 0, 1, 0, 1, 1, 0, 1 };
-
-                        for (var v = 0; v < 4; v++)
-                        {
-                            vertices[vIndex++] = planeVertices[v].X;
-                            vertices[vIndex++] = planeVertices[v].Y;
-                            vertices[vIndex++] = planeVertices[v].Z;
-                            vertices[vIndex++] = uv[v * 2];
-                            vertices[vIndex++] = uv[(v * 2) + 1];
-                        }
-
-                        // Indices for two triangles per plane
-                        indices[iIndex++] = (uint)vertexOffset;
-                        indices[iIndex++] = (uint)(vertexOffset + 1);
-                        indices[iIndex++] = (uint)(vertexOffset + 2);
-                        indices[iIndex++] = (uint)(vertexOffset + 2);
-                        indices[iIndex++] = (uint)(vertexOffset + 3);
-                        indices[iIndex++] = (uint)vertexOffset;
-
-                        vertexOffset += 4;
-                    }
+                for (var v = 0; v < 4; v++)
+                {
+                    vertices[vIndex++] = planeVertices[v].X;
+                    vertices[vIndex++] = planeVertices[v].Y;
+                    vertices[vIndex++] = planeVertices[v].Z;
+                    vertices[vIndex++] = uv[v * 2];
+                    vertices[vIndex++] = uv[v * 2 + 1];
                 }
+
+                // Indices for two triangles per plane
+                indices[iIndex++] = (uint)vertexOffset;
+                indices[iIndex++] = (uint)(vertexOffset + 1);
+                indices[iIndex++] = (uint)(vertexOffset + 2);
+                indices[iIndex++] = (uint)(vertexOffset + 2);
+                indices[iIndex++] = (uint)(vertexOffset + 3);
+                indices[iIndex++] = (uint)vertexOffset;
+
+                vertexOffset += 4;
             }
 
             // Generate OpenGL buffers
@@ -165,12 +163,12 @@ namespace RenderEngine
         }
 
         /// <summary>
-        /// Renders the specified view.
-        /// Compute camera matrices
-        /// var view = cameraMatrices.GetViewMatrix();
-        /// var proj = cameraMatrices.GetProjectionMatrix(aspectRatio);
-        /// Render
-        /// skybox.Render(view, proj, shaderProgram, viewLocation, projLocation);
+        ///     Renders the specified view.
+        ///     Compute camera matrices
+        ///     var view = cameraMatrices.GetViewMatrix();
+        ///     var proj = cameraMatrices.GetProjectionMatrix(aspectRatio);
+        ///     Render
+        ///     skybox.Render(view, proj, shaderProgram, viewLocation, projLocation);
         /// </summary>
         /// <param name="view">The view.</param>
         /// <param name="projection">The projection.</param>

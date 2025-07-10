@@ -6,9 +6,9 @@
  * PROGRAMMER:  Peter Geinitz (Wayfarer)
  */
 
+using System;
 using Contracts;
 using OpenTK.Mathematics;
-using System;
 
 namespace RenderEngine
 {
@@ -35,8 +35,8 @@ namespace RenderEngine
                 _camera.Z
             );
 
-            float angleRad = MathHelper.DegreesToRadians(_camera.Angle);
-            float pitchRad = MathHelper.DegreesToRadians(_camera.Pitch);
+            var angleRad = MathHelper.DegreesToRadians(_camera.Angle);
+            var pitchRad = MathHelper.DegreesToRadians(_camera.Pitch);
 
             var direction = new Vector3(
                 (float)Math.Cos(angleRad),

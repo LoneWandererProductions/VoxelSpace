@@ -16,7 +16,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using Imaging;
-using RenderEngine;
 using Viewer;
 
 namespace Voxels
