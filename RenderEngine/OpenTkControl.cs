@@ -203,7 +203,7 @@ namespace RenderEngine
                 GL.DrawArrays(PrimitiveType.Triangles, 0, columns.Length * 6);
             }
 
-            public void RenderPixels(PixelData[] pixels, int screenWidth, int screenHeight)
+            public void RenderPixels(CoordinateData[] pixels, int screenWidth, int screenHeight)
             {
                 GL.Clear(ClearBufferMask.ColorBufferBit);
                 RenderBackground(_backgroundTexture);
