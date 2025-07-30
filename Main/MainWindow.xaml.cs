@@ -100,7 +100,7 @@ namespace Main
                     break;
 
                 case "RaycastV2":
-                    if (_raycaster == null) return;
+                    if (_raycasterV2 == null) return;
 
                     // Measure image rendering time
                     bmp = _raycasterV2.Render(key);
