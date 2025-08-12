@@ -21,6 +21,7 @@ namespace Rays
         private readonly int _mapHeight;
         private readonly int _mapWidth;
         private readonly DirectBitmap[] _wallTextures;
+        private readonly DirectBitmap _grayTexture;
 
         public RaycasterV2(MapCell[,] map, CameraContext context, DirectBitmap[] wallTextures,
             IFloorCeilingRenderer? floorCeilingRenderer = null)
