@@ -30,8 +30,14 @@ namespace Rays
             _mapHeight = map.GetLength(0);
             _context = context;
             _wallTextures = wallTextures;
+            // Create 1×1 gray texture as fallback
+            _grayTexture = new DirectBitmap(1, 1, Color.Gray);
+        
             _floorCeilingRenderer = floorCeilingRenderer ??
-                                    new TexturedFloorCeilingRenderer(_wallTextures[0], _wallTextures[1]);
+                                    new TexturedFloorCeilingRenderer(
+                                        _wallTextures[0] ?? _grayTexture,
+                                        _wallTextures[1] ?? _grayTexture
+                                    );
         }
 
         public RenderResult Render(RvCamera camera)
