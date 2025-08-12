@@ -33,12 +33,17 @@ namespace Rays
             _wallTextures = wallTextures;
             // Create 1×1 gray texture as fallback
             _grayTexture = new DirectBitmap(1, 1, Color.Gray);
-        
-            _floorCeilingRenderer = floorCeilingRenderer ??
-                                    new TexturedFloorCeilingRenderer(
-                                        _wallTextures[0] ?? _grayTexture,
-                                        _wallTextures[1] ?? _grayTexture
-                                    );
+
+            if (_wallTextures == null || _wallTextures.Length == 0)
+            {
+                _wallTextures = new[]
+                {
+                    _grayTexture, // Default texture for walls
+                    _grayTexture  // Default texture for ceiling/floor
+                };
+            }
+
+            _floorCeilingRenderer = new TexturedFloorCeilingRenderer(_wallTextures[0], _wallTextures[1]);
         }
 
         public RenderResult Render(RvCamera camera)
