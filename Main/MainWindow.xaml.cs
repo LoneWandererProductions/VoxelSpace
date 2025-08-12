@@ -252,9 +252,9 @@ namespace Main
             CameraContext context = new(64, 600, 800);
 
             // Create Raycaster and render
-            //_raycaster = new RasterRaycast(map, camera, context);
-            //var result = _raycaster.Render();
-            //ImageView.Bitmap = result.Bitmap;
+            _raycasterV2 = new RasterRaycastV2(maps, camera, context, null);
+            var result = _raycaster.Render();
+            ImageView.Bitmap = result.Bitmap;
         }
 
         /// <summary>
