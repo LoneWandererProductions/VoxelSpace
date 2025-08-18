@@ -253,7 +253,7 @@ namespace Main
 
             // Create Raycaster and render
             _raycasterV2 = new RasterRaycastV2(maps, camera, context, null);
-            var result = _raycaster.Render();
+            var result = _raycasterV2.Render();
             ImageView.Bitmap = result.Bitmap;
         }
 

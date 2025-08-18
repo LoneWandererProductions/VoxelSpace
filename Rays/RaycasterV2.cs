@@ -2,12 +2,13 @@
  * COPYRIGHT:   See COPYING in the top level directory
  * PROJECT:     Rays
  * FILE:        RaycasterV2.cs
- * PURPOSE:     Your file purpose here
+ * PURPOSE:     Raycasting with straight walls, SIMD-style pixel filling
  * PROGRAMMER:  Peter Geinitz (Wayfarer)
  */
 
 using System;
 using System.Drawing;
+using System.Numerics;
 using Imaging;
 using Viewer;
 
@@ -30,27 +31,20 @@ namespace Rays
             _mapWidth = map.GetLength(1);
             _mapHeight = map.GetLength(0);
             _context = context;
-            _wallTextures = wallTextures;
-            // Create 1×1 gray texture as fallback
-            _grayTexture = new DirectBitmap(1, 1, Color.Gray);
 
-            if (_wallTextures == null || _wallTextures.Length == 0)
-            {
-                _wallTextures = new[]
-                {
-                    _grayTexture, // Default texture for walls
-                    _grayTexture  // Default texture for ceiling/floor
-                };
-            }
+            _wallTextures = wallTextures != null && wallTextures.Length > 0
+                ? wallTextures
+                : new[] { _grayTexture = new DirectBitmap(1, 1, Color.Gray) };
 
-            _floorCeilingRenderer = new TexturedFloorCeilingRenderer(_wallTextures[0], _wallTextures[1]);
+            // Floor/Ceiling renderer
+            _floorCeilingRenderer = floorCeilingRenderer ?? new TexturedFloorCeilingRenderer(
+                _wallTextures[0], _wallTextures.Length > 1 ? _wallTextures[1] : _wallTextures[0]);
         }
 
         public RenderResult Render(RvCamera camera)
         {
             DirectBitmap dbm = new(_context.ScreenWidth, _context.ScreenHeight, Color.Black);
 
-            // Render floor and ceiling first
             _floorCeilingRenderer?.Render(dbm, camera, _context);
 
             var halfFov = _context.Fov / 2.0;
@@ -59,114 +53,98 @@ namespace Rays
             for (var x = 0; x < _context.ScreenWidth; x++)
             {
                 var rayAngle = camera.Angle - halfFov + x * angleStep;
-                var rayAngleRad = DegreeToRadian(rayAngle);
+                var rayRad = DegreeToRadian(rayAngle);
+                var rayDirX = Math.Cos(rayRad);
+                var rayDirY = Math.Sin(rayRad);
 
-                var rayX = Math.Cos(rayAngleRad);
-                var rayY = Math.Sin(rayAngleRad);
-
-                var (distanceToWall, hitX, hitY, wallId) = CastRay(camera.X, camera.Y, rayX, rayY);
+                var (distanceToWall, hitX, hitY, wallId, hitVertical) =
+                    CastRayWithHitSide(camera.X, camera.Y, rayDirX, rayDirY);
 
                 if (distanceToWall > _context.Distance || wallId <= 0 || wallId > _wallTextures.Length)
                     continue;
 
-                var wallHeight = (int)(_context.ScreenHeight / distanceToWall);
-                var zOffset = camera.Z / _context.CellSize * wallHeight;
-                var wallTop = Math.Max(0, (_context.ScreenHeight - wallHeight) / 2 - zOffset);
-                var wallBottom = Math.Min(_context.ScreenHeight, (_context.ScreenHeight + wallHeight) / 2 - zOffset);
+                // Fish-eye correction
+                var angleDiff = DegreeToRadian(rayAngle - camera.Angle);
+                var perpWallDist = distanceToWall * Math.Cos(angleDiff);
 
-                var texture = _wallTextures[wallId - 1]; // assuming wallId is 1-based
+                // Wall height and offset
+                double wallHeight = _context.ScreenHeight / perpWallDist;
+                double verticalOffset = (camera.Z / (double)_context.CellSize) * wallHeight;
 
-                // Texture X offset
+                double wallTopF = -wallHeight / 2.0 + _context.ScreenHeight / 2.0 - verticalOffset;
+                double wallBottomF = wallTopF + wallHeight;
+
+                int wallTop = Math.Max(0, (int)Math.Round(wallTopF));
+                int wallBottom = Math.Min(_context.ScreenHeight - 1, (int)Math.Round(wallBottomF));
+
+                var texture = _wallTextures[wallId - 1];
+
                 double cellSize = _context.CellSize;
-                var hitInCellX = hitX % cellSize;
-                var hitInCellY = hitY % cellSize;
+                double hitInCellX = hitX % cellSize;
+                if (hitInCellX < 0) hitInCellX += cellSize;
+                double hitInCellY = hitY % cellSize;
+                if (hitInCellY < 0) hitInCellY += cellSize;
 
-                var isVertical = Math.Abs(hitInCellX - cellSize / 2) < Math.Abs(hitInCellY - cellSize / 2);
-
-                var texX = isVertical
-                    ? (int)(hitY % cellSize / cellSize * texture.Width)
-                    : (int)(hitX % cellSize / cellSize * texture.Width);
-
+                int texX = hitVertical
+                    ? (int)(hitInCellY / cellSize * texture.Width)
+                    : (int)(hitInCellX / cellSize * texture.Width);
                 texX = Math.Clamp(texX, 0, texture.Width - 1);
 
-                // ✅ Cache the vertical texture column once
                 var textureColumn = texture.GetColumn(texX);
+                double columnHeight = wallBottomF - wallTopF;
 
-                for (var y = wallTop; y < wallBottom; y++)
+                // SIMD-style filling using Span
+                Span<int> bitsSpan = dbm.Bits.AsSpan();
+                int screenWidth = _context.ScreenWidth;
+
+                for (int y = wallTop; y < wallBottom; y++)
                 {
-                    var t = (y - wallTop) / (double)(wallBottom - wallTop);
-                    var texY = (int)(t * texture.Height);
-                    texY = Math.Clamp(texY, 0, texture.Height - 1);
+                    double t = (y - wallTopF) / columnHeight;
+                    int texY = Math.Clamp((int)(t * texture.Height), 0, texture.Height - 1);
 
-                    var baseColor = textureColumn[texY];
-                    var foggedColor = ApplyFog(baseColor, distanceToWall);
-                    dbm.SetPixel(x, y, foggedColor);
+                    Color baseColor = textureColumn[texY];
+                    Color foggedColor = ApplyFog(baseColor, distanceToWall);
+
+                    int pixelValue = (foggedColor.A << 24) | (foggedColor.R << 16) | (foggedColor.G << 8) | foggedColor.B;
+                    bitsSpan[y * screenWidth + x] = pixelValue;
                 }
             }
-
-            var imageBytes = ToByteArray(dbm.Bits);
 
             return new RenderResult
             {
                 Bitmap = dbm.Bitmap,
-                Bytes = imageBytes
+                Bytes = ToByteArray(dbm.Bits)
             };
         }
 
-
-        private static byte[] ToByteArray(int[] bits)
+        private (double Distance, double HitX, double HitY, int WallId, bool HitVertical)
+            CastRayWithHitSide(double startX, double startY, double rayDirX, double rayDirY)
         {
-            var bytes = new byte[bits.Length * sizeof(int)];
-            Buffer.BlockCopy(bits, 0, bytes, 0, bytes.Length);
-            return bytes;
-        }
-
-        private (double Distance, double HitX, double HitY, int WallId) CastRay(double startX, double startY,
-            double rayDirX, double rayDirY)
-        {
-            const double nearClipDistance = 0.01; // avoid walls too close to camera
-
-            // Map cell size and map indices
+            const double nearClip = 0.01;
             double cellSize = _context.CellSize;
-            var mapX = (int)(startX / cellSize);
-            var mapY = (int)(startY / cellSize);
 
-            // Direction step and initial side distance
-            var deltaDistX = rayDirX == 0 ? double.MaxValue : Math.Abs(cellSize / rayDirX);
-            var deltaDistY = rayDirY == 0 ? double.MaxValue : Math.Abs(cellSize / rayDirY);
+            int mapX = (int)(startX / cellSize);
+            int mapY = (int)(startY / cellSize);
 
-            int stepX, stepY;
-            double sideDistX, sideDistY;
+            double deltaDistX = rayDirX == 0 ? double.MaxValue : Math.Abs(cellSize / rayDirX);
+            double deltaDistY = rayDirY == 0 ? double.MaxValue : Math.Abs(cellSize / rayDirY);
 
-            // Calculate step and initial side distances
-            if (rayDirX < 0)
-            {
-                stepX = -1;
-                sideDistX = (startX - mapX * cellSize) * deltaDistX / cellSize;
-            }
-            else
-            {
-                stepX = 1;
-                sideDistX = ((mapX + 1) * cellSize - startX) * deltaDistX / cellSize;
-            }
+            int stepX = rayDirX < 0 ? -1 : 1;
+            int stepY = rayDirY < 0 ? -1 : 1;
 
-            if (rayDirY < 0)
-            {
-                stepY = -1;
-                sideDistY = (startY - mapY * cellSize) * deltaDistY / cellSize;
-            }
-            else
-            {
-                stepY = 1;
-                sideDistY = ((mapY + 1) * cellSize - startY) * deltaDistY / cellSize;
-            }
+            double sideDistX = stepX < 0
+                ? (startX - mapX * cellSize) * deltaDistX / cellSize
+                : ((mapX + 1) * cellSize - startX) * deltaDistX / cellSize;
 
-            var hit = false;
-            var hitVertical = false;
+            double sideDistY = stepY < 0
+                ? (startY - mapY * cellSize) * deltaDistY / cellSize
+                : ((mapY + 1) * cellSize - startY) * deltaDistY / cellSize;
+
+            bool hit = false;
+            bool hitVertical = false;
 
             while (!hit)
             {
-                // Step to next map square in either x or y
                 if (sideDistX < sideDistY)
                 {
                     sideDistX += deltaDistX;
@@ -180,61 +158,61 @@ namespace Rays
                     hitVertical = false;
                 }
 
-                // Bounds check
                 if (mapX < 0 || mapX >= _mapWidth || mapY < 0 || mapY >= _mapHeight)
-                    return (double.MaxValue, 0, 0, 0);
+                    return (double.MaxValue, 0, 0, 0, false);
 
-                var cell = _map[mapY, mapX];
-                if (cell.WallId > 0)
+                if (_map[mapY, mapX].WallId > 0)
                     hit = true;
             }
 
-            // Compute exact hit position
-            double distance;
-            double hitX, hitY;
+            double hitX, hitY, distance;
 
             if (hitVertical)
             {
-                distance = (mapX - startX / cellSize + (1 - stepX) / 2) * cellSize / rayDirX;
-                hitX = mapX * cellSize;
-                hitY = startY + distance * rayDirY;
+                hitX = mapX * cellSize + (stepX < 0 ? cellSize : 0);
+                hitY = startY + (hitX - startX) * rayDirY / rayDirX;
+                distance = Math.Abs((hitX - startX) / rayDirX);
             }
             else
             {
-                distance = (mapY - startY / cellSize + (1 - stepY) / 2) * cellSize / rayDirY;
-                hitY = mapY * cellSize;
-                hitX = startX + distance * rayDirX;
+                hitY = mapY * cellSize + (stepY < 0 ? cellSize : 0);
+                hitX = startX + (hitY - startY) * rayDirX / rayDirY;
+                distance = Math.Abs((hitY - startY) / rayDirY);
             }
 
-            // Normalize distance to avoid FOV distortion
-            var dx = hitX - startX;
-            var dy = hitY - startY;
-            var correctedDistance = Math.Sqrt(dx * dx + dy * dy) / cellSize;
+            distance /= cellSize; // normalize
+            if (distance < nearClip) return (double.MaxValue, 0, 0, 0, hitVertical);
 
-            // Apply near clipping
-            if (correctedDistance < nearClipDistance)
-                return (double.MaxValue, 0, 0, 0);
-
-            var wallId = _map[mapY, mapX].WallId;
-
-            return (correctedDistance, hitX, hitY, wallId);
+            int wallId = _map[mapY, mapX].WallId;
+            return (distance, hitX, hitY, wallId, hitVertical);
         }
 
         private Color ApplyFog(Color baseColor, double distance)
         {
-            var fogFactor = Math.Min(1.0, distance / _context.Distance);
-            var backgroundColor = Color.Black;
-
-            var red = (int)((1 - fogFactor) * baseColor.R + fogFactor * backgroundColor.R);
-            var green = (int)((1 - fogFactor) * baseColor.G + fogFactor * backgroundColor.G);
-            var blue = (int)((1 - fogFactor) * baseColor.B + fogFactor * backgroundColor.B);
-
-            return Color.FromArgb(red, green, blue);
+            double fogFactor = Math.Min(1.0, distance / _context.Distance);
+            Color bg = Color.Black;
+            return Color.FromArgb(
+                (int)((1 - fogFactor) * baseColor.R + fogFactor * bg.R),
+                (int)((1 - fogFactor) * baseColor.G + fogFactor * bg.G),
+                (int)((1 - fogFactor) * baseColor.B + fogFactor * bg.B)
+            );
         }
 
-        private static double DegreeToRadian(double degree)
+        private static double DegreeToRadian(double degree) => degree * Math.PI / 180.0;
+
+        private static byte[] ToByteArray(int[] bits)
         {
-            return degree * Math.PI / 180.0;
+            try
+            {
+                byte[] bytes = new byte[bits.Length * sizeof(int)];
+                Buffer.BlockCopy(bits, 0, bytes, 0, bytes.Length);
+                return bytes;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"ToByteArray failed: {ex}");
+                return Array.Empty<byte>();
+            }
         }
     }
 }
