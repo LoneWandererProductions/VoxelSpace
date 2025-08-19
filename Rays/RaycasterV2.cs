@@ -8,7 +8,6 @@
 
 using System;
 using System.Drawing;
-using System.Numerics;
 using Imaging;
 using Viewer;
 
@@ -18,13 +17,13 @@ namespace Rays
     {
         private readonly CameraContext _context;
         private readonly IFloorCeilingRenderer? _floorCeilingRenderer;
-        private readonly MapCell[,] _map;
+        private readonly MapCells[,] _map;
         private readonly int _mapHeight;
         private readonly int _mapWidth;
         private readonly DirectBitmap[] _wallTextures;
         private readonly DirectBitmap _grayTexture;
 
-        public RaycasterV2(MapCell[,] map, CameraContext context, DirectBitmap[] wallTextures,
+        public RaycasterV2(MapCells[,] map, CameraContext context, DirectBitmap[] wallTextures,
             IFloorCeilingRenderer? floorCeilingRenderer = null)
         {
             _map = map;

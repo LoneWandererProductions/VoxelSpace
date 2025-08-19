@@ -36,6 +36,7 @@ namespace Main
         private string _active;
         private RasterRaycast _raycaster;
         private RasterRaycastV2 _raycasterV2;
+        private RasterRaycastV3 _raycasterV3;
         private VoxelRaster _voxel;
 
         /// <inheritdoc />
@@ -108,6 +109,15 @@ namespace Main
                     camera = _raycasterV2.Camera;
                     break;
 
+                case "RaycastV3":
+                    if (_raycasterV3 == null) return;
+
+                    // Measure image rendering time
+                    bmp = _raycasterV3.Render(key);
+
+                    camera = _raycasterV3.Camera;
+                    break;
+
                 case "Voxel":
                     if (_voxel == null) return;
 
@@ -156,6 +166,7 @@ namespace Main
         private void comboBoxRender_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (comboBoxRender.SelectedItem is ComboBoxItem selectedItem)
+            {
                 switch (selectedItem.Content.ToString())
                 {
                     case "Raycast":
@@ -167,6 +178,12 @@ namespace Main
                         _active = "RaycastV2";
                         InitiateVRaycasterV2();
                         break;
+
+                    case "RaycastV3":
+                        _active = "RaycastV3";
+                        InitiateVRaycasterV3();
+                        break;
+
                     case "Voxel":
                         _active = "Voxel";
                         InitiateVoxel();
@@ -177,6 +194,7 @@ namespace Main
                         InitiateHybrid();
                         break;
                 }
+            }
         }
 
         private void InitiateVRaycaster()
@@ -197,10 +215,10 @@ namespace Main
             };
 
 
-            var maps = new MapCell[10, 10];
+            var maps = new MapCells[10, 10];
             for (var y = 0; y < 10; y++)
             for (var x = 0; x < 10; x++)
-                maps[y, x] = new MapCell
+                maps[y, x] = new MapCells
                 {
                     WallId = map[y, x],
                     FloorId = 1, // Default floor tile ID
@@ -236,10 +254,10 @@ namespace Main
             };
 
 
-            var maps = new MapCell[10, 10];
+            var maps = new MapCells[10, 10];
             for (var y = 0; y < 10; y++)
             for (var x = 0; x < 10; x++)
-                maps[y, x] = new MapCell
+                maps[y, x] = new MapCells
                 {
                     WallId = map[y, x],
                     FloorId = 1, // Default floor tile ID
@@ -254,6 +272,44 @@ namespace Main
             // Create Raycaster and render
             _raycasterV2 = new RasterRaycastV2(maps, camera, context, null);
             var result = _raycasterV2.Render();
+            ImageView.Bitmap = result.Bitmap;
+        }
+
+        private void InitiateVRaycasterV3()
+        {
+            var maps = new MapCell[10, 10];
+
+            for (var y = 0; y < 10; y++)
+            {
+                for (var x = 0; x < 10; x++)
+                {
+                    var cell = new MapCell();
+
+                    // Beispiel: äußere Wände
+                    if (y == 0 || y == 9 || x == 0 || x == 9)
+                    {
+                        cell.Primitives.Add(new WallPrimitive(textureId: 1));
+                    }
+                    else
+                    {
+                        // Offener Boden
+                        cell.Primitives.Add(new FloorPrimitive(textureId: 1));
+                        cell.Primitives.Add(new CeilingPrimitive(textureId: 1));
+                    }
+
+                    maps[y, x] = cell;
+                }
+            }
+
+            // Kamera-Setup
+            var camera = new RvCamera(96, 96, 0);
+            CameraContext context = new(64, 600, 800);
+
+            // Raycaster V3 initialisieren
+            _raycasterV3 = new RasterRaycastV3(maps, camera, context, null);
+
+            // Rendern
+            var result = _raycasterV3.Render();
             ImageView.Bitmap = result.Bitmap;
         }
 

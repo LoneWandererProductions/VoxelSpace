@@ -17,7 +17,7 @@ namespace Rays
     {
         private readonly RaycasterV2 _ray;
 
-        public RasterRaycastV2(MapCell[,] map, RvCamera camera, CameraContext context, DirectBitmap[] wallTextures)
+        public RasterRaycastV2(MapCells[,] map, RvCamera camera, CameraContext context, DirectBitmap[] wallTextures)
         {
             Camera = camera;
 

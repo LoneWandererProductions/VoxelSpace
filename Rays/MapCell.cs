@@ -1,17 +1,17 @@
-/*
+﻿/*
  * COPYRIGHT:   See COPYING in the top level directory
  * PROJECT:     Rays
  * FILE:        MapCell.cs
- * PURPOSE:     Your file purpose here
+ * PURPOSE:     3D raycaster with per-cell primitives (cubes, ramps, multi-layered)
  * PROGRAMMER:  Peter Geinitz (Wayfarer)
  */
 
+using System.Collections.Generic;
+
 namespace Rays
 {
-    public class MapCell
+    public sealed class MapCell
     {
-        public int WallId { get; set; }
-        public int FloorId { get; set; }
-        public int CeilingId { get; set; }
+        public List<CellPrimitive> Primitives { get; } = new();
     }
 }

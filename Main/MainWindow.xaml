@@ -25,6 +25,7 @@
             <ComboBoxItem Content="Voxel" />
             <ComboBoxItem Content="Raycast" />
             <ComboBoxItem Content="RaycastV2" />
+            <ComboBoxItem Content="RaycastV3" />
             <ComboBoxItem Content="Hybrid" />
             <ComboBoxItem Content="TileGL" />
         </ComboBox>
