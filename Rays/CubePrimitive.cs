@@ -19,41 +19,29 @@ public class CubePrimitive : CellPrimitive
     }
 
     public override (bool Hit, double Distance, int TexX, int TexY) IntersectRay(
-        double startX, double startY, double rayDirX, double rayDirY,
-        double zStart, double zEnd, double cellSize)
+        double startX, double startY, double rayDirX, double rayDirY, double zStart, double zEnd, double cellSize)
     {
-        double hitX = 0, hitY = 0;
-        double t = 0;
-
+        // Compute cell bounds
         double cellX = Math.Floor(startX / cellSize) * cellSize;
         double cellY = Math.Floor(startY / cellSize) * cellSize;
 
-        if (rayDirX != 0)
-        {
-            double tx = (rayDirX > 0 ? cellX + cellSize : cellX) - startX;
-            tx /= rayDirX;
-            hitX = startX + rayDirX * tx;
-            hitY = startY + rayDirY * tx;
-            t = tx;
-        }
-        else if (rayDirY != 0)
-        {
-            double ty = (rayDirY > 0 ? cellY + cellSize : cellY) - startY;
-            ty /= rayDirY;
-            hitX = startX + rayDirX * ty;
-            hitY = startY + rayDirY * ty;
-            t = ty;
-        }
+        // Simple 2D ray intersection against cell bounds
+        double tMinX = (rayDirX != 0) ? (rayDirX > 0 ? cellX + cellSize - startX : cellX - startX) / rayDirX : double.MaxValue;
+        double tMinY = (rayDirY != 0) ? (rayDirY > 0 ? cellY + cellSize - startY : cellY - startY) / rayDirY : double.MaxValue;
 
+        double t = Math.Min(tMinX, tMinY);
+        if (t < 0) return (false, double.MaxValue, 0, 0);
+
+        double hitX = startX + rayDirX * t;
+        double hitY = startY + rayDirY * t;
+
+        // Check within cube cell
         if (hitX < cellX || hitX > cellX + cellSize || hitY < cellY || hitY > cellY + cellSize)
             return (false, double.MaxValue, 0, 0);
 
-        if (Texture == null)
-            return (true, t, 0, 0);
-
-        int texX = (int)((hitX - cellX) / cellSize * Texture.Width);
+        // Texture coordinates
+        int texX = (int)((hitX - cellX) / cellSize * Texture!.Width);
         int texY = (int)((zStart / Height) * Texture.Height);
-
         texX = Math.Clamp(texX, 0, Texture.Width - 1);
         texY = Math.Clamp(texY, 0, Texture.Height - 1);
 

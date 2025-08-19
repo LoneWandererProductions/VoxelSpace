@@ -6,6 +6,8 @@
  * PROGRAMMER:  Peter Geinitz (Wayfarer)
  */
 
+using Imaging;
+
 namespace Rays
 {
     /// <summary>
@@ -19,7 +21,7 @@ namespace Rays
         /// <summary>
         /// Optional texture reference (set by renderer or asset manager).
         /// </summary>
-        public ITexture? Texture { get; set; }
+        public DirectBitmap? Texture { get; set; }
 
         protected CellPrimitive(PrimitiveType type, int textureId)
         {
