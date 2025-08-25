@@ -25,15 +25,14 @@ namespace Rays
 
         public Matrix4x4 GetViewMatrix()
         {
-            var forward = new Vector3(
-                (float)(Math.Cos(Pitch) * Math.Cos(Yaw)),
-                (float)Math.Sin(Pitch),
-                (float)(Math.Cos(Pitch) * Math.Sin(Yaw))
-            );
-            var target = Position + forward;
-            var up = Vector3.UnitY;
+            // Build orientation
+            var rotation = Matrix4x4.CreateFromYawPitchRoll(Yaw, Pitch, 0);
 
-            return Matrix4x4.CreateLookAt(Position, target, up);
+            // Basis vectors
+            var forward = Vector3.TransformNormal(Vector3.UnitZ, rotation);
+            var up = Vector3.TransformNormal(Vector3.UnitY, rotation);
+
+            return Matrix4x4.CreateLookAt(Position, Position + forward, up);
         }
 
         public Matrix4x4 GetProjectionMatrix(float aspectRatio, float near = 0.1f, float far = 100f)
@@ -104,78 +103,111 @@ namespace Rays
             _map = map;
         }
 
-        public void Render(int screenWidth, int screenHeight)
-        {
-            float aspect = (float)screenWidth / screenHeight;
-            Matrix4x4 view = _camera.GetViewMatrix();
-            Matrix4x4 proj = _camera.GetProjectionMatrix(aspect);
-
-            Matrix4x4 vp = view * proj;
-
-            for (int x = 0; x < _map.Width; x++)
-                for (int y = 0; y < _map.Height; y++)
-                {
-                    var cell = _map.GetCell(x, y);
-
-                    if (cell.HasWallNorth)
-                        DrawQuad(
-                            new Vector3(x, cell.FloorHeight, y),
-                            new Vector3(x + 1, cell.FloorHeight, y),
-                            new Vector3(x + 1, cell.CeilingHeight, y),
-                            new Vector3(x, cell.CeilingHeight, y),
-                            vp,
-                            cell.WallTextureId
-                        );
-
-                    // ... same for South/East/West walls
-                    // ... same for floor/ceiling
-                }
-        }
-
         public void Render(SoftwareRasterizer rast)
         {
             float aspect = (float)rast.GetFrame().Width / rast.GetFrame().Height;
             Matrix4x4 view = _camera.GetViewMatrix();
             Matrix4x4 proj = _camera.GetProjectionMatrix(aspect);
-            Matrix4x4 vp = view * proj;
+            Matrix4x4 vp = proj * view;
 
             rast.Clear(Color.CornflowerBlue);
 
             for (int x = 0; x < _map.Width; x++)
+            {
                 for (int y = 0; y < _map.Height; y++)
                 {
                     var cell = _map.GetCell(x, y);
 
+                    // Walls
                     if (cell.HasWallNorth)
-                    {
-                        rast.DrawQuad(
+                        DrawQuad(rast,
                             new Vector3(x, cell.FloorHeight, y),
                             new Vector3(x + 1, cell.FloorHeight, y),
                             new Vector3(x + 1, cell.CeilingHeight, y),
                             new Vector3(x, cell.CeilingHeight, y),
                             vp,
-                            Mode,
-                            Color.Gray
-                        );
-                    }
+                            cell.WallTextureId,
+                            Color.Gray);
+
+                    if (cell.HasWallSouth)
+                        DrawQuad(rast,
+                            new Vector3(x + 1, cell.FloorHeight, y + 1),
+                            new Vector3(x, cell.FloorHeight, y + 1),
+                            new Vector3(x, cell.CeilingHeight, y + 1),
+                            new Vector3(x + 1, cell.CeilingHeight, y + 1),
+                            vp,
+                            cell.WallTextureId,
+                            Color.Gray);
+
+                    if (cell.HasWallEast)
+                        DrawQuad(rast,
+                            new Vector3(x + 1, cell.FloorHeight, y),
+                            new Vector3(x + 1, cell.FloorHeight, y + 1),
+                            new Vector3(x + 1, cell.CeilingHeight, y + 1),
+                            new Vector3(x + 1, cell.CeilingHeight, y),
+                            vp,
+                            cell.WallTextureId,
+                            Color.Gray);
+
+                    if (cell.HasWallWest)
+                        DrawQuad(rast,
+                            new Vector3(x, cell.FloorHeight, y + 1),
+                            new Vector3(x, cell.FloorHeight, y),
+                            new Vector3(x, cell.CeilingHeight, y),
+                            new Vector3(x, cell.CeilingHeight, y + 1),
+                            vp,
+                            cell.WallTextureId,
+                            Color.Gray);
+
+                    // Floor
+                    if (cell.HasFloor)
+                        DrawQuad(rast,
+                            new Vector3(x, cell.FloorHeight, y),
+                            new Vector3(x, cell.FloorHeight, y + 1),
+                            new Vector3(x + 1, cell.FloorHeight, y + 1),
+                            new Vector3(x + 1, cell.FloorHeight, y),
+                            vp,
+                            cell.FloorTextureId,
+                            Color.DarkGray);
+
+                    // Ceiling
+                    if (cell.HasCeiling)
+                        DrawQuad(rast,
+                            new Vector3(x, cell.CeilingHeight, y + 1),
+                            new Vector3(x, cell.CeilingHeight, y),
+                            new Vector3(x + 1, cell.CeilingHeight, y),
+                            new Vector3(x + 1, cell.CeilingHeight, y + 1),
+                            vp,
+                            cell.CeilingTextureId,
+                            Color.LightGray);
                 }
+            }
         }
 
-        private void DrawQuad(Vector3 v0, Vector3 v1, Vector3 v2, Vector3 v3, Matrix4x4 vp, int? textureId)
+        private void DrawQuad(
+            SoftwareRasterizer rast,
+            Vector3 v0, Vector3 v1, Vector3 v2, Vector3 v3,
+            Matrix4x4 vp,
+            int? textureId,
+            Color fallbackColor)
         {
             if (Mode == RenderMode.Wireframe)
             {
-                // TODO: transform and draw lines between v0-v1, v1-v2, v2-v3, v3-v0
+                rast.DrawLine(v0, v1, vp, Color.Black);
+                rast.DrawLine(v1, v2, vp, Color.Black);
+                rast.DrawLine(v2, v3, vp, Color.Black);
+                rast.DrawLine(v3, v0, vp, Color.Black);
             }
             else
             {
                 if (textureId.HasValue)
                 {
-                    // TODO: draw textured quad
+                    // TODO: real textured rendering
+                    rast.DrawTexturedQuad(v0, v1, v2, v3, vp, textureId.Value);
                 }
                 else
                 {
-                    // TODO: draw solid-colored fallback quad
+                    rast.DrawSolidQuad(v0, v1, v2, v3, vp, fallbackColor);
                 }
             }
         }
