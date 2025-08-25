@@ -203,7 +203,10 @@ namespace Rays
                 if (textureId.HasValue)
                 {
                     // TODO: real textured rendering
-                    rast.DrawTexturedQuad(v0, v1, v2, v3, vp, textureId.Value);
+
+                    var bitmap = new Bitmap(90,90);
+                    //textureId.Value
+                    rast.DrawTexturedQuad(v0, v1, v2, v3, vp, bitmap);
                 }
                 else
                 {
