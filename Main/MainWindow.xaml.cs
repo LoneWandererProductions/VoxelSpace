@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Numerics;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -38,6 +39,12 @@ namespace Main
         private RasterRaycastV2 _raycasterV2;
         private RasterRaycastV3 _raycasterV3;
         private VoxelRaster _voxel;
+
+        //3d Stuff
+        private DungeonMap _dungeonMap;
+        private DungeonRenderer _dungeonRenderer;
+        private SoftwareRasterizer _dungeonRaster;
+        private Camera3D _dungeonCamera;
 
         /// <inheritdoc />
         /// <summary>
@@ -134,6 +141,32 @@ namespace Main
                     _active = "TileGL";
                     InitiateTileGL();
                     break;
+                case "Caster3D":
+                    if (_dungeonCamera == null) return;
+
+                    // Move camera with WASD
+                    float moveSpeed = 0.2f;
+                    float rotSpeed = 0.05f;
+
+                    if (_pressedKeys.Contains(Key.W))
+                        _dungeonCamera.Position += Vector3.Transform(new Vector3(0, 0, moveSpeed), Matrix4x4.CreateRotationY(_dungeonCamera.Yaw));
+                    if (_pressedKeys.Contains(Key.S))
+                        _dungeonCamera.Position += Vector3.Transform(new Vector3(0, 0, -moveSpeed), Matrix4x4.CreateRotationY(_dungeonCamera.Yaw));
+                    if (_pressedKeys.Contains(Key.A))
+                        _dungeonCamera.Position += Vector3.Transform(new Vector3(-moveSpeed, 0, 0), Matrix4x4.CreateRotationY(_dungeonCamera.Yaw));
+                    if (_pressedKeys.Contains(Key.D))
+                        _dungeonCamera.Position += Vector3.Transform(new Vector3(moveSpeed, 0, 0), Matrix4x4.CreateRotationY(_dungeonCamera.Yaw));
+                    if (_pressedKeys.Contains(Key.Left))
+                        _dungeonCamera.Yaw -= rotSpeed;
+                    if (_pressedKeys.Contains(Key.Right))
+                        _dungeonCamera.Yaw += rotSpeed;
+                    if (_pressedKeys.Contains(Key.Up))
+                        _dungeonCamera.Pitch = MathF.Min(_dungeonCamera.Pitch + rotSpeed, MathF.PI / 2);
+                    if (_pressedKeys.Contains(Key.Down))
+                        _dungeonCamera.Pitch = MathF.Max(_dungeonCamera.Pitch - rotSpeed, -MathF.PI / 2);
+
+                    RenderCaster3D();
+                    break;
 
                 default:
                     return;
@@ -192,6 +225,10 @@ namespace Main
                     case "Hybrid":
                         _active = "Hybrid";
                         InitiateHybrid();
+                        break;
+                    case "Caster3D":
+                        _active = "Caster3D";
+                        InitiateCaster3D();
                         break;
                 }
             }
@@ -312,6 +349,50 @@ namespace Main
             var result = _raycasterV3.Render();
             ImageView.Bitmap = result.Bitmap;
         }
+
+
+        private void InitiateCaster3D()
+        {
+            // 1. Create a simple 10x10 labyrinth
+            _dungeonMap = new DungeonMap(10, 10);
+
+            // Outer walls
+            for (int x = 0; x < 10; x++)
+            {
+                _dungeonMap.GetCell(x, 0).HasWallNorth = true;
+                _dungeonMap.GetCell(x, 9).HasWallSouth = true;
+            }
+            for (int y = 0; y < 10; y++)
+            {
+                _dungeonMap.GetCell(0, y).HasWallWest = true;
+                _dungeonMap.GetCell(9, y).HasWallEast = true;
+            }
+
+            // Some internal walls for a tiny maze
+            _dungeonMap.GetCell(2, 2).HasWallEast = true;
+            _dungeonMap.GetCell(2, 2).HasWallSouth = true;
+            _dungeonMap.GetCell(5, 5).HasWallNorth = true;
+            _dungeonMap.GetCell(5, 5).HasWallWest = true;
+
+            // 2. Set up the camera
+            _dungeonCamera = new Camera3D { Position = new Vector3(1.5f, 1.7f, 1.5f) };
+
+            // 3. Create the renderer and raster
+            _dungeonRenderer = new DungeonRenderer(_dungeonMap, new Dictionary<int, Bitmap?>());
+            _dungeonRaster = new SoftwareRasterizer(800, 600);
+
+            // Initial render
+            RenderCaster3D();
+        }
+
+        private void RenderCaster3D()
+        {
+            if (_dungeonRenderer == null || _dungeonCamera == null) return;
+
+            _dungeonRenderer.Render(_dungeonRaster, _dungeonCamera, 800, 600);
+            ImageView.Bitmap = _dungeonRaster.GetFrame();
+        }
+
 
         /// <summary>
         ///     Initiates this instance.

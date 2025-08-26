@@ -1,27 +1,20 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Numerics;
 
 namespace Rays
 {
     /// <summary>
-    /// Rendering modes for the dungeon.
-    /// </summary>
-    public enum RenderMode
-    {
-        Wireframe,
-        Textured
-    }
-
-    /// <summary>
     /// Represents a camera in 3D space for the dungeon view.
     /// </summary>
-    public class Camera
+    public class Camera3D
     {
         public Vector3 Position { get; set; } = new Vector3(0, 1.7f, 0); // Player eye height
         public float Yaw { get; set; } = 0;  // Horizontal rotation
         public float Pitch { get; set; } = 0; // Vertical rotation
         public float Fov { get; set; } = (float)(Math.PI / 3); // 60°
+
 
         public Matrix4x4 GetViewMatrix()
         {
@@ -87,28 +80,59 @@ namespace Rays
         public MapCell3D GetCell(int x, int y) => _cells[x, y];
     }
 
+    public class Actor
+    {
+        public Vector3 Position;
+        public float VerticalVelocity;
+        public bool IsOnGround = true;
+
+        public void Update(float deltaTime)
+        {
+            if (!IsOnGround)
+            {
+                VerticalVelocity += -9.8f * deltaTime;
+                Position.Y += VerticalVelocity * deltaTime;
+                if (Position.Y <= 1.7f)
+                {
+                    Position.Y = 1.7f;
+                    IsOnGround = true;
+                    VerticalVelocity = 0f;
+                }
+            }
+        }
+
+        public void Jump()
+        {
+            if (IsOnGround)
+            {
+                VerticalVelocity = 5f;
+                IsOnGround = false;
+            }
+        }
+    }
+
     /// <summary>
     /// Renderer that builds quads from the map and rasterizes them.
     /// </summary>
     public class DungeonRenderer
     {
-        private readonly Camera _camera;
         private readonly DungeonMap _map;
+        private readonly Dictionary<int, Bitmap?> _textures;
 
         public RenderMode Mode { get; set; } = RenderMode.Wireframe;
 
-        public DungeonRenderer(Camera camera, DungeonMap map)
+        public DungeonRenderer(DungeonMap map, Dictionary<int, Bitmap?> textures)
         {
-            _camera = camera;
             _map = map;
+            _textures = textures;
         }
 
-        public void Render(SoftwareRasterizer rast)
+        public void Render(SoftwareRasterizer rast, Camera3D camera, int screenWidth, int screenHeight)
         {
-            float aspect = (float)rast.GetFrame().Width / rast.GetFrame().Height;
-            Matrix4x4 view = _camera.GetViewMatrix();
-            Matrix4x4 proj = _camera.GetProjectionMatrix(aspect);
-            Matrix4x4 vp = proj * view;
+            float aspect = (float)screenWidth / screenHeight;
+            Matrix4x4 view = camera.GetViewMatrix();
+            Matrix4x4 proj = camera.GetProjectionMatrix(aspect);
+            Matrix4x4 vp = view * proj;
 
             rast.Clear(Color.CornflowerBlue);
 
@@ -118,100 +142,95 @@ namespace Rays
                 {
                     var cell = _map.GetCell(x, y);
 
-                    // Walls
+                    // Draw walls
                     if (cell.HasWallNorth)
-                        DrawQuad(rast,
-                            new Vector3(x, cell.FloorHeight, y),
-                            new Vector3(x + 1, cell.FloorHeight, y),
-                            new Vector3(x + 1, cell.CeilingHeight, y),
-                            new Vector3(x, cell.CeilingHeight, y),
-                            vp,
-                            cell.WallTextureId,
-                            Color.Gray);
+                        DrawQuad(rast, camera.Position, new Vector3(x, cell.FloorHeight, y),
+                                                    new Vector3(x + 1, cell.FloorHeight, y),
+                                                    new Vector3(x + 1, cell.CeilingHeight, y),
+                                                    new Vector3(x, cell.CeilingHeight, y),
+                                                    vp, screenWidth, screenHeight, cell.WallTextureId, Color.Gray);
 
                     if (cell.HasWallSouth)
-                        DrawQuad(rast,
-                            new Vector3(x + 1, cell.FloorHeight, y + 1),
-                            new Vector3(x, cell.FloorHeight, y + 1),
-                            new Vector3(x, cell.CeilingHeight, y + 1),
-                            new Vector3(x + 1, cell.CeilingHeight, y + 1),
-                            vp,
-                            cell.WallTextureId,
-                            Color.Gray);
+                        DrawQuad(rast, camera.Position, new Vector3(x + 1, cell.FloorHeight, y + 1),
+                                                    new Vector3(x, cell.FloorHeight, y + 1),
+                                                    new Vector3(x, cell.CeilingHeight, y + 1),
+                                                    new Vector3(x + 1, cell.CeilingHeight, y + 1),
+                                                    vp, screenWidth, screenHeight, cell.WallTextureId, Color.Gray);
 
                     if (cell.HasWallEast)
-                        DrawQuad(rast,
-                            new Vector3(x + 1, cell.FloorHeight, y),
-                            new Vector3(x + 1, cell.FloorHeight, y + 1),
-                            new Vector3(x + 1, cell.CeilingHeight, y + 1),
-                            new Vector3(x + 1, cell.CeilingHeight, y),
-                            vp,
-                            cell.WallTextureId,
-                            Color.Gray);
+                        DrawQuad(rast, camera.Position, new Vector3(x + 1, cell.FloorHeight, y),
+                                                    new Vector3(x + 1, cell.FloorHeight, y + 1),
+                                                    new Vector3(x + 1, cell.CeilingHeight, y + 1),
+                                                    new Vector3(x + 1, cell.CeilingHeight, y),
+                                                    vp, screenWidth, screenHeight, cell.WallTextureId, Color.Gray);
 
                     if (cell.HasWallWest)
-                        DrawQuad(rast,
-                            new Vector3(x, cell.FloorHeight, y + 1),
-                            new Vector3(x, cell.FloorHeight, y),
-                            new Vector3(x, cell.CeilingHeight, y),
-                            new Vector3(x, cell.CeilingHeight, y + 1),
-                            vp,
-                            cell.WallTextureId,
-                            Color.Gray);
+                        DrawQuad(rast, camera.Position, new Vector3(x, cell.FloorHeight, y + 1),
+                                                    new Vector3(x, cell.FloorHeight, y),
+                                                    new Vector3(x, cell.CeilingHeight, y),
+                                                    new Vector3(x, cell.CeilingHeight, y + 1),
+                                                    vp, screenWidth, screenHeight, cell.WallTextureId, Color.Gray);
 
                     // Floor
                     if (cell.HasFloor)
-                        DrawQuad(rast,
-                            new Vector3(x, cell.FloorHeight, y),
-                            new Vector3(x, cell.FloorHeight, y + 1),
-                            new Vector3(x + 1, cell.FloorHeight, y + 1),
-                            new Vector3(x + 1, cell.FloorHeight, y),
-                            vp,
-                            cell.FloorTextureId,
-                            Color.DarkGray);
+                        DrawQuad(rast, camera.Position, new Vector3(x, cell.FloorHeight, y),
+                                                    new Vector3(x, cell.FloorHeight, y + 1),
+                                                    new Vector3(x + 1, cell.FloorHeight, y + 1),
+                                                    new Vector3(x + 1, cell.FloorHeight, y),
+                                                    vp, screenWidth, screenHeight, cell.FloorTextureId, Color.DarkGray);
 
                     // Ceiling
                     if (cell.HasCeiling)
-                        DrawQuad(rast,
-                            new Vector3(x, cell.CeilingHeight, y + 1),
-                            new Vector3(x, cell.CeilingHeight, y),
-                            new Vector3(x + 1, cell.CeilingHeight, y),
-                            new Vector3(x + 1, cell.CeilingHeight, y + 1),
-                            vp,
-                            cell.CeilingTextureId,
-                            Color.LightGray);
+                        DrawQuad(rast, camera.Position, new Vector3(x, cell.CeilingHeight, y + 1),
+                                                    new Vector3(x, cell.CeilingHeight, y),
+                                                    new Vector3(x + 1, cell.CeilingHeight, y),
+                                                    new Vector3(x + 1, cell.CeilingHeight, y + 1),
+                                                    vp, screenWidth, screenHeight, cell.CeilingTextureId, Color.LightGray);
                 }
             }
         }
 
-        private void DrawQuad(
-            SoftwareRasterizer rast,
-            Vector3 v0, Vector3 v1, Vector3 v2, Vector3 v3,
-            Matrix4x4 vp,
-            int? textureId,
-            Color fallbackColor)
+        private void DrawQuad(SoftwareRasterizer rast,
+                              Vector3 cameraPos,
+                              Vector3 v0, Vector3 v1, Vector3 v2, Vector3 v3,
+                              Matrix4x4 vp, int screenWidth, int screenHeight,
+                              int? textureId, Color fallbackColor)
         {
-            if (Mode == RenderMode.Wireframe)
-            {
-                rast.DrawLine(v0, v1, vp, Color.Black);
-                rast.DrawLine(v1, v2, vp, Color.Black);
-                rast.DrawLine(v2, v3, vp, Color.Black);
-                rast.DrawLine(v3, v0, vp, Color.Black);
-            }
-            else
-            {
-                if (textureId.HasValue)
-                {
-                    // TODO: real textured rendering
+            // Compute normal
+            Vector3 normal = Vector3.Normalize(Vector3.Cross(v1 - v0, v2 - v0));
+            Vector3 toCamera = cameraPos - v0;
 
-                    var bitmap = new Bitmap(90,90);
-                    //textureId.Value
-                    rast.DrawTexturedQuad(v0, v1, v2, v3, vp, bitmap);
-                }
-                else
-                {
-                    rast.DrawSolidQuad(v0, v1, v2, v3, vp, fallbackColor);
-                }
+            // Backface culling: skip if facing away
+            if (Vector3.Dot(normal, toCamera) <= 0)
+                return;
+
+            // Project vertices to screen space
+            PointF[] screenVerts = RasterHelpers.ProjectQuad(v0, v1, v2, v3, vp, screenWidth, screenHeight);
+
+            // Skip if all vertices are behind the camera
+            if (screenVerts[0].X < -5000) return;
+
+            // Select texture
+            Bitmap? tex = null;
+            if (textureId.HasValue && _textures.ContainsKey(textureId.Value))
+                tex = _textures[textureId.Value];
+
+            // Decide how to draw based on mode
+            switch (Mode)
+            {
+                case RenderMode.Wireframe:
+                    rast.DrawLine(screenVerts[0], screenVerts[1], Color.Black);
+                    rast.DrawLine(screenVerts[1], screenVerts[2], Color.Black);
+                    rast.DrawLine(screenVerts[2], screenVerts[3], Color.Black);
+                    rast.DrawLine(screenVerts[3], screenVerts[0], Color.Black);
+                    break;
+
+                case RenderMode.Textured:
+                    if (tex != null)
+                        rast.DrawTexturedQuad(screenVerts[0], screenVerts[1], screenVerts[2], screenVerts[3], tex);
+                    else
+                        rast.DrawSolidQuad(screenVerts[0], screenVerts[1], screenVerts[2], screenVerts[3], fallbackColor);
+                    break;
             }
         }
     }
