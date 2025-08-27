@@ -9,10 +9,9 @@
 using Imaging;
 using Viewer;
 
-namespace Rays
+namespace Rays;
+
+public interface IFloorCeilingRenderer
 {
-    public interface IFloorCeilingRenderer
-    {
-        void Render(DirectBitmap dbm, RvCamera camera, CameraContext context);
-    }
+    void Render(DirectBitmap dbm, RvCamera camera, CameraContext context);
 }

@@ -10,108 +10,107 @@ using System.Collections.Generic;
 using Contracts;
 using OpenTK.Graphics.OpenGL4;
 
-namespace RenderEngine
+namespace RenderEngine;
+
+public static class RenderSkybox
 {
-    public static class RenderSkybox
+    private const int FramebufferSize = 512;
+
+    /// <summary>
+    ///     Renders the skybox model single tile.
+    /// </summary>
+    /// <param name="aspectRatio">The aspect ratio.</param>
+    /// <param name="camera">The camera.</param>
+    /// <returns>Custom image Container with rendered Image</returns>
+    public static UnmanagedImageBuffer RenderSkyboxModelSingleTile(float aspectRatio, ICamera? camera = null)
     {
-        private const int FramebufferSize = 512;
+        using var fbo = new FramebufferRenderer(FramebufferSize, FramebufferSize);
+        fbo.Bind();
 
-        /// <summary>
-        ///     Renders the skybox model single tile.
-        /// </summary>
-        /// <param name="aspectRatio">The aspect ratio.</param>
-        /// <param name="camera">The camera.</param>
-        /// <returns>Custom image Container with rendered Image</returns>
-        public static UnmanagedImageBuffer RenderSkyboxModelSingleTile(float aspectRatio, ICamera? camera = null)
+        var shaderProgram = OpenTkHelper.LoadShader(
+            ShaderResource.TextureMappingVertexShader,
+            ShaderResource.TextureMappingFragmentShader
+        );
+
+        var viewLoc = GL.GetUniformLocation(shaderProgram, "view");
+        var projLoc = GL.GetUniformLocation(shaderProgram, "projection");
+        var texLoc = GL.GetUniformLocation(shaderProgram, "uTexture");
+
+        GL.UseProgram(shaderProgram);
+        GL.Uniform1(texLoc, 0);
+
+        var cameraMatrix = new PerspectiveMatrizes(camera);
+
+        var view = cameraMatrix.GetViewMatrix();
+        var proj = cameraMatrix.GetProjectionMatrix(aspectRatio);
+
+        var skybox = new StackedPlanesModel(5, 5, 3, 64, "Textures/grass.png", camera);
+        skybox.Render(view, proj, shaderProgram, viewLoc, projLoc);
+
+        fbo.Unbind();
+
+        var rgbaPixels = fbo.ReadPixels();
+        return FramebufferHelper.ConvertToUnmanagedBuffer(rgbaPixels, FramebufferSize, FramebufferSize);
+    }
+
+    /// <summary>
+    ///     Renders the skybox model multi tile.
+    /// </summary>
+    /// <param name="aspectRatio">The aspect ratio.</param>
+    /// <param name="camera">The camera.</param>
+    /// <returns>Custom image Container with rendered Image</returns>
+    public static UnmanagedImageBuffer RenderSkyboxModelMultiTile(float aspectRatio, ICamera? camera = null)
+    {
+        using var fbo = new FramebufferRenderer(FramebufferSize, FramebufferSize);
+        fbo.Bind();
+
+        var tileTextures = new List<string>
         {
-            using var fbo = new FramebufferRenderer(FramebufferSize, FramebufferSize);
-            fbo.Bind();
+            "Textures/floor1.png",
+            "Textures/floor2.png",
+            "Textures/wall1.png",
+            "Textures/ceiling1.png"
+        };
 
-            var shaderProgram = OpenTkHelper.LoadShader(
-                ShaderResource.TextureMappingVertexShader,
-                ShaderResource.TextureMappingFragmentShader
-            );
+        var shaderProgram = OpenTkHelper.LoadShader(
+            ShaderResource.TextureArrayTilemapVertexShader,
+            ShaderResource.TextureArrayTilemapFragmentShader
+        );
 
-            var viewLoc = GL.GetUniformLocation(shaderProgram, "view");
-            var projLoc = GL.GetUniformLocation(shaderProgram, "projection");
-            var texLoc = GL.GetUniformLocation(shaderProgram, "uTexture");
+        var viewLoc = GL.GetUniformLocation(shaderProgram, "view");
+        var projLoc = GL.GetUniformLocation(shaderProgram, "projection");
+        var texLoc = GL.GetUniformLocation(shaderProgram, "uTexture");
 
-            GL.UseProgram(shaderProgram);
-            GL.Uniform1(texLoc, 0);
+        GL.UseProgram(shaderProgram);
+        GL.Uniform1(texLoc, 0);
 
-            var cameraMatrix = new PerspectiveMatrizes(camera);
+        var cameraMatrix = new PerspectiveMatrizes(camera);
+        var view = cameraMatrix.GetViewMatrix();
+        var proj = cameraMatrix.GetProjectionMatrix(aspectRatio);
 
-            var view = cameraMatrix.GetViewMatrix();
-            var proj = cameraMatrix.GetProjectionMatrix(aspectRatio);
+        const int gridX = 5, gridY = 5, heightLevels = 3;
+        var tileIndices = new int[gridX * gridY * heightLevels];
 
-            var skybox = new StackedPlanesModel(5, 5, 3, 64, "Textures/grass.png", camera);
-            skybox.Render(view, proj, shaderProgram, viewLoc, projLoc);
-
-            fbo.Unbind();
-
-            var rgbaPixels = fbo.ReadPixels();
-            return FramebufferHelper.ConvertToUnmanagedBuffer(rgbaPixels, FramebufferSize, FramebufferSize);
-        }
-
-        /// <summary>
-        ///     Renders the skybox model multi tile.
-        /// </summary>
-        /// <param name="aspectRatio">The aspect ratio.</param>
-        /// <param name="camera">The camera.</param>
-        /// <returns>Custom image Container with rendered Image</returns>
-        public static UnmanagedImageBuffer RenderSkyboxModelMultiTile(float aspectRatio, ICamera? camera = null)
+        for (var z = 0; z < heightLevels; z++)
+        for (var y = 0; y < gridY; y++)
+        for (var x = 0; x < gridX; x++)
         {
-            using var fbo = new FramebufferRenderer(FramebufferSize, FramebufferSize);
-            fbo.Bind();
-
-            var tileTextures = new List<string>
+            var idx = x + y * gridX + z * gridX * gridY;
+            tileIndices[idx] = z switch
             {
-                "Textures/floor1.png",
-                "Textures/floor2.png",
-                "Textures/wall1.png",
-                "Textures/ceiling1.png"
+                0 => (x + y) % 2, // checker floor
+                1 => 2, // walls
+                _ => 3 // ceiling
             };
-
-            var shaderProgram = OpenTkHelper.LoadShader(
-                ShaderResource.TextureArrayTilemapVertexShader,
-                ShaderResource.TextureArrayTilemapFragmentShader
-            );
-
-            var viewLoc = GL.GetUniformLocation(shaderProgram, "view");
-            var projLoc = GL.GetUniformLocation(shaderProgram, "projection");
-            var texLoc = GL.GetUniformLocation(shaderProgram, "uTexture");
-
-            GL.UseProgram(shaderProgram);
-            GL.Uniform1(texLoc, 0);
-
-            var cameraMatrix = new PerspectiveMatrizes(camera);
-            var view = cameraMatrix.GetViewMatrix();
-            var proj = cameraMatrix.GetProjectionMatrix(aspectRatio);
-
-            const int gridX = 5, gridY = 5, heightLevels = 3;
-            var tileIndices = new int[gridX * gridY * heightLevels];
-
-            for (var z = 0; z < heightLevels; z++)
-            for (var y = 0; y < gridY; y++)
-            for (var x = 0; x < gridX; x++)
-            {
-                var idx = x + y * gridX + z * gridX * gridY;
-                tileIndices[idx] = z switch
-                {
-                    0 => (x + y) % 2, // checker floor
-                    1 => 2, // walls
-                    _ => 3 // ceiling
-                };
-            }
-
-            var tileMapModel =
-                new StackedPlanesTileMapModel(gridX, gridY, heightLevels, 64f, tileTextures, tileIndices);
-            tileMapModel.Render(view, proj, shaderProgram, viewLoc, projLoc);
-
-            fbo.Unbind();
-
-            var rgbaPixels = fbo.ReadPixels();
-            return FramebufferHelper.ConvertToUnmanagedBuffer(rgbaPixels, FramebufferSize, FramebufferSize);
         }
+
+        var tileMapModel =
+            new StackedPlanesTileMapModel(gridX, gridY, heightLevels, 64f, tileTextures, tileIndices);
+        tileMapModel.Render(view, proj, shaderProgram, viewLoc, projLoc);
+
+        fbo.Unbind();
+
+        var rgbaPixels = fbo.ReadPixels();
+        return FramebufferHelper.ConvertToUnmanagedBuffer(rgbaPixels, FramebufferSize, FramebufferSize);
     }
 }

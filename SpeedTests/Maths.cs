@@ -8,35 +8,34 @@
 
 using System;
 
-namespace SpeedTests
+namespace SpeedTests;
+
+internal static class Maths
 {
-    internal static class Maths
+    internal static double CalculateExpectedDistance(double startX, double startY, double angle, int cellsize,
+        int mapWidth, int mapHeight, int[,] map)
     {
-        internal static double CalculateExpectedDistance(double startX, double startY, double angle, int cellsize,
-            int mapWidth, int mapHeight, int[,] map)
+        // Convert angle to radians.
+        var rad = angle * Math.PI / 180.0;
+        var rayDirX = Math.Cos(rad);
+        var rayDirY = Math.Sin(rad);
+
+        var x = startX;
+        var y = startY;
+
+        while (true)
         {
-            // Convert angle to radians.
-            var rad = angle * Math.PI / 180.0;
-            var rayDirX = Math.Cos(rad);
-            var rayDirY = Math.Sin(rad);
+            var mapX = (int)(x / cellsize);
+            var mapY = (int)(y / cellsize);
 
-            var x = startX;
-            var y = startY;
+            if (mapX < 0 || mapX >= mapWidth || mapY < 0 || mapY >= mapHeight)
+                return double.MaxValue; // Out of bounds.
 
-            while (true)
-            {
-                var mapX = (int)(x / cellsize);
-                var mapY = (int)(y / cellsize);
+            if (map[mapY, mapX] > 0) // Wall hit.
+                return Math.Sqrt((x - startX) * (x - startX) + (y - startY) * (y - startY));
 
-                if (mapX < 0 || mapX >= mapWidth || mapY < 0 || mapY >= mapHeight)
-                    return double.MaxValue; // Out of bounds.
-
-                if (map[mapY, mapX] > 0) // Wall hit.
-                    return Math.Sqrt((x - startX) * (x - startX) + (y - startY) * (y - startY));
-
-                x += rayDirX * 0.1; // Small step.
-                y += rayDirY * 0.1;
-            }
+            x += rayDirX * 0.1; // Small step.
+            y += rayDirY * 0.1;
         }
     }
 }

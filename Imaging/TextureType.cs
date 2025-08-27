@@ -8,51 +8,50 @@
 
 // ReSharper disable UnusedMember.Local
 
-namespace Imaging
+namespace Imaging;
+
+/// <summary>
+///     Type of Textures
+/// </summary>
+public enum TextureType
 {
     /// <summary>
-    ///     Type of Textures
+    ///     The noise
     /// </summary>
-    public enum TextureType
-    {
-        /// <summary>
-        ///     The noise
-        /// </summary>
-        Noise,
+    Noise,
 
-        /// <summary>
-        ///     The clouds
-        /// </summary>
-        Clouds,
+    /// <summary>
+    ///     The clouds
+    /// </summary>
+    Clouds,
 
-        /// <summary>
-        ///     The marble
-        /// </summary>
-        Marble,
+    /// <summary>
+    ///     The marble
+    /// </summary>
+    Marble,
 
-        /// <summary>
-        ///     The wood
-        /// </summary>
-        Wood,
+    /// <summary>
+    ///     The wood
+    /// </summary>
+    Wood,
 
-        /// <summary>
-        ///     The wave
-        /// </summary>
-        Wave,
+    /// <summary>
+    ///     The wave
+    /// </summary>
+    Wave,
 
-        /// <summary>
-        ///     The crosshatch
-        /// </summary>
-        Crosshatch,
+    /// <summary>
+    ///     The crosshatch
+    /// </summary>
+    Crosshatch,
 
-        /// <summary>
-        ///     The concrete
-        /// </summary>
-        Concrete,
+    /// <summary>
+    ///     The concrete
+    /// </summary>
+    Concrete,
 
-        /// <summary>
-        ///     The canvas
-        /// </summary>
-        Canvas
-    }
+    /// <summary>
+    ///     The canvas
+    /// </summary>
+    Canvas
 }

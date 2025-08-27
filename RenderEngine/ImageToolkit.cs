@@ -147,15 +147,9 @@ namespace RenderEngine
                 var merged = _container.CompositeLayers(mergeIndices);
                 _container.InsertLayer(insertIndex, merged);
 
-                if (!removeOriginals)
-                {
-                    return;
-                }
+                if (!removeOriginals) return;
 
-                foreach (var index in mergeIndices.OrderByDescending(i => i))
-                {
-                    _container.RemoveLayer(index);
-                }
+                foreach (var index in mergeIndices.OrderByDescending(i => i)) _container.RemoveLayer(index);
             }
 
 

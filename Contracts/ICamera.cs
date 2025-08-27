@@ -6,16 +6,15 @@
  * PROGRAMMER:  Peter Geinitz (Wayfarer)
  */
 
-namespace Contracts
+namespace Contracts;
+
+public interface ICamera
 {
-    public interface ICamera
-    {
-        int X { get; }
-        int Y { get; }
-        int Z { get; }
-        int Angle { get; }
-        int Pitch { get; }
-        float ZFar { get; }
-        string ToString();
-    }
+    int X { get; }
+    int Y { get; }
+    int Z { get; }
+    int Angle { get; }
+    int Pitch { get; }
+    float ZFar { get; }
+    string ToString();
 }

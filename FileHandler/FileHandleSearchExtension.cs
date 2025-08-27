@@ -15,51 +15,50 @@ using System.Text.RegularExpressions;
 // ReSharper disable UnusedMember.Global, it is a library
 // ReSharper disable UnusedType.Global
 
-namespace FileHandler
+namespace FileHandler;
+
+/// <summary>
+///     Some Extensions for Search results
+/// </summary>
+/// <summary>
+///     Some Extensions for Search results
+/// </summary>
+public static class FileSearchExtension
 {
     /// <summary>
-    ///     Some Extensions for Search results
+    ///     The regex
     /// </summary>
+    private static readonly Regex Regex = new(@"(\d+)|(\D+)");
+
     /// <summary>
-    ///     Some Extensions for Search results
+    ///     Sorts the numbers first.
     /// </summary>
-    public static class FileSearchExtension
+    /// <param name="lst">The list we want to sort.</param>
+    /// <returns>Ordered FileNames</returns>
+    public static List<string> PathSortAlphaNumerical(this IEnumerable<string> lst)
     {
-        /// <summary>
-        ///     The regex
-        /// </summary>
-        private static readonly Regex Regex = new(@"(\d+)|(\D+)");
+        return lst?.OrderBy(Path.GetFileName).CustomSort().ToList();
+    }
 
-        /// <summary>
-        ///     Sorts the numbers first.
-        /// </summary>
-        /// <param name="lst">The list we want to sort.</param>
-        /// <returns>Ordered FileNames</returns>
-        public static List<string> PathSortAlphaNumerical(this IEnumerable<string> lst)
-        {
-            return lst?.OrderBy(Path.GetFileName).CustomSort().ToList();
-        }
+    /// <summary>
+    ///     Custom Sort, internal helper only avalable though extension
+    /// </summary>
+    /// <param name="lst">The list of files.</param>
+    /// <returns>Ordered List of files.</returns>
+    private static IEnumerable<string> CustomSort(this IEnumerable<string> lst)
+    {
+        if (!lst.Any()) return lst;
 
-        /// <summary>
-        ///     Custom Sort, internal helper only avalable though extension
-        /// </summary>
-        /// <param name="lst">The list of files.</param>
-        /// <returns>Ordered List of files.</returns>
-        private static IEnumerable<string> CustomSort(this IEnumerable<string> lst)
-        {
-            if (!lst.Any()) return lst;
+        var enumerable = lst.ToList();
+        var maxLen = enumerable.Max(s => s.Length);
 
-            var enumerable = lst.ToList();
-            var maxLen = enumerable.Max(s => s.Length);
-
-            return enumerable.Select(s => new
-                {
-                    OrgStr = s,
-                    SortStr = Regex.Replace(s,
-                        m => m.Value.PadLeft(maxLen, char.IsDigit(m.Value[0]) ? ' ' : '\xffff'))
-                })
-                .OrderBy(x => x.SortStr)
-                .Select(x => x.OrgStr);
-        }
+        return enumerable.Select(s => new
+            {
+                OrgStr = s,
+                SortStr = Regex.Replace(s,
+                    m => m.Value.PadLeft(maxLen, char.IsDigit(m.Value[0]) ? ' ' : '\xffff'))
+            })
+            .OrderBy(x => x.SortStr)
+            .Select(x => x.OrgStr);
     }
 }

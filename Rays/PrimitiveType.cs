@@ -1,12 +1,11 @@
-﻿namespace Rays
+﻿namespace Rays;
+
+public enum PrimitiveType
 {
-    public enum PrimitiveType
-    {
-        Wall,
-        Floor,
-        Ceiling,
-        Ramp,
-        Cube,
-        Decoration
-    }
+    Wall,
+    Floor,
+    Ceiling,
+    Ramp,
+    Cube,
+    Decoration
 }

@@ -8,12 +8,11 @@
 
 using OpenTK.Mathematics;
 
-namespace RenderEngine
+namespace RenderEngine;
+
+public struct CoordinateData
 {
-    public struct CoordinateData
-    {
-        public int X;
-        public int Y;
-        public Vector3 Color;
-    }
+    public int X;
+    public int Y;
+    public Vector3 Color;
 }

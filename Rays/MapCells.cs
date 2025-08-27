@@ -6,12 +6,11 @@
  * PROGRAMMER:  Peter Geinitz (Wayfarer)
  */
 
-namespace Rays
+namespace Rays;
+
+public class MapCells
 {
-    public class MapCells
-    {
-        public int WallId { get; set; }
-        public int FloorId { get; set; }
-        public int CeilingId { get; set; }
-    }
+    public int WallId { get; set; }
+    public int FloorId { get; set; }
+    public int CeilingId { get; set; }
 }

@@ -8,11 +8,10 @@
 
 using System.Drawing;
 
-namespace SpeedTests
+namespace SpeedTests;
+
+public struct PixelData
 {
-    public struct PixelData
-    {
-        public Color Color { get; set; }
-        public int Height { get; set; }
-    }
+    public Color Color { get; set; }
+    public int Height { get; set; }
 }

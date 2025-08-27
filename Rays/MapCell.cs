@@ -8,10 +8,9 @@
 
 using System.Collections.Generic;
 
-namespace Rays
+namespace Rays;
+
+public sealed class MapCell
 {
-    public sealed class MapCell
-    {
-        public List<CellPrimitive> Primitives { get; } = new();
-    }
+    public List<CellPrimitive> Primitives { get; } = new();
 }

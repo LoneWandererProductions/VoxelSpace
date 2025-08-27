@@ -10,61 +10,60 @@ using System;
 using Imaging;
 using Viewer;
 
-namespace Rays
+namespace Rays;
+
+public class TexturedFloorCeilingRenderer : IFloorCeilingRenderer
 {
-    public class TexturedFloorCeilingRenderer : IFloorCeilingRenderer
+    private readonly DirectBitmap _ceilingTexture;
+    private readonly DirectBitmap _floorTexture;
+
+    public TexturedFloorCeilingRenderer(DirectBitmap floor, DirectBitmap ceiling)
     {
-        private readonly DirectBitmap _ceilingTexture;
-        private readonly DirectBitmap _floorTexture;
+        _floorTexture = floor;
+        _ceilingTexture = ceiling;
+    }
 
-        public TexturedFloorCeilingRenderer(DirectBitmap floor, DirectBitmap ceiling)
+    public void Render(DirectBitmap dbm, RvCamera camera, CameraContext context)
+    {
+        // Classic raycasting floor rendering
+        for (var y = context.ScreenHeight / 2 + 1; y < context.ScreenHeight; y++)
         {
-            _floorTexture = floor;
-            _ceilingTexture = ceiling;
-        }
+            var rowDistance = context.ScreenHeight / (2.0 * y - context.ScreenHeight);
+            var stepX = rowDistance * Math.Cos(DegreeToRadian(camera.Angle));
+            var stepY = rowDistance * Math.Sin(DegreeToRadian(camera.Angle));
+            var floorX = camera.X + rowDistance * Math.Cos(DegreeToRadian(camera.Angle));
+            var floorY = camera.Y + rowDistance * Math.Sin(DegreeToRadian(camera.Angle));
 
-        public void Render(DirectBitmap dbm, RvCamera camera, CameraContext context)
-        {
-            // Classic raycasting floor rendering
-            for (var y = context.ScreenHeight / 2 + 1; y < context.ScreenHeight; y++)
+            // Cache the Y row in the floor and ceiling textures
+            var textureRowY = (int)floorY % _floorTexture.Height;
+            if (textureRowY < 0) textureRowY += _floorTexture.Height;
+
+            var textureCeilingY = (int)floorY % _ceilingTexture.Height;
+            if (textureCeilingY < 0) textureCeilingY += _ceilingTexture.Height;
+
+            var floorRowCache = _floorTexture.GetRow(textureRowY);
+            var ceilingRowCache = _ceilingTexture.GetRow(textureRowY);
+
+            for (var x = 0; x < context.ScreenWidth; x++)
             {
-                var rowDistance = context.ScreenHeight / (2.0 * y - context.ScreenHeight);
-                var stepX = rowDistance * Math.Cos(DegreeToRadian(camera.Angle));
-                var stepY = rowDistance * Math.Sin(DegreeToRadian(camera.Angle));
-                var floorX = camera.X + rowDistance * Math.Cos(DegreeToRadian(camera.Angle));
-                var floorY = camera.Y + rowDistance * Math.Sin(DegreeToRadian(camera.Angle));
+                var cellX = (int)floorX % _floorTexture.Width;
+                if (cellX < 0) cellX += _floorTexture.Width;
 
-                // Cache the Y row in the floor and ceiling textures
-                var textureRowY = (int)floorY % _floorTexture.Height;
-                if (textureRowY < 0) textureRowY += _floorTexture.Height;
+                // Use pre-cached row
+                var floorColor = floorRowCache[cellX];
+                var ceilingColor = ceilingRowCache[cellX];
 
-                var textureCeilingY = (int)floorY % _ceilingTexture.Height;
-                if (textureCeilingY < 0) textureCeilingY += _ceilingTexture.Height;
+                dbm.SetPixel(x, y, floorColor);
+                dbm.SetPixel(x, context.ScreenHeight - y, ceilingColor);
 
-                var floorRowCache = _floorTexture.GetRow(textureRowY);
-                var ceilingRowCache = _ceilingTexture.GetRow(textureRowY);
-
-                for (var x = 0; x < context.ScreenWidth; x++)
-                {
-                    var cellX = (int)floorX % _floorTexture.Width;
-                    if (cellX < 0) cellX += _floorTexture.Width;
-
-                    // Use pre-cached row
-                    var floorColor = floorRowCache[cellX];
-                    var ceilingColor = ceilingRowCache[cellX];
-
-                    dbm.SetPixel(x, y, floorColor);
-                    dbm.SetPixel(x, context.ScreenHeight - y, ceilingColor);
-
-                    floorX += stepX;
-                    floorY += stepY;
-                }
+                floorX += stepX;
+                floorY += stepY;
             }
         }
+    }
 
-        private static double DegreeToRadian(double degree)
-        {
-            return degree * Math.PI / 180.0;
-        }
+    private static double DegreeToRadian(double degree)
+    {
+        return degree * Math.PI / 180.0;
     }
 }

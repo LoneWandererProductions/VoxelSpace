@@ -10,30 +10,29 @@ using System.Drawing;
 using System.Windows.Input;
 using Viewer;
 
-namespace Rays
+namespace Rays;
+
+public sealed class RasterRaycast
 {
-    public sealed class RasterRaycast
+    private readonly Raycaster _ray;
+
+    public RasterRaycast(int[,] map, RvCamera camera, CameraContext context)
     {
-        private readonly Raycaster _ray;
+        Camera = camera;
 
-        public RasterRaycast(int[,] map, RvCamera camera, CameraContext context)
-        {
-            Camera = camera;
+        _ray = new Raycaster(map, context);
+    }
 
-            _ray = new Raycaster(map, context);
-        }
+    public RvCamera Camera { get; set; }
 
-        public RvCamera Camera { get; set; }
+    public Bitmap Render(Key eKey)
+    {
+        Camera = InputHelper.SimulateCameraMovementRay(eKey, Camera);
+        return _ray.Render(Camera).Bitmap;
+    }
 
-        public Bitmap Render(Key eKey)
-        {
-            Camera = InputHelper.SimulateCameraMovementRay(eKey, Camera);
-            return _ray.Render(Camera).Bitmap;
-        }
-
-        public RenderResult Render()
-        {
-            return _ray.Render(Camera);
-        }
+    public RenderResult Render()
+    {
+        return _ray.Render(Camera);
     }
 }

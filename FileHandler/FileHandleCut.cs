@@ -15,129 +15,56 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 
-namespace FileHandler
+namespace FileHandler;
+
+/// <summary>
+///     The file handle Cut class.
+/// </summary>
+public static class FileHandleCut
 {
     /// <summary>
-    ///     The file handle Cut class.
+    ///     Copy and delete all Files to another Location, includes subdirectories
+    ///     Example: https://msdn.microsoft.com/de-de/library/bb762914%28v=vs.110%29.aspx
     /// </summary>
-    public static class FileHandleCut
+    /// <param name="source">Full qualified location Path</param>
+    /// <param name="target">Full qualified target Path</param>
+    /// <param name="overwrite">Is overwrite allowed</param>
+    /// <returns>Status if we encountered any problems</returns>
+    /// <exception cref="FileHandlerException">No Correct Path was provided</exception>
+    public static bool CutFiles(string source, string target, bool overwrite)
     {
-        /// <summary>
-        ///     Copy and delete all Files to another Location, includes subdirectories
-        ///     Example: https://msdn.microsoft.com/de-de/library/bb762914%28v=vs.110%29.aspx
-        /// </summary>
-        /// <param name="source">Full qualified location Path</param>
-        /// <param name="target">Full qualified target Path</param>
-        /// <param name="overwrite">Is overwrite allowed</param>
-        /// <returns>Status if we encountered any problems</returns>
-        /// <exception cref="FileHandlerException">No Correct Path was provided</exception>
-        public static bool CutFiles(string source, string target, bool overwrite)
+        FileHandlerProcessing.ValidatePaths(source, target);
+
+        //if nothing exists we can return anyways
+        if (!Directory.Exists(source)) return false;
+
+        var check = true;
+        var dir = new DirectoryInfo(source);
+        var dirs = dir.GetDirectories();
+        var files = dir.GetFiles();
+
+        //Give the User Optional Infos about the Amount we Copy
+        var lstFiles = (from file in files
+            select file.Name).ToList();
+
+        var itm = new FileItems
         {
-            FileHandlerProcessing.ValidatePaths(source, target);
+            Elements = new List<string>(lstFiles), Message = FileHandlerResources.InformationFileDeletion
+        };
 
-            //if nothing exists we can return anyways
-            if (!Directory.Exists(source)) return false;
+        FileHandlerRegister.SendOverview?.Invoke(nameof(CutFiles), itm);
 
-            var check = true;
-            var dir = new DirectoryInfo(source);
-            var dirs = dir.GetDirectories();
-            var files = dir.GetFiles();
-
-            //Give the User Optional Infos about the Amount we Copy
-            var lstFiles = (from file in files
-                select file.Name).ToList();
-
-            var itm = new FileItems
-            {
-                Elements = new List<string>(lstFiles), Message = FileHandlerResources.InformationFileDeletion
-            };
-
-            FileHandlerRegister.SendOverview?.Invoke(nameof(CutFiles), itm);
-
-            //do the actual work
-            if (files.Length > 0)
-            {
-                if (!Directory.Exists(target)) _ = Directory.CreateDirectory(target);
-
-                foreach (var file in files)
-                {
-                    var tempPath = Path.Combine(target, file.Name);
-
-                    try
-                    {
-                        file.MoveTo(tempPath, overwrite);
-
-                        FileHandlerRegister.SendStatus?.Invoke(nameof(CutFiles), file.Name);
-                    }
-                    catch (Exception ex) when (ex is UnauthorizedAccessException or ArgumentException or IOException
-                                                   or NotSupportedException)
-                    {
-                        FileHandlerRegister.AddError(nameof(CutFiles), file.Name, ex);
-                        Trace.WriteLine(ex);
-                        check = false;
-                    }
-                }
-            }
-
-            foreach (var subDir in dirs)
-            {
-                var tempPath = Path.Combine(target, subDir.Name);
-
-                if (!Directory.Exists(target)) _ = Directory.CreateDirectory(target);
-
-                if (Directory.Exists(tempPath)) continue;
-
-                _ = CutFiles(subDir.FullName, tempPath, overwrite);
-            }
-
-            return check;
-        }
-
-        /// <summary>
-        ///     Copy and delete all Files to another Location, includes subdirectories
-        /// </summary>
-        /// <param name="source">Full qualified location Path</param>
-        /// <param name="target">List of Files</param>
-        /// <param name="overwrite">Is overwrite allowed</param>
-        /// <returns>Status if we encountered any problems</returns>
-        /// <exception cref="FileHandlerException">No Correct Path was provided</exception>
-        public static bool CutFiles(List<string> source, string target, bool overwrite)
+        //do the actual work
+        if (files.Length > 0)
         {
-            if (source == null || source.Count == 0 || string.IsNullOrEmpty(target))
-                throw new FileHandlerException(FileHandlerResources.ErrorEmptyString);
-
             if (!Directory.Exists(target)) _ = Directory.CreateDirectory(target);
 
-            //Give the User Optional Infos about the Amount we Copy
-            var itm = new FileItems
+            foreach (var file in files)
             {
-                Elements = new List<string>(source), Message = FileHandlerResources.InformationFileDeletion
-            };
+                var tempPath = Path.Combine(target, file.Name);
 
-            FileHandlerRegister.SendOverview?.Invoke(nameof(CutFiles), itm);
-
-            var check = true;
-            //Do the work
-            var root = FileHandlerProcessing.SearchRoot(source);
-            var file = new FileInfo(root);
-            root = file.Directory.FullName;
-
-            foreach (var element in source)
                 try
                 {
-                    file = new FileInfo(element);
-
-                    var directory = file.Directory.ToString();
-
-                    //Get Sub Folder
-                    var path = FileHandlerProcessing.GetSubFolder(directory, root, target);
-
-                    if (path?.Length == 0) continue;
-
-                    var tempPath = Path.Combine(path!, file.Name);
-
-                    if (!Directory.Exists(path)) _ = Directory.CreateDirectory(path);
-
                     file.MoveTo(tempPath, overwrite);
 
                     FileHandlerRegister.SendStatus?.Invoke(nameof(CutFiles), file.Name);
@@ -145,12 +72,84 @@ namespace FileHandler
                 catch (Exception ex) when (ex is UnauthorizedAccessException or ArgumentException or IOException
                                                or NotSupportedException)
                 {
-                    FileHandlerRegister.AddError(nameof(CutFiles), element, ex);
+                    FileHandlerRegister.AddError(nameof(CutFiles), file.Name, ex);
                     Trace.WriteLine(ex);
                     check = false;
                 }
-
-            return check;
+            }
         }
+
+        foreach (var subDir in dirs)
+        {
+            var tempPath = Path.Combine(target, subDir.Name);
+
+            if (!Directory.Exists(target)) _ = Directory.CreateDirectory(target);
+
+            if (Directory.Exists(tempPath)) continue;
+
+            _ = CutFiles(subDir.FullName, tempPath, overwrite);
+        }
+
+        return check;
+    }
+
+    /// <summary>
+    ///     Copy and delete all Files to another Location, includes subdirectories
+    /// </summary>
+    /// <param name="source">Full qualified location Path</param>
+    /// <param name="target">List of Files</param>
+    /// <param name="overwrite">Is overwrite allowed</param>
+    /// <returns>Status if we encountered any problems</returns>
+    /// <exception cref="FileHandlerException">No Correct Path was provided</exception>
+    public static bool CutFiles(List<string> source, string target, bool overwrite)
+    {
+        if (source == null || source.Count == 0 || string.IsNullOrEmpty(target))
+            throw new FileHandlerException(FileHandlerResources.ErrorEmptyString);
+
+        if (!Directory.Exists(target)) _ = Directory.CreateDirectory(target);
+
+        //Give the User Optional Infos about the Amount we Copy
+        var itm = new FileItems
+        {
+            Elements = new List<string>(source), Message = FileHandlerResources.InformationFileDeletion
+        };
+
+        FileHandlerRegister.SendOverview?.Invoke(nameof(CutFiles), itm);
+
+        var check = true;
+        //Do the work
+        var root = FileHandlerProcessing.SearchRoot(source);
+        var file = new FileInfo(root);
+        root = file.Directory.FullName;
+
+        foreach (var element in source)
+            try
+            {
+                file = new FileInfo(element);
+
+                var directory = file.Directory.ToString();
+
+                //Get Sub Folder
+                var path = FileHandlerProcessing.GetSubFolder(directory, root, target);
+
+                if (path?.Length == 0) continue;
+
+                var tempPath = Path.Combine(path!, file.Name);
+
+                if (!Directory.Exists(path)) _ = Directory.CreateDirectory(path);
+
+                file.MoveTo(tempPath, overwrite);
+
+                FileHandlerRegister.SendStatus?.Invoke(nameof(CutFiles), file.Name);
+            }
+            catch (Exception ex) when (ex is UnauthorizedAccessException or ArgumentException or IOException
+                                           or NotSupportedException)
+            {
+                FileHandlerRegister.AddError(nameof(CutFiles), element, ex);
+                Trace.WriteLine(ex);
+                check = false;
+            }
+
+        return check;
     }
 }
