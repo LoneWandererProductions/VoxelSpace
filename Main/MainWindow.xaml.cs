@@ -356,7 +356,7 @@ public sealed partial class MainWindow
         _dungeonMap.GetCell(5, 5).HasWallWest = true;
 
         // 2. Set up the viewport
-        var raster = new CPURasterizer(800, 600);
+        var raster = new SoftwareRasterizer(800, 600);
         _dungeonViewport = new DungeonViewport(_dungeonMap, raster, 800, 600);
 
         // Initial render

@@ -147,7 +147,7 @@ public sealed unsafe class UnmanagedImageBuffer : IDisposable
         var newR = (byte)(r * alpha + oldR * (1 - alpha));
         var newG = (byte)(g * alpha + oldG * (1 - alpha));
         var newB = (byte)(b * alpha + oldB * (1 - alpha));
-        var newA = (byte)(a + oldA * (1 - alpha)); // Approximate new alpha
+        var newA = (byte)Math.Clamp((int)(a + oldA * (1 - alpha)), 0, 255); // Approximate new alpha
 
         buffer[offset] = newB;
         buffer[offset + 1] = newG;
@@ -353,15 +353,24 @@ public sealed unsafe class UnmanagedImageBuffer : IDisposable
     /// <returns>Bitmap converted to ImageBufferManager</returns>
     public static UnmanagedImageBuffer FromBitmap(Bitmap bmp)
     {
-        // Assumes Format32bppArgb
+        if (bmp.PixelFormat != PixelFormat.Format32bppArgb)
+            throw new ArgumentException("Bitmap must be Format32bppArgb", nameof(bmp));
+
         var buffer = new UnmanagedImageBuffer(bmp.Width, bmp.Height);
         var data = bmp.LockBits(new Rectangle(0, 0, bmp.Width, bmp.Height),
-            ImageLockMode.ReadOnly, PixelFormat.Format32bppArgb);
+            ImageLockMode.ReadOnly, bmp.PixelFormat);
 
         try
         {
-            var src = new Span<byte>((void*)data.Scan0, data.Stride * bmp.Height);
-            buffer.ReplaceBuffer(src.Slice(0, buffer.BufferSpan.Length));
+            int rowBytes = bmp.Width * 4; // 4 bytes per pixel
+            var dst = buffer.BufferSpan;
+
+            for (int y = 0; y < bmp.Height; y++)
+            {
+                var srcRow = new Span<byte>((byte*)data.Scan0 + y * data.Stride, rowBytes);
+                var dstRow = dst.Slice(y * rowBytes, rowBytes);
+                srcRow.CopyTo(dstRow);
+            }
         }
         finally
         {
@@ -370,6 +379,7 @@ public sealed unsafe class UnmanagedImageBuffer : IDisposable
 
         return buffer;
     }
+
 
     /// <summary>
     ///     Blits the specified source.
@@ -445,9 +455,10 @@ public sealed unsafe class UnmanagedImageBuffer : IDisposable
     /// <summary>
     /// Fills a triangle using barycentric coordinates (optional texture sampling).
     /// </summary>
-    public void FillTriangle(Point p0, Point p1, Point p2, UnmanagedImageBuffer texture = null)
+    public void FillTriangle(Point p0, Point p1, Point p2,
+                             UnmanagedImageBuffer texture = null,
+                             Vector2? uv0 = null, Vector2? uv1 = null, Vector2? uv2 = null)
     {
-        // Compute bounding box
         int minX = Math.Max(0, Math.Min(p0.X, Math.Min(p1.X, p2.X)));
         int maxX = Math.Min(Width - 1, Math.Max(p0.X, Math.Max(p1.X, p2.X)));
         int minY = Math.Max(0, Math.Min(p0.Y, Math.Min(p1.Y, p2.Y)));
@@ -466,33 +477,53 @@ public sealed unsafe class UnmanagedImageBuffer : IDisposable
 
                 if (w0 >= 0 && w1 >= 0 && w2 >= 0)
                 {
-                    if (texture != null)
+                    if (texture != null && uv0.HasValue && uv1.HasValue && uv2.HasValue)
                     {
-                        // Simple affine mapping (assuming texture covers triangle)
-                        int tx = (int)(w0 * 0 + w1 * texture.Width + w2 * 0);
-                        int ty = (int)(w0 * 0 + w1 * 0 + w2 * texture.Height);
+                        int tx = (int)(w0 * uv0.Value.X + w1 * uv1.Value.X + w2 * uv2.Value.X);
+                        int ty = (int)(w0 * uv0.Value.Y + w1 * uv1.Value.Y + w2 * uv2.Value.Y);
+
                         tx = Math.Clamp(tx, 0, texture.Width - 1);
                         ty = Math.Clamp(ty, 0, texture.Height - 1);
+
                         var c = texture.GetPixel(tx, ty);
                         SetPixel(x, y, c.A, c.R, c.G, c.B);
                     }
                     else
                     {
-                        SetPixel(x, y, 255, 255, 255, 255); // White default
+                        SetPixel(x, y, 255, 255, 255, 255); // Default white
                     }
                 }
             }
         }
     }
 
+
     /// <summary>
     /// Draws a quad by splitting into two triangles (optionally textured).
     /// </summary>
-    public void DrawTexturedQuad(Point p0, Point p1, Point p2, Point p3, UnmanagedImageBuffer texture = null)
+    /// <summary>
+    /// Draws a textured quad by splitting it into two triangles with proper texture mapping.
+    /// </summary>
+    /// <param name="p0">Top-left vertex in screen space.</param>
+    /// <param name="p1">Top-right vertex in screen space.</param>
+    /// <param name="p2">Bottom-right vertex in screen space.</param>
+    /// <param name="p3">Bottom-left vertex in screen space.</param>
+    /// <param name="texture">The texture to map onto the quad.</param>
+    public void DrawTexturedQuad(Point p0, Point p1, Point p2, Point p3, UnmanagedImageBuffer? texture = null)
     {
-        FillTriangle(p0, p1, p2, texture);
-        FillTriangle(p0, p2, p3, texture);
+        if (texture == null) throw new ArgumentNullException(nameof(texture));
+
+        // Define per-vertex UVs for full quad
+        var uv0 = new Vector2(0, 0);                       // top-left
+        var uv1 = new Vector2(texture.Width - 1, 0);       // top-right
+        var uv2 = new Vector2(texture.Width - 1, texture.Height - 1); // bottom-right
+        var uv3 = new Vector2(0, texture.Height - 1);     // bottom-left
+
+        // Draw two triangles forming the quad
+        FillTriangle(p0, p1, p2, texture, uv0, uv1, uv2);
+        FillTriangle(p0, p2, p3, texture, uv0, uv2, uv3);
     }
+
 
     /// <summary>
     /// Draws a filled triangle using integer coordinates and a solid color.
