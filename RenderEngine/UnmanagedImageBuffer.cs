@@ -388,6 +388,111 @@ public sealed unsafe class UnmanagedImageBuffer : IDisposable
             srcRow.CopyTo(dstRow);
         }
     }
+    /// <summary>
+    /// Draws a line using Bresenham’s integer algorithm (no allocations, fast).
+    /// </summary>
+    public void DrawLine(int x0, int y0, int x1, int y1, byte a, byte r, byte g, byte b)
+    {
+        int dx = Math.Abs(x1 - x0);
+        int dy = Math.Abs(y1 - y0);
+        int sx = x0 < x1 ? 1 : -1;
+        int sy = y0 < y1 ? 1 : -1;
+        int err = dx - dy;
+
+        while (true)
+        {
+            if ((uint)x0 < (uint)Width && (uint)y0 < (uint)Height)
+            {
+                SetPixel(x0, y0, a, r, g, b);
+            }
+            if (x0 == x1 && y0 == y1) break;
+            int e2 = 2 * err;
+            if (e2 > -dy) { err -= dy; x0 += sx; }
+            if (e2 < dx) { err += dx; y0 += sy; }
+        }
+    }
+
+    /// <summary>
+    /// Fills an axis-aligned rectangle, using SIMD for full rows when possible.
+    /// </summary>
+    public void FillRect(int x, int y, int width, int height, byte a, byte r, byte g, byte b)
+    {
+        if (x < 0) { width += x; x = 0; }
+        if (y < 0) { height += y; y = 0; }
+        if (x + width > Width) width = Width - x;
+        if (y + height > Height) height = Height - y;
+        if (width <= 0 || height <= 0) return;
+
+        var rowVector = CreatePixelVector(a, r, g, b);
+        int vectorSize = Vector<byte>.Count;
+
+        for (int j = 0; j < height; j++)
+        {
+            var rowSpan = GetPixelSpan(x, y + j, width);
+            int i = 0;
+            for (; i <= rowSpan.Length - vectorSize; i += vectorSize)
+                rowVector.CopyTo(rowSpan.Slice(i, vectorSize));
+            for (; i < rowSpan.Length; i += 4)
+            {
+                rowSpan[i] = b;
+                rowSpan[i + 1] = g;
+                rowSpan[i + 2] = r;
+                rowSpan[i + 3] = a;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Fills a triangle using barycentric coordinates (optional texture sampling).
+    /// </summary>
+    public void FillTriangle(Point p0, Point p1, Point p2, UnmanagedImageBuffer texture = null)
+    {
+        // Compute bounding box
+        int minX = Math.Max(0, Math.Min(p0.X, Math.Min(p1.X, p2.X)));
+        int maxX = Math.Min(Width - 1, Math.Max(p0.X, Math.Max(p1.X, p2.X)));
+        int minY = Math.Max(0, Math.Min(p0.Y, Math.Min(p1.Y, p2.Y)));
+        int maxY = Math.Min(Height - 1, Math.Max(p0.Y, Math.Max(p1.Y, p2.Y)));
+
+        float denom = (p1.Y - p2.Y) * (p0.X - p2.X) + (p2.X - p1.X) * (p0.Y - p2.Y);
+        if (denom == 0) return;
+
+        for (int y = minY; y <= maxY; y++)
+        {
+            for (int x = minX; x <= maxX; x++)
+            {
+                float w0 = ((p1.Y - p2.Y) * (x - p2.X) + (p2.X - p1.X) * (y - p2.Y)) / denom;
+                float w1 = ((p2.Y - p0.Y) * (x - p2.X) + (p0.X - p2.X) * (y - p2.Y)) / denom;
+                float w2 = 1 - w0 - w1;
+
+                if (w0 >= 0 && w1 >= 0 && w2 >= 0)
+                {
+                    if (texture != null)
+                    {
+                        // Simple affine mapping (assuming texture covers triangle)
+                        int tx = (int)(w0 * 0 + w1 * texture.Width + w2 * 0);
+                        int ty = (int)(w0 * 0 + w1 * 0 + w2 * texture.Height);
+                        tx = Math.Clamp(tx, 0, texture.Width - 1);
+                        ty = Math.Clamp(ty, 0, texture.Height - 1);
+                        var c = texture.GetPixel(tx, ty);
+                        SetPixel(x, y, c.A, c.R, c.G, c.B);
+                    }
+                    else
+                    {
+                        SetPixel(x, y, 255, 255, 255, 255); // White default
+                    }
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// Draws a quad by splitting into two triangles (optionally textured).
+    /// </summary>
+    public void DrawTexturedQuad(Point p0, Point p1, Point p2, Point p3, UnmanagedImageBuffer texture = null)
+    {
+        FillTriangle(p0, p1, p2, texture);
+        FillTriangle(p0, p2, p3, texture);
+    }
 
     /// <summary>
     ///     Blits a rectangular region from the source buffer to this buffer.
