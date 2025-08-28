@@ -1,79 +1,73 @@
-﻿using System.Drawing;
-using System.Drawing.Imaging;
+﻿using Rays;
+using System;
+using System.Drawing;
 
-namespace Rays;
+namespace RenderEngine;
+
+/// <summary>
+/// Software rasterizer using <see cref="UnmanagedImageBuffer"/> for fast pixel rendering.
+/// </summary>
+public class SoftwareRasterizer : IRenderer , IDisposable
+{
+    private readonly UnmanagedImageBuffer _buffer;
+
+    public int Width => _buffer.Width;
+    public int Height => _buffer.Height;
 
     /// <summary>
-    /// Software GDI+ implementation of <see cref="IRenderer"/>.
+    /// Creates a new rasterizer with a fixed canvas size.
     /// </summary>
-    public class SoftwareRasterizer : IRenderer
-{
-    private readonly Graphics _gfx;
-    private readonly int _height;
-    private readonly Bitmap _target;
-    private readonly int _width;
-
     public SoftwareRasterizer(int width, int height)
     {
-        _width = width;
-        _height = height;
-        _target = new Bitmap(width, height, PixelFormat.Format32bppArgb);
-        _gfx = Graphics.FromImage(_target);
-        _gfx.Clear(Color.Black);
+        _buffer = new UnmanagedImageBuffer(width, height);
     }
 
     /// <summary>
-    ///     Get the rendered frame as a bitmap.
-    /// </summary>
-    public Bitmap GetFrame()
-    {
-        return _target;
-    }
-
-    /// <summary>
-    ///     Clear the frame.
+    /// Clears the canvas to a single color.
     /// </summary>
     public void Clear(Color color)
     {
-        _gfx.Clear(color);
+        _buffer.Clear(color.A, color.R, color.G, color.B);
+    }
+
+    public void DrawLine(Point p0, Point p1, Color color)
+    {
+        _buffer.DrawLine(p0.X, p0.Y, p1.X, p1.Y, color.A, color.R, color.G, color.B);
+    }
+
+    public void DrawFilledRect(int x, int y, int width, int height, Color color)
+    {
+        _buffer.FillRect(x, y, width, height, color.A, color.R, color.G, color.B);
+    }
+
+    public void DrawTexturedQuad(Point p0, Point p1, Point p2, Point p3, UnmanagedImageBuffer texture)
+    {
+        _buffer.DrawTexturedQuad(p0, p1, p2, p3, texture);
+    }
+
+    public void BlitRegion(UnmanagedImageBuffer src, int srcX, int srcY, int width, int height, int destX, int destY)
+    {
+        _buffer.BlitRegion(src, srcX, srcY, width, height, destX, destY);
+    }
+
+    public void DrawSolidQuad(Point p0, Point p1, Point p2, Point p3, Color fill)
+    {
+        // CPU: Fill by splitting into 2 triangles or using scanline
+        _buffer.DrawFilledTriangle(p0, p1, p2, fill);
+        _buffer.DrawFilledTriangle(p0, p2, p3, fill);
     }
 
     /// <summary>
-    ///     Draw a line in screen space.
+    /// Returns the current frame as a bitmap (slow, only for presenting on screen).
     /// </summary>
-    public void DrawLine(PointF p0, PointF p1, Color color)
+    public Bitmap GetFrame()
     {
-        using var pen = new Pen(color, 1);
-        _gfx.DrawLine(pen, p0, p1);
+        return _buffer.ToBitmap();
     }
 
-    /// <summary>
-    ///     Draw a filled quad with optional wireframe outline.
-    /// </summary>
-    public void DrawSolidQuad(PointF p0, PointF p1, PointF p2, PointF p3, Color fill)
+    public void Dispose()
     {
-        PointF[] pts = { p0, p1, p2, p3 };
-        using var brush = new SolidBrush(fill);
-        _gfx.FillPolygon(brush, pts);
-
-        using var pen = new Pen(Color.Black, 1);
-        _gfx.DrawPolygon(pen, pts);
+        _buffer.Dispose();
     }
 
-    /// <summary>
-    ///     Draw a textured quad in screen space.
-    /// </summary>
-    public void DrawTexturedQuad(PointF p0, PointF p1, PointF p2, PointF p3, Bitmap texture)
-    {
-        // Split quad into two triangles because GDI+ can only map parallelograms
-        PointF[] tri1 = { p0, p1, p2 };
-        PointF[] tri2 = { p2, p3, p0 };
-
-        var rect = new RectangleF(0, 0, texture.Width, texture.Height);
-        using var brush = new TextureBrush(texture, rect);
-
-        _gfx.FillPolygon(brush, tri1);
-        brush.ResetTransform();
-        _gfx.FillPolygon(brush, tri2);
-    }
 }

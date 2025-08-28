@@ -218,18 +218,29 @@ public class DungeonRenderer
         switch (Mode)
         {
             case RenderMode.Wireframe:
-                rast.DrawLine(screenVerts[0], screenVerts[1], Color.Black);
-                rast.DrawLine(screenVerts[1], screenVerts[2], Color.Black);
-                rast.DrawLine(screenVerts[2], screenVerts[3], Color.Black);
-                rast.DrawLine(screenVerts[3], screenVerts[0], Color.Black);
+                rast.DrawLine(Point.Round(screenVerts[0]), Point.Round(screenVerts[1]), Color.Black);
+                rast.DrawLine(Point.Round(screenVerts[1]), Point.Round(screenVerts[2]), Color.Black);
+                rast.DrawLine(Point.Round(screenVerts[2]), Point.Round(screenVerts[3]), Color.Black);
+                rast.DrawLine(Point.Round(screenVerts[3]), Point.Round(screenVerts[0]), Color.Black);
                 break;
 
             case RenderMode.Textured:
                 if (tex != null)
-                    rast.DrawTexturedQuad(screenVerts[0], screenVerts[1], screenVerts[2], screenVerts[3], tex);
+                    rast.DrawTexturedQuad(
+                        Point.Round(screenVerts[0]),
+                        Point.Round(screenVerts[1]),
+                        Point.Round(screenVerts[2]),
+                        Point.Round(screenVerts[3]),
+                        null);
                 else
-                    rast.DrawSolidQuad(screenVerts[0], screenVerts[1], screenVerts[2], screenVerts[3], fallbackColor);
+                    rast.DrawSolidQuad(
+                        Point.Round(screenVerts[0]),
+                        Point.Round(screenVerts[1]),
+                        Point.Round(screenVerts[2]),
+                        Point.Round(screenVerts[3]),
+                        fallbackColor);
                 break;
         }
+
     }
 }

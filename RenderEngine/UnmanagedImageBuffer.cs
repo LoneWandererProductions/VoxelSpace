@@ -495,6 +495,47 @@ public sealed unsafe class UnmanagedImageBuffer : IDisposable
     }
 
     /// <summary>
+    /// Draws a filled triangle using integer coordinates and a solid color.
+    /// </summary>
+    /// <param name="p0">First vertex.</param>
+    /// <param name="p1">Second vertex.</param>
+    /// <param name="p2">Third vertex.</param>
+    /// <param name="color">Fill color.</param>
+    public void DrawFilledTriangle(Point p0, Point p1, Point p2, Color color)
+    {
+        // Bounding box
+        int minX = Math.Max(0, Math.Min(p0.X, Math.Min(p1.X, p2.X)));
+        int minY = Math.Max(0, Math.Min(p0.Y, Math.Min(p1.Y, p2.Y)));
+        int maxX = Math.Min(Width - 1, Math.Max(p0.X, Math.Max(p1.X, p2.X)));
+        int maxY = Math.Min(Height - 1, Math.Max(p0.Y, Math.Max(p1.Y, p2.Y)));
+
+        // Precompute edge vectors
+        var v0 = new Vector2(p1.X - p0.X, p1.Y - p0.Y);
+        var v1 = new Vector2(p2.X - p0.X, p2.Y - p0.Y);
+        float denom = v0.X * v1.Y - v1.X * v0.Y;
+        if (denom == 0) return; // Degenerate triangle
+
+        // Iterate bounding box
+        for (int y = minY; y <= maxY; y++)
+        {
+            for (int x = minX; x <= maxX; x++)
+            {
+                var v2 = new Vector2(x - p0.X, y - p0.Y);
+
+                // Barycentric coordinates
+                float u = (v2.X * v1.Y - v1.X * v2.Y) / denom;
+                float v = (v0.X * v2.Y - v2.X * v0.Y) / denom;
+                float w = 1 - u - v;
+
+                if (u >= 0 && v >= 0 && w >= 0)
+                {
+                    SetPixel(x, y, color.A, color.R, color.G, color.B);
+                }
+            }
+        }
+    }
+
+    /// <summary>
     ///     Blits a rectangular region from the source buffer to this buffer.
     /// </summary>
     /// <param name="src">The source.</param>
