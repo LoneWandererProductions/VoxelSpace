@@ -3,7 +3,10 @@ using System.Drawing.Imaging;
 
 namespace Rays;
 
-public class SoftwareRasterizer
+    /// <summary>
+    /// Software GDI+ implementation of <see cref="IRenderer"/>.
+    /// </summary>
+    public class SoftwareRasterizer : IRenderer
 {
     private readonly Graphics _gfx;
     private readonly int _height;

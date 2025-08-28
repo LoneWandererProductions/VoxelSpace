@@ -38,13 +38,12 @@ public sealed partial class MainWindow
     private Camera3D _dungeonCamera;
 
     //3d Stuff
-    private DungeonMap _dungeonMap;
-    private SoftwareRasterizer _dungeonRaster;
-    private DungeonRenderer _dungeonRenderer;
+    private DungeonViewport _dungeonViewport;
     private RasterRaycast _raycaster;
     private RasterRaycastV2 _raycasterV2;
     private RasterRaycastV3 _raycasterV3;
     private VoxelRaster _voxel;
+    private DungeonMap _dungeonMap;
 
     /// <inheritdoc />
     /// <summary>
@@ -141,35 +140,16 @@ public sealed partial class MainWindow
                 _active = "TileGL";
                 InitiateTileGL();
                 break;
+
             case "Caster3D":
-                if (_dungeonCamera == null) return;
+                if (_dungeonViewport == null) return;
 
-                // Move camera with WASD
-                var moveSpeed = 0.2f;
-                var rotSpeed = 0.05f;
+                // Apply movement for all pressed keys
+                foreach (var pressedKey in _pressedKeys)
+                    _dungeonViewport.ApplyKeyMovement(pressedKey);
 
-                if (_pressedKeys.Contains(Key.W))
-                    _dungeonCamera.Position += Vector3.Transform(new Vector3(0, 0, moveSpeed),
-                        Matrix4x4.CreateRotationY(_dungeonCamera.Yaw));
-                if (_pressedKeys.Contains(Key.S))
-                    _dungeonCamera.Position += Vector3.Transform(new Vector3(0, 0, -moveSpeed),
-                        Matrix4x4.CreateRotationY(_dungeonCamera.Yaw));
-                if (_pressedKeys.Contains(Key.A))
-                    _dungeonCamera.Position += Vector3.Transform(new Vector3(-moveSpeed, 0, 0),
-                        Matrix4x4.CreateRotationY(_dungeonCamera.Yaw));
-                if (_pressedKeys.Contains(Key.D))
-                    _dungeonCamera.Position += Vector3.Transform(new Vector3(moveSpeed, 0, 0),
-                        Matrix4x4.CreateRotationY(_dungeonCamera.Yaw));
-                if (_pressedKeys.Contains(Key.Left))
-                    _dungeonCamera.Yaw -= rotSpeed;
-                if (_pressedKeys.Contains(Key.Right))
-                    _dungeonCamera.Yaw += rotSpeed;
-                if (_pressedKeys.Contains(Key.Up))
-                    _dungeonCamera.Pitch = MathF.Min(_dungeonCamera.Pitch + rotSpeed, MathF.PI / 2);
-                if (_pressedKeys.Contains(Key.Down))
-                    _dungeonCamera.Pitch = MathF.Max(_dungeonCamera.Pitch - rotSpeed, -MathF.PI / 2);
-
-                RenderCaster3D();
+                // Render frame
+                ImageView.Bitmap = _dungeonViewport.Render();
                 break;
 
             default:
@@ -375,25 +355,13 @@ public sealed partial class MainWindow
         _dungeonMap.GetCell(5, 5).HasWallNorth = true;
         _dungeonMap.GetCell(5, 5).HasWallWest = true;
 
-        // 2. Set up the camera
-        _dungeonCamera = new Camera3D { Position = new Vector3(1.5f, 1.7f, 1.5f) };
-
-        // 3. Create the renderer and raster
-        _dungeonRenderer = new DungeonRenderer(_dungeonMap, new Dictionary<int, Bitmap?>());
-        _dungeonRaster = new SoftwareRasterizer(800, 600);
+        // 2. Set up the viewport
+        var raster = new SoftwareRasterizer(800, 600);
+        _dungeonViewport = new DungeonViewport(_dungeonMap, raster, 800, 600);
 
         // Initial render
-        RenderCaster3D();
+        ImageView.Bitmap = _dungeonViewport.Render();
     }
-
-    private void RenderCaster3D()
-    {
-        if (_dungeonRenderer == null || _dungeonCamera == null) return;
-
-        _dungeonRenderer.Render(_dungeonRaster, _dungeonCamera, 800, 600);
-        ImageView.Bitmap = _dungeonRaster.GetFrame();
-    }
-
 
     /// <summary>
     ///     Initiates this instance.
