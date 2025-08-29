@@ -35,28 +35,6 @@ public class Camera3D
 }
 
 /// <summary>
-///     Represents one cell of the dungeon map.
-/// </summary>
-public class MapCell3D
-{
-    public bool HasWallNorth { get; set; }
-    public bool HasWallSouth { get; set; }
-    public bool HasWallEast { get; set; }
-    public bool HasWallWest { get; set; }
-
-    public bool HasFloor { get; set; } = true;
-    public bool HasCeiling { get; set; } = true;
-
-    public float FloorHeight { get; set; } = 0;
-    public float CeilingHeight { get; set; } = 2.5f;
-
-    // Optional texture IDs (null means "use fallback solid color")
-    public int? WallTextureId { get; set; }
-    public int? FloorTextureId { get; set; }
-    public int? CeilingTextureId { get; set; }
-}
-
-/// <summary>
 ///     Simple grid-based dungeon map.
 /// </summary>
 public class DungeonMap
@@ -113,6 +91,42 @@ public class Actor
 }
 
 /// <summary>
+///     Represents one cell of the dungeon map.
+/// </summary>
+public class MapCell3D
+{
+    public bool HasWallNorth { get; set; }
+    public bool HasWallSouth { get; set; }
+    public bool HasWallEast { get; set; }
+    public bool HasWallWest { get; set; }
+
+    public bool HasFloor { get; set; } = true;
+    public bool HasCeiling { get; set; } = true;
+
+    public float FloorHeight { get; set; } = 0;
+    public float CeilingHeight { get; set; } = 2.5f;
+
+    public int? WallTextureId { get; set; }
+    public int? FloorTextureId { get; set; }
+    public int? CeilingTextureId { get; set; }
+
+    // Precomputed corners (8 corners of the cell cube)
+    public Vector3[] PrecomputedCorners { get; private set; } = new Vector3[8];
+
+    public void PrecomputeCorners(int x, int y)
+    {
+        PrecomputedCorners[0] = new Vector3(x, FloorHeight, y);
+        PrecomputedCorners[1] = new Vector3(x + 1, FloorHeight, y);
+        PrecomputedCorners[2] = new Vector3(x, FloorHeight, y + 1);
+        PrecomputedCorners[3] = new Vector3(x + 1, FloorHeight, y + 1);
+        PrecomputedCorners[4] = new Vector3(x, CeilingHeight, y);
+        PrecomputedCorners[5] = new Vector3(x + 1, CeilingHeight, y);
+        PrecomputedCorners[6] = new Vector3(x, CeilingHeight, y + 1);
+        PrecomputedCorners[7] = new Vector3(x + 1, CeilingHeight, y + 1);
+    }
+}
+
+/// <summary>
 ///     Renderer that builds quads from the map and rasterizes them.
 /// </summary>
 public class DungeonRenderer
@@ -143,66 +157,48 @@ public class DungeonRenderer
             {
                 var cell = _map.GetCell(x, y);
 
+                // Precompute corners for this cell
+                cell.PrecomputeCorners(x, y);
+
                 // Frustum culling at cell level
                 if (!FrustumCulling.IsCellVisible(vp, x, y, cell.FloorHeight, cell.CeilingHeight))
                     continue;
 
-                DrawCell(rast, camera, cell, x, y, vp, screenWidth, screenHeight);
+                // Use precomputed corners version
+                DrawCell(rast, camera, cell, screenWidth, screenHeight, vp);
             }
         }
 
         return rast.GetFrame();
     }
 
-    /// <summary>
-    /// Draws all quads of a single cell.
-    /// </summary>
-    private void DrawCell(IRenderer rast, Camera3D camera, MapCell3D cell, int x, int y, Matrix4x4 vp, int screenWidth, int screenHeight)
+    private void DrawCell(IRenderer rast, Camera3D camera, MapCell3D cell, int screenWidth, int screenHeight, Matrix4x4 vp)
     {
-        // Walls
+        var c = cell.PrecomputedCorners;
+
+        // North wall
         if (cell.HasWallNorth)
-            DrawQuad(rast, camera.Position, new Vector3(x, cell.FloorHeight, y),
-                new Vector3(x + 1, cell.FloorHeight, y),
-                new Vector3(x + 1, cell.CeilingHeight, y),
-                new Vector3(x, cell.CeilingHeight, y),
-                vp, screenWidth, screenHeight, cell.WallTextureId, Color.Gray);
+            DrawQuad(rast, camera.Position, c[0], c[1], c[5], c[4], vp, screenWidth, screenHeight, cell.WallTextureId, Color.Gray);
 
+        // South wall
         if (cell.HasWallSouth)
-            DrawQuad(rast, camera.Position, new Vector3(x + 1, cell.FloorHeight, y + 1),
-                new Vector3(x, cell.FloorHeight, y + 1),
-                new Vector3(x, cell.CeilingHeight, y + 1),
-                new Vector3(x + 1, cell.CeilingHeight, y + 1),
-                vp, screenWidth, screenHeight, cell.WallTextureId, Color.Gray);
+            DrawQuad(rast, camera.Position, c[3], c[2], c[6], c[7], vp, screenWidth, screenHeight, cell.WallTextureId, Color.Gray);
 
+        // East wall
         if (cell.HasWallEast)
-            DrawQuad(rast, camera.Position, new Vector3(x + 1, cell.FloorHeight, y),
-                new Vector3(x + 1, cell.FloorHeight, y + 1),
-                new Vector3(x + 1, cell.CeilingHeight, y + 1),
-                new Vector3(x + 1, cell.CeilingHeight, y),
-                vp, screenWidth, screenHeight, cell.WallTextureId, Color.Gray);
+            DrawQuad(rast, camera.Position, c[1], c[3], c[7], c[5], vp, screenWidth, screenHeight, cell.WallTextureId, Color.Gray);
 
+        // West wall
         if (cell.HasWallWest)
-            DrawQuad(rast, camera.Position, new Vector3(x, cell.FloorHeight, y + 1),
-                new Vector3(x, cell.FloorHeight, y),
-                new Vector3(x, cell.CeilingHeight, y),
-                new Vector3(x, cell.CeilingHeight, y + 1),
-                vp, screenWidth, screenHeight, cell.WallTextureId, Color.Gray);
+            DrawQuad(rast, camera.Position, c[2], c[0], c[4], c[6], vp, screenWidth, screenHeight, cell.WallTextureId, Color.Gray);
 
         // Floor
         if (cell.HasFloor)
-            DrawQuad(rast, camera.Position, new Vector3(x, cell.FloorHeight, y),
-                new Vector3(x, cell.FloorHeight, y + 1),
-                new Vector3(x + 1, cell.FloorHeight, y + 1),
-                new Vector3(x + 1, cell.FloorHeight, y),
-                vp, screenWidth, screenHeight, cell.FloorTextureId, Color.DarkGray);
+            DrawQuad(rast, camera.Position, c[0], c[2], c[3], c[1], vp, screenWidth, screenHeight, cell.FloorTextureId, Color.DarkGray);
 
         // Ceiling
         if (cell.HasCeiling)
-            DrawQuad(rast, camera.Position, new Vector3(x, cell.CeilingHeight, y + 1),
-                new Vector3(x, cell.CeilingHeight, y),
-                new Vector3(x + 1, cell.CeilingHeight, y),
-                new Vector3(x + 1, cell.CeilingHeight, y + 1),
-                vp, screenWidth, screenHeight, cell.CeilingTextureId, Color.LightGray);
+            DrawQuad(rast, camera.Position, c[6], c[4], c[5], c[7], vp, screenWidth, screenHeight, cell.CeilingTextureId, Color.LightGray);
     }
 
     private void DrawQuad(IRenderer rast,
