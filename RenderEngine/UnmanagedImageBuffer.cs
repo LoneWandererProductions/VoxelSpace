@@ -202,14 +202,33 @@ public sealed unsafe class UnmanagedImageBuffer : IDisposable
     /// <param name="b">Blue channel byte value.</param>
     public void Clear(byte a, byte r, byte g, byte b)
     {
-        var buffer = BufferSpan;
+        var buffer = BufferSpan; // Span<byte> representing the pixel buffer
 
-        var pixelVector = CreatePixelVector(a, r, g, b);
+        int vectorSize = Vector<byte>.Count;
 
-        var vectorSize = Vector<byte>.Count;
-        var i = 0;
+        // Ensure vectorSize is multiple of 4 (pixels)
+        if (vectorSize % 4 != 0)
+            vectorSize -= vectorSize % 4;
 
-        for (; i <= buffer.Length - vectorSize; i += vectorSize) pixelVector.CopyTo(buffer.Slice(i, vectorSize));
+        // Build a temporary array containing repeated pixels to fill one Vector
+        byte[] pixelArray = new byte[vectorSize];
+        for (int j = 0; j < vectorSize; j += 4)
+        {
+            pixelArray[j] = b;
+            pixelArray[j + 1] = g;
+            pixelArray[j + 2] = r;
+            pixelArray[j + 3] = a;
+        }
+
+        var pixelVector = new Vector<byte>(pixelArray);
+
+        int i = 0;
+
+        // SIMD loop
+        for (; i <= buffer.Length - vectorSize; i += vectorSize)
+        {
+            pixelVector.CopyTo(buffer.Slice(i, vectorSize));
+        }
 
         // Fill any remaining bytes one pixel at a time
         for (; i < buffer.Length; i += 4)
@@ -220,6 +239,7 @@ public sealed unsafe class UnmanagedImageBuffer : IDisposable
             buffer[i + 3] = a;
         }
     }
+
 
     /// <summary>
     ///     Creates a SIMD vector filled with the specified BGRA pixel color repeated to fill the vector.

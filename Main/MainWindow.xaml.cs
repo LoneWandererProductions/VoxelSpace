@@ -92,48 +92,45 @@ public sealed partial class MainWindow
         Bitmap bmp = null;
         RvCamera camera = null;
 
-        // Measure full execution time
+        // Start measuring total execution time
         var stopwatchFull = Stopwatch.StartNew();
 
         switch (_active)
         {
             case "Raycast":
-                if (_raycaster == null) return;
-
-                // Measure image rendering time
-                bmp = _raycaster.Render(key);
-
-                camera = _raycaster.Camera;
+                if (_raycaster != null)
+                {
+                    bmp = _raycaster.Render(key);
+                    camera = _raycaster.Camera;
+                }
                 break;
 
             case "RaycastV2":
-                if (_raycasterV2 == null) return;
-
-                // Measure image rendering time
-                bmp = _raycasterV2.Render(key);
-
-                camera = _raycasterV2.Camera;
+                if (_raycasterV2 != null)
+                {
+                    bmp = _raycasterV2.Render(key);
+                    camera = _raycasterV2.Camera;
+                }
                 break;
 
             case "RaycastV3":
-                if (_raycasterV3 == null) return;
-
-                // Measure image rendering time
-                bmp = _raycasterV3.Render(key);
-
-                camera = _raycasterV3.Camera;
+                if (_raycasterV3 != null)
+                {
+                    bmp = _raycasterV3.Render(key);
+                    camera = _raycasterV3.Camera;
+                }
                 break;
 
             case "Voxel":
-                if (_voxel == null) return;
-
-                bmp = _voxel.GetBitmapForKey(key);
-
-                camera = _voxel.Camera;
+                if (_voxel != null)
+                {
+                    bmp = _voxel.GetBitmapForKey(key);
+                    camera = _voxel.Camera;
+                }
                 break;
 
             case "Hybrid":
-                // Handle hybrid logic
+                // Optional: implement hybrid logic here
                 break;
 
             case "TileGL":
@@ -142,14 +139,15 @@ public sealed partial class MainWindow
                 break;
 
             case "Caster3D":
-                if (_dungeonViewport == null) return;
+                if (_dungeonViewport != null)
+                {
+                    // Apply movement for all pressed keys
+                    foreach (var pressedKey in _pressedKeys)
+                        _dungeonViewport.ApplyKeyMovement(pressedKey);
 
-                // Apply movement for all pressed keys
-                foreach (var pressedKey in _pressedKeys)
-                    _dungeonViewport.ApplyKeyMovement(pressedKey);
-
-                // Render frame
-                ImageView.Bitmap = _dungeonViewport.Render();
+                    // Render frame
+                    bmp = _dungeonViewport.Render();
+                }
                 break;
 
             default:
@@ -158,9 +156,11 @@ public sealed partial class MainWindow
 
         stopwatchFull.Stop();
 
-        // Update UI with timing details
+        // Update UI with timing info
         UpdateTextBox(camera?.ToString(), stopwatchFull.ElapsedMilliseconds);
-        ImageView.Bitmap = bmp ?? new Bitmap(1, 1); // Use placeholder if bmp is null
+
+        // Update the displayed image, use 1x1 placeholder if bmp is null
+        ImageView.Bitmap = bmp ?? new Bitmap(1, 1);
     }
 
     /// <summary>
