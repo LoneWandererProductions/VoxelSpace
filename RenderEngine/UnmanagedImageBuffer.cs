@@ -44,6 +44,11 @@ public sealed unsafe class UnmanagedImageBuffer : IDisposable
     private readonly int _bytesPerPixel;
 
     /// <summary>
+    /// Gets the stride (number of bytes per row).
+    /// </summary>
+    public int Stride { get; }
+
+    /// <summary>
     ///     Initializes a new instance of the <see cref="UnmanagedImageBuffer" /> class with specified dimensions and bytes per
     ///     pixel.
     ///     The buffer is allocated in unmanaged memory and initially cleared to transparent black.
@@ -64,6 +69,7 @@ public sealed unsafe class UnmanagedImageBuffer : IDisposable
         Height = height;
         _bytesPerPixel = bytesPerPixel;
         _bufferSize = width * height * bytesPerPixel;
+        Stride = width * 4; // assuming 32bpp ARGB
 
         _bufferPtr = Marshal.AllocHGlobal(_bufferSize);
         Clear(0, 0, 0, 0);
@@ -584,6 +590,27 @@ public sealed unsafe class UnmanagedImageBuffer : IDisposable
             var dstRow = GetPixelSpan(destX, destY + y, width);
             srcRow.CopyTo(dstRow);
         }
+    }
+
+    /// <summary>
+    /// Creates a deep copy of this <see cref="UnmanagedImageBuffer"/>.
+    /// </summary>
+    public UnmanagedImageBuffer Clone()
+    {
+        var clone = new UnmanagedImageBuffer(Width, Height);
+        long byteCount = (long)Stride * Height;
+
+        unsafe
+        {
+            Buffer.MemoryCopy(
+                source: (void*)_bufferPtr,
+                destination: (void*)clone._bufferPtr,
+                destinationSizeInBytes: byteCount,
+                sourceBytesToCopy: byteCount
+            );
+        }
+
+        return clone;
     }
 
     /// <summary>

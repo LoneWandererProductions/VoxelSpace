@@ -20,11 +20,11 @@ namespace Rays
         private readonly int _width;
         private readonly int _height;
 
-        public DungeonViewport(DungeonMap map, IRenderer renderer, int width, int height)
+        public DungeonViewport(DungeonMap map, IRenderer rasterer, int width, int height, Dictionary<int, Bitmap?> texture = null)
         {
             _map = map;
-            _renderer = new DungeonRenderer(map, new Dictionary<int, Bitmap?>());
-            _rast = renderer;
+            _renderer = new DungeonRenderer(map, texture);
+            _rast = rasterer;
             _width = width;
             _height = height;
             Camera = new Camera3D { Position = new Vector3(1.5f, 1.7f, 1.5f) };
@@ -42,8 +42,7 @@ namespace Rays
                 ApplyKeyMovement(eKey.Value);
 
             // Render using current camera and raster
-            _renderer.Render(_rast, Camera, _width, _height);
-            return _rast.GetFrame();
+            return _renderer.Render(_rast, Camera, _width, _height);
         }
 
         public void ApplyKeyMovement(Key key)

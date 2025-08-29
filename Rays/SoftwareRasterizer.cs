@@ -11,6 +11,8 @@ public class SoftwareRasterizer : IRenderer , IDisposable
 {
     private readonly UnmanagedImageBuffer _buffer;
 
+    private UnmanagedImageBuffer _imageBuffer;
+
     public int Width => _buffer.Width;
     public int Height => _buffer.Height;
 
@@ -20,6 +22,7 @@ public class SoftwareRasterizer : IRenderer , IDisposable
     public SoftwareRasterizer(int width, int height)
     {
         _buffer = new UnmanagedImageBuffer(width, height);
+        _imageBuffer = _buffer.Clone();
     }
 
     /// <summary>
@@ -27,34 +30,35 @@ public class SoftwareRasterizer : IRenderer , IDisposable
     /// </summary>
     public void Clear(Color color)
     {
-        _buffer.Clear(color.A, color.R, color.G, color.B);
+        _imageBuffer = _buffer.Clone();
+        _imageBuffer.Clear(color.A, color.R, color.G, color.B);
     }
 
     public void DrawLine(Point p0, Point p1, Color color)
     {
-        _buffer.DrawLine(p0.X, p0.Y, p1.X, p1.Y, color.A, color.R, color.G, color.B);
+        _imageBuffer.DrawLine(p0.X, p0.Y, p1.X, p1.Y, color.A, color.R, color.G, color.B);
     }
 
     public void DrawFilledRect(int x, int y, int width, int height, Color color)
     {
-        _buffer.FillRect(x, y, width, height, color.A, color.R, color.G, color.B);
+        _imageBuffer.FillRect(x, y, width, height, color.A, color.R, color.G, color.B);
     }
 
     public void DrawTexturedQuad(Point p0, Point p1, Point p2, Point p3, UnmanagedImageBuffer texture)
     {
-        _buffer.DrawTexturedQuad(p0, p1, p2, p3, texture);
+        _imageBuffer.DrawTexturedQuad(p0, p1, p2, p3, texture);
     }
 
     public void BlitRegion(UnmanagedImageBuffer src, int srcX, int srcY, int width, int height, int destX, int destY)
     {
-        _buffer.BlitRegion(src, srcX, srcY, width, height, destX, destY);
+        _imageBuffer.BlitRegion(src, srcX, srcY, width, height, destX, destY);
     }
 
     public void DrawSolidQuad(Point p0, Point p1, Point p2, Point p3, Color fill)
     {
         // CPU: Fill by splitting into 2 triangles or using scanline
-        _buffer.DrawFilledTriangle(p0, p1, p2, fill);
-        _buffer.DrawFilledTriangle(p0, p2, p3, fill);
+        _imageBuffer.DrawFilledTriangle(p0, p1, p2, fill);
+        _imageBuffer.DrawFilledTriangle(p0, p2, p3, fill);
     }
 
     /// <summary>
@@ -62,12 +66,13 @@ public class SoftwareRasterizer : IRenderer , IDisposable
     /// </summary>
     public Bitmap GetFrame()
     {
-        return _buffer.ToBitmap();
+        return _imageBuffer.ToBitmap();
     }
 
     public void Dispose()
     {
         _buffer.Dispose();
+        _imageBuffer.Dispose();
     }
 
 }

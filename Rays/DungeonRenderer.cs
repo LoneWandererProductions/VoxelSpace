@@ -128,7 +128,7 @@ public class DungeonRenderer
 
     public RenderMode Mode { get; set; } = RenderMode.Wireframe;
 
-    public void Render(IRenderer rast, Camera3D camera, int screenWidth, int screenHeight)
+    public Bitmap Render(IRenderer rast, Camera3D camera, int screenWidth, int screenHeight)
     {
         var aspect = (float)screenWidth / screenHeight;
         var view = camera.GetViewMatrix();
@@ -187,6 +187,9 @@ public class DungeonRenderer
                     new Vector3(x + 1, cell.CeilingHeight, y + 1),
                     vp, screenWidth, screenHeight, cell.CeilingTextureId, Color.LightGray);
         }
+
+        // now simply return the renderer's frame
+        return rast.GetFrame();
     }
 
     private void DrawQuad(IRenderer rast,
