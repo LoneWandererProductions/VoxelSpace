@@ -44,7 +44,7 @@ public class SoftwareRasterizer : IRenderer , IDisposable
         _imageBuffer.FillRect(x, y, width, height, color.A, color.R, color.G, color.B);
     }
 
-    public void DrawTexturedQuad(Point p0, Point p1, Point p2, Point p3, UnmanagedImageBuffer texture)
+    public void DrawTexturedQuad(Point p0, Point p1, Point p2, Point p3, UnmanagedImageBuffer? texture = null)
     {
         _imageBuffer.DrawTexturedQuad(p0, p1, p2, p3, texture);
     }

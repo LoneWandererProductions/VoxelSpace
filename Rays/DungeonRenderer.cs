@@ -1,4 +1,5 @@
-﻿using System;
+﻿using RenderEngine;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Numerics;
@@ -201,24 +202,28 @@ public class DungeonRenderer
             DrawQuad(rast, camera.Position, c[6], c[4], c[5], c[7], vp, screenWidth, screenHeight, cell.CeilingTextureId, Color.LightGray);
     }
 
+
+
     private void DrawQuad(IRenderer rast,
         Vector3 cameraPos,
         Vector3 v0, Vector3 v1, Vector3 v2, Vector3 v3,
         Matrix4x4 vp, int screenWidth, int screenHeight,
         int? textureId, Color fallbackColor)
     {
+        // Compute normal and backface cull
         var normal = Vector3.Normalize(Vector3.Cross(v1 - v0, v2 - v0));
         var toCamera = cameraPos - v0;
-
         if (Vector3.Dot(normal, toCamera) <= 0)
             return;
 
+        // Project vertices to screen space
         var screenVerts = RasterHelpers.ProjectQuad(v0, v1, v2, v3, vp, screenWidth, screenHeight);
         if (screenVerts[0].X < -5000) return;
 
-        Bitmap? tex = null;
-        if (textureId.HasValue && _textures.ContainsKey(textureId.Value))
-            tex = _textures[textureId.Value];
+        // Select texture
+        UnmanagedImageBuffer? tex = null;
+        if (textureId.HasValue && _textures.TryGetValue(textureId.Value, out var bmp) && bmp != null)
+            tex = UnmanagedImageBuffer.FromBitmap(bmp);
 
         switch (Mode)
         {
@@ -236,7 +241,7 @@ public class DungeonRenderer
                         Point.Round(screenVerts[1]),
                         Point.Round(screenVerts[2]),
                         Point.Round(screenVerts[3]),
-                        null);
+                        tex);
                 else
                     rast.DrawSolidQuad(
                         Point.Round(screenVerts[0]),
@@ -247,6 +252,7 @@ public class DungeonRenderer
                 break;
         }
     }
+
 
     /// <summary>
     /// Lightweight frustum culling helper

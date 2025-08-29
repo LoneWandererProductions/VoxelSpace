@@ -50,7 +50,7 @@ namespace Rays
         /// <param name="p2">Bottom-right point.</param>
         /// <param name="p3">Bottom-left point.</param>
         /// <param name="texture">Texture to map onto the quad.</param>
-        void DrawTexturedQuad(Point p0, Point p1, Point p2, Point p3, UnmanagedImageBuffer texture);
+        void DrawTexturedQuad(Point p0, Point p1, Point p2, Point p3, UnmanagedImageBuffer? texture = null);
 
         /// <summary>
         /// Draws a filled quad defined by four points.
