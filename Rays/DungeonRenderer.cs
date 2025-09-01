@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.Eventing.Reader;
 using System.Drawing;
+using System.Linq;
 using System.Numerics;
 
 namespace Rays;
@@ -73,6 +74,9 @@ public class DungeonRenderer
                     continue;
 
                 DrawCell(rast, camera, cell, screenWidth, screenHeight, vp);
+
+                // Draw layers (water, grass, etc.)
+                DrawCellLayers(rast, camera, cell, screenWidth, screenHeight, vp);
             }
         }
 
@@ -183,6 +187,64 @@ public class DungeonRenderer
         }
     }
 
+    /// <summary>
+    /// Draws all layers in a cell (water, grass, etc.) using the generic CellLayer system.
+    /// </summary>
+    private void DrawCellLayers(IRenderer rast, Camera3D camera, MapCell3D cell, int screenWidth, int screenHeight, Matrix4x4 vp)
+    {
+        foreach (var layer in cell.Layers)
+        {
+            // Skip if fully below camera
+            if (camera.Position.Y < cell.FloorHeight)
+                continue;
+
+            // Project cell corners to screen for this layer's height
+            var corners = cell.PrecomputedCorners;
+
+            // Determine top of layer in world space
+            float layerTopY = cell.FloorHeight + layer.Height;
+
+            var layerVerts = corners.Select(v => new Vector3(v.X, Math.Min(v.Y, layerTopY), v.Z)).ToArray();
+
+            // Project to screen
+            var screenVerts = RasterHelpers.ProjectQuad(layerVerts[0], layerVerts[1], layerVerts[2], layerVerts[3], vp, screenWidth, screenHeight);
+
+            // Skip if outside screen
+            if (screenVerts.Any(v => float.IsNaN(v.X) || float.IsNaN(v.Y)))
+                continue;
+
+            // Custom draw logic
+            if (layer.CustomDraw != null)
+            {
+                var topLeft = new Point((int)screenVerts[0].X, (int)screenVerts[0].Y);
+                layer.CustomDraw(rast, topLeft, layer.Mask!);
+                continue;
+            }
+
+            // Compute alpha scaling based on camera height relative to layer
+            float visible = Math.Clamp((camera.Position.Y - cell.FloorHeight) / layer.Height, 0f, 1f);
+            if (visible <= 0) continue;
+
+            var col = Color.FromArgb((int)(layer.Color.A * visible), layer.Color.R, layer.Color.G, layer.Color.B);
+
+            if (layer.Mask != null)
+            {
+                // Optionally scale mask alpha by visibility
+                rast.BlitRegion(layer.Mask, 0, 0, layer.Mask.Width, layer.Mask.Height,
+                                (int)screenVerts[0].X, (int)screenVerts[0].Y);
+            }
+            else
+            {
+                rast.DrawSolidQuad(
+                    Point.Round(screenVerts[0]),
+                    Point.Round(screenVerts[1]),
+                    Point.Round(screenVerts[2]),
+                    Point.Round(screenVerts[3]),
+                    col
+                );
+            }
+        }
+    }
     private void DrawQuad(IRenderer rast,
         Vector3 cameraPos,
         Vector3 v0, Vector3 v1, Vector3 v2, Vector3 v3,

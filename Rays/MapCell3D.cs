@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System.Collections.Generic;
+using System.Numerics;
 
 namespace Rays;
 
@@ -21,6 +22,9 @@ public class MapCell3D
     public int? WallTextureId { get; set; }
     public int? FloorTextureId { get; set; }
     public int? CeilingTextureId { get; set; }
+
+    // Generic list of layers
+    public List<CellLayer> Layers = new List<CellLayer>();
 
     // Precomputed corners (8 corners of the cell cube)
     public Vector3[] PrecomputedCorners { get; private set; } = new Vector3[8];
