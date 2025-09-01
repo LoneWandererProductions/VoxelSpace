@@ -42,6 +42,17 @@ namespace Rays
         /// <param name="color">Fill color.</param>
         void DrawFilledRect(int x, int y, int width, int height, Color color);
 
+
+        /// <param name="topLeft"></param>
+        /// <param name="sprite"></param>
+        void DrawSprite(Point topLeft, UnmanagedImageBuffer sprite);
+
+        /// <summary>Draws a sprite (billboard) at a screen-space rectangle. Ignores transparency so slightly faster.</summary>
+        /// <param name="topLeft">The top left.</param>
+        /// <param name="sprite">The sprite.</param>
+        /// <param name="opaqueFastPath">if set to <c>true</c> [opaque fast path].</param>
+        void DrawSprite(Point topLeft, UnmanagedImageBuffer sprite, bool opaqueFastPath);
+
         /// <summary>
         /// Draws a textured quad defined by four points.
         /// </summary>

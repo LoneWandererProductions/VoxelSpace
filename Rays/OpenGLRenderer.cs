@@ -92,5 +92,15 @@ namespace Rays
         {
             DrawSolidQuad(p0, p1, p2, p3, fill);
         }
+
+        public void DrawSprite(Point topLeft, UnmanagedImageBuffer sprite)
+        {
+            // TODO: Implement OpenGL Draw Sprite
+        }
+
+        public void DrawSprite(Point topLeft, UnmanagedImageBuffer sprite, bool opaqueFastPath)
+        {
+            // TODO: Implement OpenGL Draw Sprite
+        }
     }
 }

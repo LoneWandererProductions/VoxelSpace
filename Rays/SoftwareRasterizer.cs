@@ -75,4 +75,60 @@ public class SoftwareRasterizer : IRenderer , IDisposable
         _imageBuffer.Dispose();
     }
 
+    public void DrawSprite(Point topLeft, UnmanagedImageBuffer sprite)
+    {
+        int srcW = sprite.Width;
+        int srcH = sprite.Height;
+
+        int dstW = this.Width;
+        int dstH = this.Height;
+
+        for (int sy = 0; sy < srcH; sy++)
+        {
+            int dy = topLeft.Y + sy;
+            if (dy < 0 || dy >= dstH)
+                continue;
+
+            for (int sx = 0; sx < srcW; sx++)
+            {
+                int dx = topLeft.X + sx;
+                if (dx < 0 || dx >= dstW)
+                    continue;
+
+                var c = sprite.GetPixel(sx, sy);
+                if (c.A == 0)
+                    continue; // skip fully transparent
+
+                if (c.A == 255)
+                {
+                    // fast opaque set
+                    _imageBuffer.SetPixel(dx, dy, c);
+                }
+                else
+                {
+                    // alpha blend with background
+                    _imageBuffer.SetPixelAlphaBlend(dx, dy, c.A, c.R, c.G, c.B);
+                }
+            }
+        }
+    }
+
+    public void DrawSprite(Point topLeft, UnmanagedImageBuffer sprite, bool opaqueFastPath)
+    {
+        if (!opaqueFastPath)
+        {
+            DrawSprite(topLeft, sprite);
+            return;
+        }
+
+        int copyW = Math.Min(sprite.Width, Width - topLeft.X);
+        int copyH = Math.Min(sprite.Height, Height - topLeft.Y);
+
+        for (int y = 0; y < copyH; y++)
+        {
+            var srcRow = sprite.GetPixelSpan(0, y, copyW);
+            var dstRow = _imageBuffer.GetPixelSpan(topLeft.X, topLeft.Y + y, copyW);
+            srcRow.CopyTo(dstRow);
+        }
+    }
 }

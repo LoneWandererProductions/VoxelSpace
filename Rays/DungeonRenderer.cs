@@ -1,66 +1,11 @@
 ﻿using RenderEngine;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Eventing.Reader;
 using System.Drawing;
 using System.Numerics;
 
 namespace Rays;
-
-/// <summary>
-///     Represents a camera in 3D space for the dungeon view.
-/// </summary>
-public class Camera3D
-{
-    public Vector3 Position { get; set; } = new(0, 1.7f, 0); // Player eye height
-    public float Yaw { get; set; } = 0; // Horizontal rotation
-    public float Pitch { get; set; } = 0; // Vertical rotation
-    public float Fov { get; set; } = (float)(Math.PI / 3); // 60°
-
-
-    public Matrix4x4 GetViewMatrix()
-    {
-        // Build orientation
-        var rotation = Matrix4x4.CreateFromYawPitchRoll(Yaw, Pitch, 0);
-
-        // Basis vectors
-        var forward = Vector3.TransformNormal(Vector3.UnitZ, rotation);
-        var up = Vector3.TransformNormal(Vector3.UnitY, rotation);
-
-        return Matrix4x4.CreateLookAt(Position, Position + forward, up);
-    }
-
-    public Matrix4x4 GetProjectionMatrix(float aspectRatio, float near = 0.1f, float far = 100f)
-    {
-        return Matrix4x4.CreatePerspectiveFieldOfView(Fov, aspectRatio, near, far);
-    }
-}
-
-/// <summary>
-///     Simple grid-based dungeon map.
-/// </summary>
-public class DungeonMap
-{
-    private readonly MapCell3D[,] _cells;
-
-    public DungeonMap(int width, int height)
-    {
-        Width = width;
-        Height = height;
-        _cells = new MapCell3D[width, height];
-
-        for (var x = 0; x < width; x++)
-        for (var y = 0; y < height; y++)
-            _cells[x, y] = new MapCell3D();
-    }
-
-    public int Width { get; }
-    public int Height { get; }
-
-    public MapCell3D GetCell(int x, int y)
-    {
-        return _cells[x, y];
-    }
-}
 
 public class Actor
 {
@@ -92,42 +37,6 @@ public class Actor
 }
 
 /// <summary>
-///     Represents one cell of the dungeon map.
-/// </summary>
-public class MapCell3D
-{
-    public bool HasWallNorth { get; set; }
-    public bool HasWallSouth { get; set; }
-    public bool HasWallEast { get; set; }
-    public bool HasWallWest { get; set; }
-
-    public bool HasFloor { get; set; } = true;
-    public bool HasCeiling { get; set; } = true;
-
-    public float FloorHeight { get; set; } = 0;
-    public float CeilingHeight { get; set; } = 2.5f;
-
-    public int? WallTextureId { get; set; }
-    public int? FloorTextureId { get; set; }
-    public int? CeilingTextureId { get; set; }
-
-    // Precomputed corners (8 corners of the cell cube)
-    public Vector3[] PrecomputedCorners { get; private set; } = new Vector3[8];
-
-    public void PrecomputeCorners(int x, int y)
-    {
-        PrecomputedCorners[0] = new Vector3(x, FloorHeight, y);
-        PrecomputedCorners[1] = new Vector3(x + 1, FloorHeight, y);
-        PrecomputedCorners[2] = new Vector3(x, FloorHeight, y + 1);
-        PrecomputedCorners[3] = new Vector3(x + 1, FloorHeight, y + 1);
-        PrecomputedCorners[4] = new Vector3(x, CeilingHeight, y);
-        PrecomputedCorners[5] = new Vector3(x + 1, CeilingHeight, y);
-        PrecomputedCorners[6] = new Vector3(x, CeilingHeight, y + 1);
-        PrecomputedCorners[7] = new Vector3(x + 1, CeilingHeight, y + 1);
-    }
-}
-
-/// <summary>
 ///     Renderer that builds quads from the map and rasterizes them.
 /// </summary>
 public class DungeonRenderer
@@ -143,7 +52,7 @@ public class DungeonRenderer
 
     public RenderMode Mode { get; set; } = RenderMode.Wireframe;
 
-    public Bitmap Render(IRenderer rast, Camera3D camera, int screenWidth, int screenHeight)
+    public Bitmap Render(IRenderer rast, Camera3D camera, int screenWidth, int screenHeight, List<PaperDoll>? dolls = null)
     {
         var aspect = (float)screenWidth / screenHeight;
         var view = camera.GetViewMatrix();
@@ -152,24 +61,28 @@ public class DungeonRenderer
 
         rast.Clear(Color.CornflowerBlue);
 
+        // 1. Draw dungeon cells
         for (var x = 0; x < _map.Width; x++)
         {
             for (var y = 0; y < _map.Height; y++)
             {
                 var cell = _map.GetCell(x, y);
-
-                // Precompute corners for this cell
                 cell.PrecomputeCorners(x, y);
 
-                // Frustum culling at cell level
                 if (!FrustumCulling.IsCellVisible(vp, x, y, cell.FloorHeight, cell.CeilingHeight))
                     continue;
 
-                // Use precomputed corners version
                 DrawCell(rast, camera, cell, screenWidth, screenHeight, vp);
             }
         }
 
+        // 2. Draw paper dolls after world geometry
+        if (dolls != null && dolls.Count > 0)
+        {
+            DrawPaperDolls(rast, camera, dolls, screenWidth, screenHeight, vp);
+        }
+
+        // 3. Return final image
         return rast.GetFrame();
     }
 
@@ -202,7 +115,73 @@ public class DungeonRenderer
             DrawQuad(rast, camera.Position, c[6], c[4], c[5], c[7], vp, screenWidth, screenHeight, cell.CeilingTextureId, Color.LightGray);
     }
 
+    /// <summary>
+    /// Draws paper dolls, respecting occlusion by walls or props (blocky boxes).
+    /// </summary>
+    private void DrawPaperDolls(IRenderer rast, Camera3D camera, List<PaperDoll> dolls, int screenWidth, int screenHeight, Matrix4x4 vp)
+    {
+        foreach (var doll in dolls)
+        {
+            // Transform doll position to screen space
+            var dollPos = doll.Position;
+            var clipPos = Vector3.Transform(dollPos, vp);
 
+            // Skip if behind camera
+            if (clipPos.Z <= 0)
+                continue;
+
+            // Project to screen
+            var screenX = (int)((clipPos.X / clipPos.Z + 1f) * 0.5f * screenWidth);
+            var screenY = (int)((1f - (clipPos.Y / clipPos.Z + 1f) * 0.5f) * screenHeight);
+
+            // Check against occluding cells
+            bool occluded = false;
+
+            // Determine which cell the doll is in
+            int cellX = (int)Math.Floor(doll.Position.X);
+            int cellY = (int)Math.Floor(doll.Position.Z); // assuming Y-up
+
+            var cell = _map.GetCell(cellX, cellY);
+
+            if (cell != null)
+            {
+                // Simple occlusion: check height
+                if (doll.Position.Y < cell.CeilingHeight)
+                {
+                    // Doll is behind the wall/ceiling
+                    occluded = true;
+                }
+            }
+
+            // Optionally check neighboring cells for props
+            // foreach (var neighbor in GetNeighborCells(cellX, cellY)) { ... }
+
+            if (occluded)
+                continue;
+
+            // Draw sprite centered on screenX, screenY
+            var halfW = doll.Sprite.Width / 2;
+            var halfH = doll.Sprite.Height / 2;
+
+            if (doll.Sprite == null)
+            {
+                rast.DrawSolidQuad(
+                new Point(screenX - halfW, screenY - halfH),
+                new Point(screenX + halfW, screenY - halfH),
+                new Point(screenX + halfW, screenY + halfH),
+                new Point(screenX - halfW, screenY + halfH),
+                Color.White); // Or integrate with a sprite blit function
+            }
+            else 
+            {
+                // Define the top-left point
+                var topLeft = new Point(screenX - halfW, screenY - halfH);
+
+                // Draw sprite
+                rast.DrawSprite(topLeft, doll.Sprite);
+            }
+        }
+    }
 
     private void DrawQuad(IRenderer rast,
         Vector3 cameraPos,
