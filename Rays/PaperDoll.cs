@@ -15,5 +15,11 @@ namespace Rays
     {
         public Vector3 Position { get; set; }          // World position
         public UnmanagedImageBuffer? Sprite { get; set; } // 2D sprite texture
+
+        /// <summary>
+        /// Approximate world radius for frustum culling.
+        /// Adjust if sprites are very wide/tall.
+        /// </summary>
+        public float Radius { get; set; } = 0.5f;
     }
 }

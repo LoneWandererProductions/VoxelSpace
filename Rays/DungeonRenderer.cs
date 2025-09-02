@@ -8,39 +8,10 @@ using System.Numerics;
 
 namespace Rays;
 
-public class Actor
-{
-    public bool IsOnGround = true;
-    public Vector3 Position;
-    public float VerticalVelocity;
-
-    public void Update(float deltaTime)
-    {
-        if (IsOnGround) return;
-
-        VerticalVelocity += -9.8f * deltaTime;
-        Position.Y += VerticalVelocity * deltaTime;
-
-        if (!(Position.Y <= 1.7f)) return;
-
-        Position.Y = 1.7f;
-        IsOnGround = true;
-        VerticalVelocity = 0f;
-    }
-
-    public void Jump()
-    {
-        if (!IsOnGround) return;
-
-        VerticalVelocity = 5f;
-        IsOnGround = false;
-    }
-}
-
 /// <summary>
 ///     Renderer that builds quads from the map and rasterizes them.
 /// </summary>
-public class DungeonRenderer
+public partial class DungeonRenderer
 {
     private readonly DungeonMap _map;
     private readonly Dictionary<int, Bitmap?> _textures;
@@ -70,7 +41,12 @@ public class DungeonRenderer
                 var cell = _map.GetCell(x, y);
                 cell.PrecomputeCorners(x, y);
 
-                if (!FrustumCulling.IsCellVisible(vp, x, y, cell.FloorHeight, cell.CeilingHeight))
+                // Compute min/max bounds of the cell cube
+                var min = new Vector3(x, cell.FloorHeight, y);
+                var max = new Vector3(x + 1, cell.CeilingHeight, y + 1);
+
+                // Use generalized frustum culling
+                if (!FrustumCulling.IsCellVisible(vp, min, max))
                     continue;
 
                 DrawCell(rast, camera, cell, screenWidth, screenHeight, vp);
@@ -83,7 +59,12 @@ public class DungeonRenderer
         // 2. Draw paper dolls after world geometry
         if (dolls != null && dolls.Count > 0)
         {
-            DrawPaperDolls(rast, camera, dolls, screenWidth, screenHeight, vp);
+            // Cull dolls by bounding sphere before drawing
+            var visibleDolls = dolls
+                .Where(d => FrustumCulling.IsSphereVisible(vp, d.Position, d.Radius))
+                .ToList();
+
+            DrawPaperDolls(rast, camera, visibleDolls, screenWidth, screenHeight, vp);
         }
 
         // 3. Return final image
@@ -190,30 +171,28 @@ public class DungeonRenderer
     /// <summary>
     /// Draws all layers in a cell (water, grass, etc.) using the generic CellLayer system.
     /// </summary>
-    private void DrawCellLayers(IRenderer rast, Camera3D camera, MapCell3D cell, int screenWidth, int screenHeight, Matrix4x4 vp)
+    private void DrawCellLayers(IRenderer rast, Camera3D camera, MapCell3D cell,
+        int screenWidth, int screenHeight, Matrix4x4 vp)
     {
         foreach (var layer in cell.Layers)
         {
-            // Skip if fully below camera
-            if (camera.Position.Y < cell.FloorHeight)
+            float y = cell.FloorHeight + layer.Height;
+
+            var v0 = new Vector3(cell.PrecomputedCorners[0].X, y, cell.PrecomputedCorners[0].Z);
+            var v1 = new Vector3(cell.PrecomputedCorners[1].X, y, cell.PrecomputedCorners[1].Z);
+            var v2 = new Vector3(cell.PrecomputedCorners[3].X, y, cell.PrecomputedCorners[3].Z);
+            var v3 = new Vector3(cell.PrecomputedCorners[2].X, y, cell.PrecomputedCorners[2].Z);
+
+            // Backface culling
+            var normal = Vector3.UnitY;
+            if (Vector3.Dot(normal, camera.Position - v0) <= 0)
                 continue;
 
-            // Project cell corners to screen for this layer's height
-            var corners = cell.PrecomputedCorners;
-
-            // Determine top of layer in world space
-            float layerTopY = cell.FloorHeight + layer.Height;
-
-            var layerVerts = corners.Select(v => new Vector3(v.X, Math.Min(v.Y, layerTopY), v.Z)).ToArray();
-
-            // Project to screen
-            var screenVerts = RasterHelpers.ProjectQuad(layerVerts[0], layerVerts[1], layerVerts[2], layerVerts[3], vp, screenWidth, screenHeight);
-
-            // Skip if outside screen
-            if (screenVerts.Any(v => float.IsNaN(v.X) || float.IsNaN(v.Y)))
+            var screenVerts = RasterHelpers.ProjectQuad(v0, v1, v2, v3, vp, screenWidth, screenHeight);
+            if (screenVerts.Any(p => float.IsNaN(p.X) || float.IsNaN(p.Y)))
                 continue;
 
-            // Custom draw logic
+            // Custom draw
             if (layer.CustomDraw != null)
             {
                 var topLeft = new Point((int)screenVerts[0].X, (int)screenVerts[0].Y);
@@ -221,17 +200,18 @@ public class DungeonRenderer
                 continue;
             }
 
-            // Compute alpha scaling based on camera height relative to layer
-            float visible = Math.Clamp((camera.Position.Y - cell.FloorHeight) / layer.Height, 0f, 1f);
-            if (visible <= 0) continue;
-
-            var col = Color.FromArgb((int)(layer.Color.A * visible), layer.Color.R, layer.Color.G, layer.Color.B);
+            // Color/alpha blending
+            var col = layer.Color;
+            if (layer.AlphaBlend)
+            {
+                float visibility = Math.Clamp((camera.Position.Y - cell.FloorHeight) / (layer.Height + 0.001f), 0f, 1f);
+                col = Color.FromArgb((int)(col.A * visibility), col);
+            }
 
             if (layer.Mask != null)
             {
-                // Optionally scale mask alpha by visibility
                 rast.BlitRegion(layer.Mask, 0, 0, layer.Mask.Width, layer.Mask.Height,
-                                (int)screenVerts[0].X, (int)screenVerts[0].Y);
+                    (int)screenVerts[0].X, (int)screenVerts[0].Y);
             }
             else
             {
@@ -240,11 +220,11 @@ public class DungeonRenderer
                     Point.Round(screenVerts[1]),
                     Point.Round(screenVerts[2]),
                     Point.Round(screenVerts[3]),
-                    col
-                );
+                    col);
             }
         }
     }
+
     private void DrawQuad(IRenderer rast,
         Vector3 cameraPos,
         Vector3 v0, Vector3 v1, Vector3 v2, Vector3 v3,
@@ -291,41 +271,6 @@ public class DungeonRenderer
                         Point.Round(screenVerts[3]),
                         fallbackColor);
                 break;
-        }
-    }
-
-
-    /// <summary>
-    /// Lightweight frustum culling helper
-    /// </summary>
-    private static class FrustumCulling
-    {
-        public static bool IsCellVisible(Matrix4x4 vp, int x, int y, float floor, float ceiling)
-        {
-            var corners = new[]
-            {
-                    new Vector3(x, floor, y),
-                    new Vector3(x + 1, floor, y),
-                    new Vector3(x, floor, y + 1),
-                    new Vector3(x + 1, floor, y + 1),
-                    new Vector3(x, ceiling, y),
-                    new Vector3(x + 1, ceiling, y),
-                    new Vector3(x, ceiling, y + 1),
-                    new Vector3(x + 1, ceiling, y + 1)
-                };
-
-            foreach (var corner in corners)
-            {
-                var clip = Vector3.Transform(corner, vp);
-                if (clip.X >= -clip.Z && clip.X <= clip.Z &&
-                    clip.Y >= -clip.Z && clip.Y <= clip.Z &&
-                    clip.Z >= 0 && clip.Z <= clip.Z)
-                {
-                    return true;
-                }
-            }
-
-            return false;
         }
     }
 }

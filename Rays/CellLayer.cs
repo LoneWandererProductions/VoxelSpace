@@ -8,13 +8,38 @@ using System.Threading.Tasks;
 
 namespace Rays
 {
+    /// <summary>
+    /// Represents a decorative or functional layer within a map cell,
+    /// such as water, grass, lava, fog, etc.
+    /// </summary>
     public class CellLayer
     {
-        public string Name;                 // e.g., "Water", "Grass"
-        public float Height;                // relative to floor
-        public Color Color = Color.White;   // simple solid color fallback
-        public UnmanagedImageBuffer? Mask;  // optional alpha pattern
-        public bool AlphaBlend = true;      // whether to blend
-        public Action<IRenderer, Point, UnmanagedImageBuffer>? CustomDraw; // optional custom logic
+        public string Name { get; set; } = "Layer";   // e.g., "Water", "Grass"
+
+        /// <summary>
+        /// Height above the floor at which this layer sits.
+        /// Example: Water surface = 0.2f if floor is 0.
+        /// </summary>
+        public float Height { get; set; }
+
+        /// <summary>
+        /// Simple solid color fallback if no texture is given.
+        /// </summary>
+        public Color Color { get; set; } = Color.White;
+
+        /// <summary>
+        /// Optional mask texture for transparency or detail.
+        /// </summary>
+        public UnmanagedImageBuffer? Mask { get; set; }
+
+        /// <summary>
+        /// Whether this layer should alpha-blend with others.
+        /// </summary>
+        public bool AlphaBlend { get; set; } = true;
+
+        /// <summary>
+        /// Optional custom draw logic for advanced rendering.
+        /// </summary>
+        public Action<IRenderer, Point, UnmanagedImageBuffer>? CustomDraw { get; set; }
     }
 }
