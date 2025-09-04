@@ -49,7 +49,7 @@ public partial class DungeonRenderer
                 if (!FrustumCulling.IsCellVisible(vp, min, max))
                     continue;
 
-                DrawCell(rast, camera, cell, screenWidth, screenHeight, vp);
+                DrawCell(rast, camera, cell, screenWidth, screenHeight, vp, x, y);
 
                 // Draw layers (water, grass, etc.)
                 DrawCellLayers(rast, camera, cell, screenWidth, screenHeight, vp);
@@ -71,34 +71,103 @@ public partial class DungeonRenderer
         return rast.GetFrame();
     }
 
-    private void DrawCell(IRenderer rast, Camera3D camera, MapCell3D cell, int screenWidth, int screenHeight, Matrix4x4 vp)
+    private void DrawCell(
+        IRenderer rast,
+        Camera3D camera,
+        MapCell3D cell,
+        int screenWidth,
+        int screenHeight,
+        Matrix4x4 vp,
+        int x,
+        int y)
     {
-        var c = cell.PrecomputedCorners;
+        // Walls
+        foreach (Direction dir in Enum.GetValues(typeof(Direction)))
+        {
+            var wallBounds = cell.GetWallBounds(dir, x, y);
+            if (wallBounds.HasValue)
+            {
+                var (min, max) = wallBounds.Value;
 
-        // North wall
-        if (cell.HasWallNorth)
-            DrawQuad(rast, camera.Position, c[0], c[1], c[5], c[4], vp, screenWidth, screenHeight, cell.WallTextureId, Color.Gray);
-
-        // South wall
-        if (cell.HasWallSouth)
-            DrawQuad(rast, camera.Position, c[3], c[2], c[6], c[7], vp, screenWidth, screenHeight, cell.WallTextureId, Color.Gray);
-
-        // East wall
-        if (cell.HasWallEast)
-            DrawQuad(rast, camera.Position, c[1], c[3], c[7], c[5], vp, screenWidth, screenHeight, cell.WallTextureId, Color.Gray);
-
-        // West wall
-        if (cell.HasWallWest)
-            DrawQuad(rast, camera.Position, c[2], c[0], c[4], c[6], vp, screenWidth, screenHeight, cell.WallTextureId, Color.Gray);
+                DrawBox(
+                    rast,
+                    camera,
+                    min,
+                    max,
+                    vp,
+                    screenWidth,
+                    screenHeight,
+                    cell.WallTextureId,
+                    Color.Gray
+                );
+            }
+        }
 
         // Floor
-        if (cell.HasFloor)
-            DrawQuad(rast, camera.Position, c[0], c[2], c[3], c[1], vp, screenWidth, screenHeight, cell.FloorTextureId, Color.DarkGray);
+        var floorBounds = cell.GetFloorBounds(x, y);
+        if (floorBounds.HasValue)
+        {
+            var (min, max) = floorBounds.Value;
+
+            DrawBox(
+                rast,
+                camera,
+                min,
+                max,
+                vp,
+                screenWidth,
+                screenHeight,
+                cell.FloorTextureId,
+                Color.DarkGray
+            );
+        }
 
         // Ceiling
-        if (cell.HasCeiling)
-            DrawQuad(rast, camera.Position, c[6], c[4], c[5], c[7], vp, screenWidth, screenHeight, cell.CeilingTextureId, Color.LightGray);
+        var ceilingBounds = cell.GetCeilingBounds(x, y);
+        if (ceilingBounds.HasValue)
+        {
+            var (min, max) = ceilingBounds.Value;
+
+            DrawBox(
+                rast,
+                camera,
+                min,
+                max,
+                vp,
+                screenWidth,
+                screenHeight,
+                cell.CeilingTextureId,
+                Color.LightGray
+            );
+        }
     }
+
+
+    private void DrawBox(IRenderer rast, Camera3D camera,
+    Vector3 min, Vector3 max,
+    Matrix4x4 vp, int screenWidth, int screenHeight,
+    int? textureId, Color fallbackColor)
+    {
+        // Build 8 corners
+        var c000 = new Vector3(min.X, min.Y, min.Z);
+        var c100 = new Vector3(max.X, min.Y, min.Z);
+        var c010 = new Vector3(min.X, min.Y, max.Z);
+        var c110 = new Vector3(max.X, min.Y, max.Z);
+
+        var c001 = new Vector3(min.X, max.Y, min.Z);
+        var c101 = new Vector3(max.X, max.Y, min.Z);
+        var c011 = new Vector3(min.X, max.Y, max.Z);
+        var c111 = new Vector3(max.X, max.Y, max.Z);
+
+        // 6 faces (same winding as existing DrawQuad)
+        DrawQuad(rast, camera.Position, c000, c100, c101, c001, vp, screenWidth, screenHeight, textureId, fallbackColor); // front
+        DrawQuad(rast, camera.Position, c100, c110, c111, c101, vp, screenWidth, screenHeight, textureId, fallbackColor); // right
+        DrawQuad(rast, camera.Position, c110, c010, c011, c111, vp, screenWidth, screenHeight, textureId, fallbackColor); // back
+        DrawQuad(rast, camera.Position, c010, c000, c001, c011, vp, screenWidth, screenHeight, textureId, fallbackColor); // left
+        DrawQuad(rast, camera.Position, c001, c101, c111, c011, vp, screenWidth, screenHeight, textureId, fallbackColor); // top
+        DrawQuad(rast, camera.Position, c000, c010, c110, c100, vp, screenWidth, screenHeight, textureId, fallbackColor); // bottom
+    }
+
 
     /// <summary>
     /// Draws paper dolls, respecting occlusion by walls or props (blocky boxes).
