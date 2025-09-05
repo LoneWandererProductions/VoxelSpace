@@ -330,38 +330,36 @@ public sealed partial class MainWindow
         ImageView.Bitmap = result.Bitmap;
     }
 
-
     private void InitiateCaster3D()
     {
-        // 1. Create a simple 10x10 labyrinth
-        _dungeonMap = new DungeonMap(10, 10);
+        // 10x10 map, with 3 vertical layers
+        _dungeonMap = new DungeonMap(10, 10, 3);
 
-        // Outer walls
-        for (var x = 0; x < 10; x++)
+        // Add outer walls only on level 0
+        for (int x = 0; x < 10; x++)
         {
-            _dungeonMap.GetCell(x, 0).HasWallNorth = true;
-            _dungeonMap.GetCell(x, 9).HasWallSouth = true;
+            _dungeonMap.GetCell(x, 0, 0).HasWallNorth = true;
+            _dungeonMap.GetCell(x, 9, 0).HasWallSouth = true;
         }
 
-        for (var y = 0; y < 10; y++)
+        for (int y = 0; y < 10; y++)
         {
-            _dungeonMap.GetCell(0, y).HasWallWest = true;
-            _dungeonMap.GetCell(9, y).HasWallEast = true;
+            _dungeonMap.GetCell(0, y, 0).HasWallWest = true;
+            _dungeonMap.GetCell(9, y, 0).HasWallEast = true;
         }
 
-        // Some internal walls for a tiny maze
-        _dungeonMap.GetCell(2, 2).HasWallEast = true;
-        _dungeonMap.GetCell(2, 2).HasWallSouth = true;
-        _dungeonMap.GetCell(5, 5).HasWallNorth = true;
-        _dungeonMap.GetCell(5, 5).HasWallWest = true;
+        // Place a solid floor on level 1 (like a balcony)
+        _dungeonMap.GetCell(4, 4, 1).HasFloor = true;
+        _dungeonMap.GetCell(4, 4, 1).HasCeiling = true;
 
-        // 2. Set up the viewport
+        // 2. Viewport as before
         var raster = new SoftwareRasterizer(800, 600);
         _dungeonViewport = new DungeonViewport(_dungeonMap, raster, 800, 600);
 
         // Initial render
         ImageView.Bitmap = _dungeonViewport.Render();
     }
+
 
     /// <summary>
     ///     Initiates this instance.

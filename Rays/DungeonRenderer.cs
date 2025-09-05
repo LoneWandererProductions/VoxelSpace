@@ -33,33 +33,42 @@ public partial class DungeonRenderer
 
         rast.Clear(Color.CornflowerBlue);
 
-        // 1. Draw dungeon cells
-        for (var x = 0; x < _map.Width; x++)
+        // 1. Draw dungeon cells (stacked Z-levels)
+        for (var z = 0; z < _map.Levels; z++)
         {
-            for (var y = 0; y < _map.Height; y++)
+            for (var x = 0; x < _map.Width; x++)
             {
-                var cell = _map.GetCell(x, y);
-                cell.PrecomputeCorners(x, y);
+                for (var y = 0; y < _map.Height; y++)
+                {
+                    var cell = _map.GetCell(x, y, z);
 
-                // Compute min/max bounds of the cell cube
-                var min = new Vector3(x, cell.FloorHeight, y);
-                var max = new Vector3(x + 1, cell.CeilingHeight, y + 1);
+                    // Precompute corners using the cell's own X,Y,Z & heights
+                    cell.PrecomputeCorners();
 
-                // Use generalized frustum culling
-                if (!FrustumCulling.IsCellVisible(vp, min, max))
-                    continue;
+                    // Use the cell's per-level height as the vertical stride between layers
+                    float levelHeight = cell.CeilingHeight - cell.FloorHeight;
+                    float floor = cell.FloorHeight + z * levelHeight;
+                    float ceil = cell.CeilingHeight + z * levelHeight;
 
-                DrawCell(rast, camera, cell, screenWidth, screenHeight, vp, x, y);
+                    var min = new Vector3(x, floor, y);
+                    var max = new Vector3(x + 1, ceil, y + 1);
 
-                // Draw layers (water, grass, etc.)
-                DrawCellLayers(rast, camera, cell, screenWidth, screenHeight, vp);
+                    // Frustum culling
+                    if (!FrustumCulling.IsCellVisible(vp, min, max))
+                        continue;
+
+                    // Draw the cell
+                    DrawCell(rast, camera, cell, screenWidth, screenHeight, vp);
+
+                    // Draw cell layers (water, grass, etc.)
+                    DrawCellLayers(rast, camera, cell, screenWidth, screenHeight, vp);
+                }
             }
         }
 
-        // 2. Draw paper dolls after world geometry
+        // 2. Paper dolls
         if (dolls != null && dolls.Count > 0)
         {
-            // Cull dolls by bounding sphere before drawing
             var visibleDolls = dolls
                 .Where(d => FrustumCulling.IsSphereVisible(vp, d.Position, d.Radius))
                 .ToList();
@@ -77,71 +86,53 @@ public partial class DungeonRenderer
         MapCell3D cell,
         int screenWidth,
         int screenHeight,
-        Matrix4x4 vp,
-        int x,
-        int y)
+        Matrix4x4 vp)
     {
         // Walls
         foreach (Direction dir in Enum.GetValues(typeof(Direction)))
         {
-            var wallBounds = cell.GetWallBounds(dir, x, y);
+            var wallBounds = cell.GetWallBounds(dir);
             if (wallBounds.HasValue)
             {
                 var (min, max) = wallBounds.Value;
-
                 DrawBox(
-                    rast,
-                    camera,
-                    min,
-                    max,
-                    vp,
-                    screenWidth,
-                    screenHeight,
+                    rast, camera,
+                    min, max,
+                    vp, screenWidth, screenHeight,
                     cell.WallTextureId,
                     Color.Gray
                 );
             }
         }
 
-        // Floor
-        var floorBounds = cell.GetFloorBounds(x, y);
+        // Floor slab
+        var floorBounds = cell.GetFloorBounds();
         if (floorBounds.HasValue)
         {
             var (min, max) = floorBounds.Value;
-
             DrawBox(
-                rast,
-                camera,
-                min,
-                max,
-                vp,
-                screenWidth,
-                screenHeight,
+                rast, camera,
+                min, max,
+                vp, screenWidth, screenHeight,
                 cell.FloorTextureId,
                 Color.DarkGray
             );
         }
 
-        // Ceiling
-        var ceilingBounds = cell.GetCeilingBounds(x, y);
+        // Ceiling slab
+        var ceilingBounds = cell.GetCeilingBounds();
         if (ceilingBounds.HasValue)
         {
             var (min, max) = ceilingBounds.Value;
-
             DrawBox(
-                rast,
-                camera,
-                min,
-                max,
-                vp,
-                screenWidth,
-                screenHeight,
+                rast, camera,
+                min, max,
+                vp, screenWidth, screenHeight,
                 cell.CeilingTextureId,
                 Color.LightGray
             );
         }
     }
-
 
     private void DrawBox(IRenderer rast, Camera3D camera,
     Vector3 min, Vector3 max,
@@ -172,11 +163,17 @@ public partial class DungeonRenderer
     /// <summary>
     /// Draws paper dolls, respecting occlusion by walls or props (blocky boxes).
     /// </summary>
-    private void DrawPaperDolls(IRenderer rast, Camera3D camera, List<PaperDoll> dolls, int screenWidth, int screenHeight, Matrix4x4 vp)
+    private void DrawPaperDolls(
+        IRenderer rast,
+        Camera3D camera,
+        List<PaperDoll> dolls,
+        int screenWidth,
+        int screenHeight,
+        Matrix4x4 vp)
     {
         foreach (var doll in dolls)
         {
-            // Transform doll position to screen space
+            // Transform doll position into clip space
             var dollPos = doll.Position;
             var clipPos = Vector3.Transform(dollPos, vp);
 
@@ -184,54 +181,49 @@ public partial class DungeonRenderer
             if (clipPos.Z <= 0)
                 continue;
 
-            // Project to screen
-            var screenX = (int)((clipPos.X / clipPos.Z + 1f) * 0.5f * screenWidth);
-            var screenY = (int)((1f - (clipPos.Y / clipPos.Z + 1f) * 0.5f) * screenHeight);
+            // Project to screen space
+            int screenX = (int)((clipPos.X / clipPos.Z + 1f) * 0.5f * screenWidth);
+            int screenY = (int)((1f - (clipPos.Y / clipPos.Z + 1f) * 0.5f) * screenHeight);
 
-            // Check against occluding cells
-            bool occluded = false;
-
-            // Determine which cell the doll is in
+            // Determine which cell the doll stands in
             int cellX = (int)Math.Floor(doll.Position.X);
-            int cellY = (int)Math.Floor(doll.Position.Z); // assuming Y-up
+            int cellY = (int)Math.Floor(doll.Position.Z);
+            int cellZ = (int)Math.Floor(doll.Position.Y / (_map.BaseHeight));
 
-            var cell = _map.GetCell(cellX, cellY);
 
+            var cell = _map.GetCell(cellX, cellY, cellZ);
+
+            bool occluded = false;
             if (cell != null)
             {
-                // Simple occlusion: check height
-                if (doll.Position.Y < cell.CeilingHeight)
+                // Check if doll is under the ceiling or inside solid part of this cell
+                if (doll.Position.Y < cell.CeilingHeight &&
+                    doll.Position.Y > cell.FloorHeight)
                 {
-                    // Doll is behind the wall/ceiling
                     occluded = true;
                 }
             }
-
-            // Optionally check neighboring cells for props
-            // foreach (var neighbor in GetNeighborCells(cellX, cellY)) { ... }
 
             if (occluded)
                 continue;
 
             // Draw sprite centered on screenX, screenY
-            var halfW = doll.Sprite.Width / 2;
-            var halfH = doll.Sprite.Height / 2;
+            int halfW = doll.Sprite?.Width / 2 ?? 8;
+            int halfH = doll.Sprite?.Height / 2 ?? 8;
 
             if (doll.Sprite == null)
             {
                 rast.DrawSolidQuad(
-                new Point(screenX - halfW, screenY - halfH),
-                new Point(screenX + halfW, screenY - halfH),
-                new Point(screenX + halfW, screenY + halfH),
-                new Point(screenX - halfW, screenY + halfH),
-                Color.White); // Or integrate with a sprite blit function
+                    new Point(screenX - halfW, screenY - halfH),
+                    new Point(screenX + halfW, screenY - halfH),
+                    new Point(screenX + halfW, screenY + halfH),
+                    new Point(screenX - halfW, screenY + halfH),
+                    Color.White
+                );
             }
-            else 
+            else
             {
-                // Define the top-left point
                 var topLeft = new Point(screenX - halfW, screenY - halfH);
-
-                // Draw sprite
                 rast.DrawSprite(topLeft, doll.Sprite);
             }
         }
@@ -240,12 +232,24 @@ public partial class DungeonRenderer
     /// <summary>
     /// Draws all layers in a cell (water, grass, etc.) using the generic CellLayer system.
     /// </summary>
-    private void DrawCellLayers(IRenderer rast, Camera3D camera, MapCell3D cell,
+    /// <param name="rast">The rast.</param>
+    /// <param name="camera">The camera.</param>
+    /// <param name="cell">The cell.</param>
+    /// <param name="screenWidth">Width of the screen.</param>
+    /// <param name="screenHeight">Height of the screen.</param>
+    /// <param name="vp">The vp.</param>
+    private static void DrawCellLayers(IRenderer rast, Camera3D camera, MapCell3D cell,
         int screenWidth, int screenHeight, Matrix4x4 vp)
     {
+        if (cell.Layers.Count == 0) return;
+
+        // vertical offset for this Z-level
+        float levelHeight = cell.CeilingHeight - cell.FloorHeight;
+        float zOffsetY = cell.Z * levelHeight;
+
         foreach (var layer in cell.Layers)
         {
-            float y = cell.FloorHeight + layer.Height;
+            float y = cell.FloorHeight + zOffsetY + layer.Height;
 
             var v0 = new Vector3(cell.PrecomputedCorners[0].X, y, cell.PrecomputedCorners[0].Z);
             var v1 = new Vector3(cell.PrecomputedCorners[1].X, y, cell.PrecomputedCorners[1].Z);
@@ -273,7 +277,10 @@ public partial class DungeonRenderer
             var col = layer.Color;
             if (layer.AlphaBlend)
             {
-                float visibility = Math.Clamp((camera.Position.Y - cell.FloorHeight) / (layer.Height + 0.001f), 0f, 1f);
+                float visibility = Math.Clamp(
+                    (camera.Position.Y - (cell.FloorHeight + zOffsetY)) / (layer.Height + 0.001f),
+                    0f, 1f
+                );
                 col = Color.FromArgb((int)(col.A * visibility), col);
             }
 
